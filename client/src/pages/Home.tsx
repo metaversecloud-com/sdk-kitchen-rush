@@ -1,4 +1,5 @@
 import { useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 // components
 import { PageContainer } from "@/components";
@@ -13,6 +14,8 @@ import { backendAPI, setErrorMessage, setGameState } from "@/utils";
 export const Home = () => {
   const dispatch = useContext(GlobalDispatchContext);
   const { droppedAsset, hasInteractiveParams } = useContext(GlobalStateContext);
+  const navigate = useNavigate();
+
   const imgSrc = droppedAsset?.topLayerURL || droppedAsset?.bottomLayerURL;
 
   const [isLoading, setIsLoading] = useState(true);
@@ -29,16 +32,41 @@ export const Home = () => {
     }
   }, [hasInteractiveParams]);
 
+  const handleStart = () => {
+    navigate("/level"); // you'll build this next
+  };
+
   return (
-    <PageContainer isLoading={isLoading} headerText="Server side example using interactive parameters">
-      {droppedAsset?.id && (
-        <div className="flex flex-col w-full items-start">
-          <p className="mt-4 mb-2">
-            You have successfully retrieved the dropped asset details for {droppedAsset.assetName}!
-          </p>
-          {imgSrc && <img className="w-96 h-96 object-cover rounded-2xl my-4" alt="preview" src={imgSrc} />}
-        </div>
-      )}
+    <PageContainer isLoading={isLoading} headerText="Kitchen Rush">
+      <div className="flex flex-col items-center justify-center w-full text-center gap-6 mt-6">
+        
+        {/* Game Image */}
+        {imgSrc ? (
+          <img
+            className="w-60 h-40 object-cover rounded-xl"
+            alt="Kitchen Rush"
+            src={imgSrc}
+          />
+        ) : (
+          <div className="w-60 h-40 bg-gray-300 rounded-xl flex items-center justify-center">
+            Game Image
+          </div>
+        )}
+
+        {/* Description */}
+        <p className="max-w-md">
+          Serve customers quickly and accurately before they get angry. Build orders,
+          maintain streaks, and survive the rush!
+        </p>
+
+        {/* Start Button */}
+        <button
+          onClick={handleStart}
+          className="bg-blue-300 px-6 py-3 rounded-xl text-lg"
+        >
+          Start Game
+        </button>
+      </div>
     </PageContainer>
   );
 };
