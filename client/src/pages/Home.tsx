@@ -21,16 +21,9 @@ export const Home = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (hasInteractiveParams) {
-      backendAPI
-        .get("/game-state")
-        .then((response) => {
-          setGameState(dispatch, response.data);
-        })
-        .catch((error) => setErrorMessage(dispatch, error as ErrorType))
-        .finally(() => setIsLoading(false));
-    }
-  }, [hasInteractiveParams]);
+    // TEMP: skip backend while building UI
+    setIsLoading(false);
+  }, []);
 
   const handleStart = () => {
     navigate("/level"); // you'll build this next
