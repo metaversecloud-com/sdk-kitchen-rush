@@ -1,4 +1,4 @@
-import { Order } from "../types/order"
+import { Order } from "../types/Order"
 
 export const compareIngredients = (currentOrder: Partial<Order>, activeOrder: Order) :  boolean => {
     if(currentOrder.size !== activeOrder.size || currentOrder.milk !== activeOrder.milk ||  
@@ -13,4 +13,3 @@ export const compareIngredients = (currentOrder: Partial<Order>, activeOrder: Or
     if(toppings === false) return false;
         return true
 }
-
