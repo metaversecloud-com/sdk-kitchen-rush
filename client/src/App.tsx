@@ -58,7 +58,7 @@ const App = () => {
       .finally(() => setHasInitBackendAPI(true));
   };
 
-  if (hasMissingParams) {
+  if (false && hasMissingParams) {//have teh 
     return (
       <div className="flex flex-col gap-4 text-center justify-center h-screen">
         <h2>Missing Interactive Parameters</h2>

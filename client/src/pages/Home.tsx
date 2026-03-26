@@ -48,8 +48,12 @@ export const Home = () => {
 
         {/* Description */}
         <p className="max-w-md">
-          Serve customers quickly and accurately before they get angry. Build orders,
-          maintain streaks, and survive the rush!
+          Welcome to Kitchen Rush! In this game, you must accurately serve orders to customers before time runs out. 
+          There are four levels of difficulty. This is the Warmup round: First, select the corresponding cup size. 
+          Next, choose a hot or cold drink base. Then, select the correct type of milk. If you fail to complete an order 
+          on time or serve an incorrect order, you receive a frowny face. The game is over when you receive 5 frowny faces. 
+          You have the ability to earn streak point multipliers for serving multiple correct orders in a row. You may also 
+          end the game early if you wish with the “Close Shop” button.
         </p>
 
         {/* Start Button */}
