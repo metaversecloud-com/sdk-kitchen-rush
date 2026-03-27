@@ -4,6 +4,8 @@ import useOrderManager from '../hooks/useOrderManager';
 import Order from './Order';
 import Ingredients from './Ingredients';
 import { LEVEL_ONE_ORDERS } from '../data/Coffee';
+import '../styles/Game.css';
+import '../styles/Ingredients.css';
 
 const Game = () => {
   const {
@@ -14,6 +16,7 @@ const Game = () => {
     handleServeOrder,
     handleViewOrder,
     setSourceQueue,
+    // handleCloseShop,
   } = useOrderManager(
     () => console.log('game over'),
     () => console.log('level complete')
@@ -37,11 +40,12 @@ const Game = () => {
       {activeOrder && (
         <Order order={activeOrder} isActive={true} />
       )}
+      <button className="serve-button" onClick={handleServeOrder}>Serve</button>
       <Ingredients
         tray={tray}
         onSelect={(category, value) => console.log(category, value)}
       />
-      <button onClick={handleServeOrder}>Serve</button>
+    {/* <button onClick={handleCloseShop}>Close Shop</button> */}
     </div>
   );
 };
