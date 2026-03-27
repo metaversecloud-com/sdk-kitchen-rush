@@ -26,7 +26,7 @@ export const Home = () => {
   }, []);
 
   const handleStart = () => {
-    navigate("/level"); // you'll build this next
+    navigate("/level");
   };
 
   return (
@@ -47,14 +47,36 @@ export const Home = () => {
         )}
 
         {/* Description */}
-        <p className="max-w-md">
-          Welcome to Kitchen Rush! In this game, you must accurately serve orders to customers before time runs out. 
-          There are four levels of difficulty. This is the Warmup round: First, select the corresponding cup size. 
-          Next, choose a hot or cold drink base. Then, select the correct type of milk. If you fail to complete an order 
-          on time or serve an incorrect order, you receive a frowny face. The game is over when you receive 5 frowny faces. 
-          You have the ability to earn streak point multipliers for serving multiple correct orders in a row. You may also 
-          end the game early if you wish with the “Close Shop” button.
-        </p>
+        <div className="max-w-md text-left space-y-3">
+          <p className="mb-3 font-semibold">
+              Welcome to Kitchen Rush! 🍽️
+            </p>
+            
+            <p className="mb-4">
+              Make coffee for your customers before time runs out!
+            </p>
+
+            <p className="font-semibold">How to play:</p>
+            <ul className="list-disc ml-6 mb-4 space-y-1">
+              <li>👀 Look at the order</li>
+              <li>🥤 Pick the right size, temperature, and milk</li>
+              <li>✅ Press <strong>Serve</strong> when you're ready</li>
+            </ul>
+
+            <p className="font-semibold">Be careful!</p>
+            <ul className="list-disc ml-6 mb-4 space-y-1">
+              <li>❌ Wrong order or too slow = 😠 sad face</li>
+              <li>😠 5 sad faces = Game Over</li>
+            </ul>
+
+            <p className="mb-2">
+              🔥 Get streaks for bonus points!
+            </p>
+            
+            <p className="font-bold text-center text-left">
+              Ready to play? Let’s go! 🎉
+          </p>
+        </div>
 
         {/* Start Button */}
         <button

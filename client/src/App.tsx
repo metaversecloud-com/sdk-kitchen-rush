@@ -2,7 +2,7 @@ import { useContext, useEffect, useMemo, useState } from "react";
 import { Route, Routes, useNavigate, useSearchParams } from "react-router-dom";
 
 // pages
-import { Error, Home } from "./pages";
+import { Error, Home, OrderScreen, Level } from "./pages";
 
 // context
 import { GlobalDispatchContext } from "./context/GlobalContext";
@@ -58,7 +58,7 @@ const App = () => {
       .finally(() => setHasInitBackendAPI(true));
   };
 
-  if (false && hasMissingParams) {//have teh 
+  if (false && hasMissingParams) {//the false is temporary rn until we putting it into topia
     return (
       <div className="flex flex-col gap-4 text-center justify-center h-screen">
         <h2>Missing Interactive Parameters</h2>
@@ -82,10 +82,12 @@ const App = () => {
   }
 
   return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="*" element={<Error />} />
-    </Routes>
+<Routes>
+  <Route path="/" element={<Home />} />
+  <Route path="/level" element={<Level />} />
+  <Route path="/order" element={<OrderScreen />} />
+  <Route path="*" element={<Error />} />
+</Routes>
   );
 };
 
