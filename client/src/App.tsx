@@ -2,7 +2,7 @@ import { useContext, useEffect, useMemo, useState } from "react";
 import { Route, Routes, useNavigate, useSearchParams } from "react-router-dom";
 
 // pages
-import { Error, Home, OrderScreen, Level } from "./pages";
+import { Error, Home, OrderScreen, Level, GameOver } from "./pages";
 
 // context
 import { GlobalDispatchContext } from "./context/GlobalContext";
@@ -87,6 +87,7 @@ const App = () => {
   <Route path="/level" element={<Level />} />
   <Route path="/order" element={<OrderScreen />} />
   <Route path="*" element={<Error />} />
+  <Route path="/gameover" element={<GameOver />} />
 </Routes>
   );
 };
