@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { levelConfig } from "../config/levelConfig";
 
 export default function Level() {
-  const level = 4; // temp hardcode until Selena's logic is done
+  const level = 1; // temp hardcode until Selena's logic is done
   const navigate = useNavigate();
   const config = levelConfig[level];
 
@@ -11,7 +11,7 @@ export default function Level() {
       <h1 className="text-2xl font-bold">{config.title}</h1>
       <p className="text-gray-600 max-w-sm">{config.description}</p>
       <button
-        onClick={() => navigate("/order", { state: { level: 4 } })}
+        onClick={() => navigate("/order", { state: { level: 1 } })}
         className="bg-blue-300 px-6 py-3 rounded-xl"
       >
         Continue
