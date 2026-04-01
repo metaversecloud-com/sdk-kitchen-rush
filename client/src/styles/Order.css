@@ -1,0 +1,107 @@
+/* ---------------------- */
+/* SMALLER ORDER CARD     */
+/* ---------------------- */
+.order-card {
+  width: 220px;              /* smaller width */
+  background: #ffffff;
+  border: 2px solid #dcdcdc;
+  border-radius: 10px;
+  padding: 10px;             /* smaller padding */
+  display: flex;
+  flex-direction: column;
+  gap: 10px;                 /* tighter spacing */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Active highlight */
+.order-card.active {
+  border-color: #4a90e2;
+  box-shadow: 0 0 6px rgba(74,144,226,0.4);
+}
+
+/* ---------------------- */
+/* HEADER                 */
+/* ---------------------- */
+.order-header h3 {
+  font-size: 0.9rem;         /* smaller text */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+
+.timer-bar {
+  width: 70px;               /* smaller bar */
+  height: 6px;
+}
+
+.timer-bar {
+  width: 100%;
+  height: 6px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.timer-fill {
+  height: 100%;
+  width: 100%;
+  background: #4a90e2;
+  border-radius: 4px;
+  transform-origin: left;
+  animation: countdown var(--timer-duration, 12s) linear forwards;
+}
+
+@keyframes countdown {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+/* ---------------------- */
+/* VISUALIZATION BOX      */
+/* ---------------------- */
+.order-visual {
+  height: 80px;              /* smaller box */
+  border: 2px dashed #cfcfcf;
+  border-radius: 8px;
+  background: #fafafa;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;                  /* tighter spacing */
+}
+
+.visual-item {
+  padding: 3px 6px;
+  background: #e8e8e8;
+  border-radius: 5px;
+  font-size: 0.75rem;        /* smaller text */
+}
+
+/* ---------------------- */
+/* DETAILS                */
+/* ---------------------- */
+.order-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detail-group label {
+  font-size: 0.8rem;
+}
+
+.options-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.option {
+  padding: 3px 6px;
+  background: #f1f1f1;
+  border-radius: 5px;
+  border: 1px solid #dcdcdc;
+  font-size: 0.75rem;
+}
