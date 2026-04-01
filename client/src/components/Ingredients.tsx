@@ -24,6 +24,27 @@ const Ingredients = ({ tray, onSelect }: IngredientsProps) => {
     }
     return tray[category] === value;
   };
+const updateTray = (category: keyof Order, value: string): void => {
+  // MULTI-SELECT: toppings
+  if (category === "toppings") {
+    setTray(prev => {
+      const current = prev.toppings ?? [];
+      return {
+        ...prev,
+        toppings: current.includes(value)
+          ? current.filter(t => t !== value)
+          : [...current, value]
+      };
+    });
+    return;
+  }
+
+  // SINGLE-SELECT: size, temp, milk, flavor
+  setTray(prev => ({
+    ...prev,
+    [category]: value
+  }));
+};
 
   return (
     <div className="ingredients">
