@@ -1,0 +1,46 @@
+.ingredients {
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* space between categories */
+  width: 100%;
+  max-width: 400px;
+  margin-top: 20px;
+}
+
+.ingredient-category {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ingredient-category h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.ingredient-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px; /* space between buttons */
+}
+
+.ingredient-options button {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: #f7f7f7;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.ingredient-options button:hover {
+  background: #eaeaea;
+}
+
+.ingredient-options button.selected {
+  background: #4a90e2;
+  color: white;
+  border-color: #4a90e2;
+}
