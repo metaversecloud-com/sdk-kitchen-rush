@@ -6,6 +6,7 @@ import { LEVEL_ONE_ORDERS } from '../data/Coffee';
 import '../styles/Game.css';
 import '../styles/Ingredients.css';
 import {useNavigate} from "react-router-dom"
+import Tray from './Tray';
 
 const Game = () => {
   const navigate = useNavigate();
@@ -50,9 +51,12 @@ const Game = () => {
         <span>⏱ {timeRemaining}s</span>
         <span>😠 {angryCustomerCount}/5</span>
       </div>
+      <div className="order-tray-row">
       {activeOrder && (
         <Order order={activeOrder} isActive={true} />
       )}
+        <Tray tray={tray} />
+      </div>
       <button className="serve-button" onClick={handleServeOrder}>Serve</button>
       <Ingredients
         tray={tray}

@@ -37,3 +37,11 @@
 .serve-button:hover {
   background: #3a78c2;
 }
+
+.order-tray-row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+}
