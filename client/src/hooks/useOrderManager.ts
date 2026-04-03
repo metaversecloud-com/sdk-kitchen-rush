@@ -2,7 +2,7 @@ import { Order } from "../types/Order"
 import { compareIngredients } from "../utils/compareIngredients"
 import { getSpeedBonus } from "../utils/speedMultiplier"
 import { getStreakMultiplier } from "../utils/streakMultiplier"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 
 const MAX_ANGRY_CUSTOMERS = 5;
@@ -20,8 +20,11 @@ const useOrderManager = (
   const [sourceQueue, setSourceQueue] = useState<Order[]>([]);
   const [tray, setTray] = useState<Partial<Order>>({})
   const [streak, setStreak] = useState<number>(0);
-  const [timerId, setTimerId] = useState<number | undefined>(undefined);
+  const timerRef = useRef<number | undefined>(undefined);
+
+  // handles time logic
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
+  const timerIntervalRef = useRef<number | undefined>(undefined);
 
   // TIMER COUNTDOWN
   useEffect(() => {
@@ -62,7 +65,7 @@ const useOrderManager = (
 
   // ORDER HANDLERS
   const handleServeOrder = (): void => {
-    clearTimeout(timerId)
+    clearTimeout(timerRef.current)
     if (!activeOrder) return
     const isCorrect = compareIngredients(tray, activeOrder)
     if (isCorrect) {
@@ -91,10 +94,20 @@ const useOrderManager = (
   }
 
   const handleViewOrder = (order: Order): void => {
-    clearTimeout(timerId)
+    clearTimeout(timerRef.current)
     setTimeRemaining(order.timeLimit / 1000)
-    const id = setTimeout(() => handleTimeout(), order.timeLimit) as unknown as number
-    setTimerId(id)
+    clearInterval(timerIntervalRef.current)
+    setTimeRemaining(order.timeLimit / 1000)
+    timerIntervalRef.current = setInterval(() => {
+      setTimeRemaining(prev => {
+        if (prev <= 1) {
+          clearInterval(timerIntervalRef.current)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000) as unknown as number
+    timerRef.current = setTimeout(() => handleTimeout(), order.timeLimit) as unknown as number
   }
 
   const handleTimeout = (): void => {
@@ -105,7 +118,7 @@ const useOrderManager = (
 
   // CLOSE SHOP
   const handleCloseShop = (): void => {
-    clearTimeout(timerId)
+    clearTimeout(timerRef.current)
     clearTray()
     resetStreak()
     resetScore()
@@ -146,7 +159,6 @@ const useOrderManager = (
     streak,
     timeRemaining,
     sourceQueue,
-    timerId,
     advance,
     setSourceQueue,
     handleServeOrder,
