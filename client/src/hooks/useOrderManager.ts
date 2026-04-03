@@ -25,7 +25,7 @@ const useOrderManager = (
   // handles time logic
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const timerIntervalRef = useRef<number | undefined>(undefined);
-
+  
   // TIMER COUNTDOWN
   useEffect(() => {
     if (timeRemaining <= 0) return
@@ -93,6 +93,13 @@ const useOrderManager = (
     clearTray()
   }
 
+  const handleTimeoutRef = useRef<() => void>(() => {});
+
+  // Keeps the ref always pointing to the latest version
+  useEffect(() => {
+    handleTimeoutRef.current = handleTimeout;
+  });
+
   const handleViewOrder = (order: Order): void => {
     clearTimeout(timerRef.current)
     setTimeRemaining(order.timeLimit / 1000)
@@ -107,7 +114,9 @@ const useOrderManager = (
         return prev - 1
       })
     }, 1000) as unknown as number
-    timerRef.current = setTimeout(() => handleTimeout(), order.timeLimit) as unknown as number
+    timerRef.current = setTimeout(() => {
+      handleTimeoutRef.current()  // always calls latest version
+    }, order.timeLimit) as unknown as number
   }
 
   const handleTimeout = (): void => {
