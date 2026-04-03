@@ -2,15 +2,12 @@
 /* SMALLER ORDER CARD     */
 /* ---------------------- */
 .order-card {
-  width: 220px;              /* smaller width */
-  background: #ffffff;
-  border: 2px solid #dcdcdc;
-  border-radius: 10px;
-  padding: 10px;             /* smaller padding */
-  display: flex;
-  flex-direction: column;
-  gap: 10px;                 /* tighter spacing */
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  width: 100%;
+  max-width: 350px;
+  border: 2px solid #4a90e2; /* Matches your 'active' look */
+  border-radius: 15px;
+  padding: 20px;
+  background: white;
 }
 
 /* Active highlight */
@@ -61,15 +58,15 @@
 /* VISUALIZATION BOX      */
 /* ---------------------- */
 .order-visual {
-  height: 80px;              /* smaller box */
-  border: 2px dashed #cfcfcf;
-  border-radius: 8px;
-  background: #fafafa;
+  height: 120px; /* Taller box for the 'Image' feel */
+  background: #f8f9fa;
+  border: 2px dashed #cbd5e0;
+  margin-bottom: 15px;
   display: flex;
-  justify-content: center;
-  align-items: center;
   flex-wrap: wrap;
-  gap: 4px;                  /* tighter spacing */
+  align-content: center;
+  justify-content: center;
+  gap: 5px;
 }
 
 .visual-item {

@@ -1,15 +1,27 @@
 import { Order } from "../types/Order"
 
-export const compareIngredients = (currentOrder: Partial<Order>, activeOrder: Order) :  boolean => {
-    if(currentOrder.size !== activeOrder.size || currentOrder.milk !== activeOrder.milk ||  
-        currentOrder.temp !== activeOrder.temp || currentOrder.flavor !== activeOrder.flavor ) 
+export const compareIngredients = (currentOrder: Partial<Order>, activeOrder: Order): boolean => {
+    // Helper to safely compare strings regardless of Capitalization or Spaces
+    const isMatch = (val1: any, val2: any) => {
+        return String(val1 || "").trim().toLowerCase() === String(val2 || "").trim().toLowerCase();
+    };
+
+    // Check main ingredients
+    if (!isMatch(currentOrder.size, activeOrder.size) || 
+        !isMatch(currentOrder.milk, activeOrder.milk) || 
+        !isMatch(currentOrder.temp, activeOrder.temp) || 
+        !isMatch(currentOrder.flavor, activeOrder.flavor)) {
         return false;
-    if (!currentOrder.toppings && !activeOrder.toppings) return true;
-    if (!currentOrder.toppings || !activeOrder.toppings) return false;
-    currentOrder.toppings.sort();
-    activeOrder.toppings.sort();
-    if (currentOrder.toppings.length !== activeOrder.toppings.length) return false;
-    const toppings = currentOrder.toppings.every(topping => activeOrder.toppings?.includes(topping));
-    if(toppings === false) return false;
-        return true
-}
+    }
+
+    // Toppings logic
+    const trayToppings = currentOrder.toppings || [];
+    const orderToppings = activeOrder.toppings || [];
+
+    if (trayToppings.length !== orderToppings.length) return false;
+
+    // Compare each topping (lowercased)
+    return trayToppings.every(t => 
+        orderToppings.some(ot => ot.toLowerCase().trim() === t.toLowerCase().trim())
+    );
+};
