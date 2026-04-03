@@ -1,20 +1,55 @@
-/* Style for the buttons you CAN'T click anymore */
+.ingredients-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 450px;
+  margin: 0 auto;
+}
+
+.ingredient-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.category-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #888;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.options-grid {
+  display: flex;
+  flex-direction: row; /* Forces buttons side-by-side */
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.option-btn {
+  padding: 10px 15px;
+  border: 1px solid #dcdcdc;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+  flex: 1; /* Makes all buttons in a row the same width */
+  max-width: 100px;
+}
+
+.option-btn.selected {
+  background: #ebf5ff;
+  border-color: #4a90e2;
+  color: #4a90e2;
+  font-weight: bold;
+}
+
 .option-btn.disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  filter: grayscale(1);
-  background: #f0f0f0;
-}
-
-/* Optional: Add a subtle animation when a row locks */
-.ingredient-row.locked {
-  transition: opacity 0.3s ease;
-}
-
-/* Keep the selected one bright so they know what they picked */
-.option-btn.selected {
-  opacity: 1 !important;
-  filter: none !important;
-  border: 2px solid #4a90e2;
-  background: #ebf5ff;
+  background: #f9f9f9;
 }

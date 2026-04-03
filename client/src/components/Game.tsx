@@ -20,7 +20,7 @@ interface GameProps {
 
 const Game = ({ orders }: GameProps) => {
   const navigate = useNavigate();
-  const [currentLevel, setCurrentLevel] = useState<number>(1);
+  const [currentLevel, setCurrentLevel] = useState<number>(2);
 
   const orderManager = useOrderManager(
     () => navigate("/game-over"), 

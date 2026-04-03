@@ -11,34 +11,28 @@ const Ingredients = ({ tray, onSelect, availableIngredients }: IngredientsProps)
   return (
     <div className="ingredients-container">
       {Object.entries(availableIngredients).map(([category, options]: [string, any]) => {
-        // Check if the player has already picked something for this category
+        // This check prevents the "locked" logic if you haven't implemented it yet
         const isLocked = tray[category] !== undefined && tray[category] !== "";
 
         return (
-          <div key={category} className={`ingredient-row ${isLocked ? "locked" : ""}`}>
-            <label className="category-label">
-              {category} {isLocked && "🔒"} 
-            </label>
+          <div key={category} className="ingredient-row">
+            <label className="category-label">{category}</label>
             <div className="options-grid">
-              {options.map((option: string) => {
-                const isActive = tray[category] === option;
-
-                return (
-                  <button
-                    key={option}
-                    // Add a 'disabled' class if a choice was already made
-                    className={`option-btn ${isActive ? "selected" : ""} ${isLocked && !isActive ? "disabled" : ""}`}
-                    onClick={() => {
-                      // ONLY call onSelect if the category is currently empty
-                      if (!isLocked) {
-                        onSelect(category, option);
-                      }
-                    }}
-                  >
-                    {option}
-                  </button>
-                );
-              })}
+              {options.map((option: string) => (
+                <button
+                  key={option}
+                  type="button"
+                  // Ensure these classes match your CSS exactly
+                  className={`option-btn ${tray[category] === option ? "selected" : ""} ${isLocked && tray[category] !== option ? "disabled" : ""}`}
+                  onClick={() => {
+                    if (!isLocked) {
+                      onSelect(category, option);
+                    }
+                  }}
+                >
+                  {option}
+                </button>
+              ))}
             </div>
           </div>
         );

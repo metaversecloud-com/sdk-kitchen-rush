@@ -88,12 +88,19 @@ const App = () => {
   // }
 
   return (
-<Routes>
-  <Route path="/" element={<Home />} />
-  <Route path="/game" element={<Game orders={getLevelOrders(1)} />} />
-  <Route path="/game-over" element={<GameOver />} />
-  <Route path="*" element={<Error />} /> 
-</Routes>
+  <Routes>
+    {/* 1. The Welcome/Home screen MUST be first and use 'index' or path="/" */}
+    <Route path="/" element={<Home />} /> 
+    
+    {/* 2. The Game screen */}
+    <Route path="/game" element={<Game orders={getLevelOrders(2)} />} />
+    
+    {/* 3. The Game Over screen */}
+    <Route path="/game-over" element={<GameOver />} />
+    
+    {/* 4. The Catch-all (Under Construction) */}
+    <Route path="*" element={<Error />} />
+  </Routes>
   );
 };
 
