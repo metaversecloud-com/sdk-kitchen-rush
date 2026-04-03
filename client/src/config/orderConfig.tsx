@@ -11,8 +11,15 @@ export function generateOrder(level: keyof typeof levelConfig) {
     size: rand(ing.size),
     temp: rand(ing.temp),
     milk: rand(ing.milk),
-    // only include if unlocked this level
     flavor: ing.flavor.length > 0 ? rand(ing.flavor) : null,
-    topping: ing.topping.length > 0 ? rand(ing.topping) : null,
+    toppings: ing.topping.length > 0 ? [rand(ing.topping)] : [],
   };
+}
+
+export function getLevelOrders(level: number) {
+  const levelKey = `level${level}` as keyof typeof levelConfig;
+
+  return Array.from({ length: 5 }, () =>
+    generateOrder(levelKey)
+  );
 }

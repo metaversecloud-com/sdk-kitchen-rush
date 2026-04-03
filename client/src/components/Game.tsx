@@ -1,14 +1,21 @@
-// calls both hooks
-import React, { useEffect } from 'react';
-import useOrderManager from '../hooks/useOrderManager';
-import useGameManager from '../hooks/useGameManager';
-import Order from './Order';
-import Ingredients from './Ingredients';
-import { LEVEL_ONE_ORDERS } from '../data/Coffee';
-import '../styles/Game.css';
-import '../styles/Ingredients.css';
+import React, { useEffect } from "react";
+import useOrderManager from "../hooks/useOrderManager";
+import useGameManager from "../hooks/useGameManager";
+import Order from "./Order";
+import Ingredients from "./Ingredients";
+import "../styles/Game.css";
+import "../styles/Ingredients.css";
 
-const Game = () => {
+interface GameProps {
+  orders: any[]; // you can type this later as Order[]
+}
+
+const Game = ({ orders }: GameProps) => {
+  const orderManager = useOrderManager(
+    () => console.log("game over"),
+    () => console.log("level complete")
+  );
+
   const {
     activeOrder,
     angryCustomerCount,
@@ -21,30 +28,30 @@ const Game = () => {
     advance,
     updateTray,
     timeRemaining,
-    // handleCloseShop,
-  } = useOrderManager(
-    () => console.log('game over'),
-    () => console.log('level complete')
-  );
+    timerId,
+    clearTray,
+    resetStreak,
+    resetAngryCustomer,
+  } = orderManager;
 
-  const {
-    handleCloseShop 
-  } = useGameManager();
+  const { handleCloseShop } = useGameManager(orderManager);
 
+  // set orders from Level.tsx (NOT hardcoded anymore)
   useEffect(() => {
-    setSourceQueue(LEVEL_ONE_ORDERS);
-  }, []);
+    setSourceQueue(orders);
+  }, [orders]);
 
+  // start first order
   useEffect(() => {
     if (sourceQueue.length > 0 && !activeOrder) {
-        advance();
+      advance();
     }
-}, [sourceQueue]);
+  }, [sourceQueue]);
 
+  // start timer when order changes
   useEffect(() => {
     if (activeOrder) handleViewOrder(activeOrder);
   }, [activeOrder]);
-
 
   return (
     <div className="game">
@@ -54,15 +61,18 @@ const Game = () => {
         <span>⏱ {timeRemaining}s</span>
         <span>😠 {angryCustomerCount}/5</span>
       </div>
-      {activeOrder && (
-        <Order order={activeOrder} isActive={true} />
-      )}
-      <button className="serve-button" onClick={handleServeOrder}>Serve</button>
-      <Ingredients
-        tray={tray}
-        onSelect={updateTray}
-      />
-    <button className="close-button " onClick={handleCloseShop}>Close Shop</button>
+
+      {activeOrder && <Order order={activeOrder} isActive={true} />}
+
+      <button className="serve-button" onClick={handleServeOrder}>
+        Serve
+      </button>
+
+      <Ingredients tray={tray} onSelect={updateTray} />
+
+      <button className="close-button" onClick={handleCloseShop}>
+        Close Shop
+      </button>
     </div>
   );
 };

@@ -1,51 +1,29 @@
-import useOrderManager from "../hooks/useOrderManager";
-import {useState} from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom";
 
+const useGameManager = (orderManager: any) => {
+  const navigate = useNavigate();
 
-const useGameManager = () => {
-    const [score, setScore] = useState<number>(0);
-    const navigate = useNavigate()
+  const {
+    clearTray,
+    resetStreak,
+    resetAngryCustomer,
+    timerId,
+    setSourceQueue,
+  } = orderManager;
 
-    // Call the order manager hook
-    const {
-        clearTray,
-        resetStreak,
-        resetAngryCustomer,
-        timerId,
-        setSourceQueue,
-        
-        // handleViewOrder,
-    } = useOrderManager(
-        () => console.log("game over"),
-        () => console.log("level complete")
-    );  
+  const handleCloseShop = () => {
+    clearTray();
+    resetStreak();
+    clearTimeout(timerId);
+    resetAngryCustomer();
+    setSourceQueue([]);
 
-    // close shop
-    const handleCloseShop = () => {
-        clearTray()
-        resetStreak()
-        clearTimeout(timerId)
-        resetScore()
-        resetAngryCustomer()
-        resetQueues()
-        navigate('/')
+    navigate("/");
+  };
 
-    }
+  return {
+    handleCloseShop,
+  };
+};
 
-    const resetScore = (): void => {
-        setScore(0);
-    }
-
-    const resetQueues = (): void => {
-        setSourceQueue([])
-    }
-    
-    return {
-        handleCloseShop,
-        resetScore,
-        resetQueues
-    }
-}
-
-export default useGameManager
+export default useGameManager;
