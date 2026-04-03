@@ -25,9 +25,9 @@ export const Home = () => {
     setIsLoading(false);
   }, []);
 
-  const handleStart = () => {
-    navigate("/level");
-  };
+ const handleStart = () => {
+  navigate("/game"); // Changed from "/level" to "/game"
+};
 
   return (
     <PageContainer isLoading={isLoading} headerText="Kitchen Rush">

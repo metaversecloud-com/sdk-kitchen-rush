@@ -1,25 +1,33 @@
 import { levelConfig } from "./levelConfig";
+import { Order } from "../types/Order";
 
-function rand<T>(arr: readonly T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
+export const generateOrder = (level: number): Order => {
+  // Use type assertion to ensure TypeScript knows 'level' is a valid key
+  const config = levelConfig[level as keyof typeof levelConfig];
 
-export function generateOrder(level: keyof typeof levelConfig) {
-  const ing = levelConfig[level].ingredients;
+  // This is where your error was: config was undefined!
+  if (!config) {
+    throw new Error(`Level ${level} not found in levelConfig`);
+  }
+
+  const { ingredients } = config;
 
   return {
-    size: rand(ing.size),
-    temp: rand(ing.temp),
-    milk: rand(ing.milk),
-    flavor: ing.flavor.length > 0 ? rand(ing.flavor) : null,
-    toppings: ing.topping.length > 0 ? [rand(ing.topping)] : [],
+    id: Math.random().toString(36).substr(2, 9),
+    size: ingredients.size[Math.floor(Math.random() * ingredients.size.length)],
+    temp: ingredients.temp[Math.floor(Math.random() * ingredients.temp.length)],
+    milk: ingredients.milk[Math.floor(Math.random() * ingredients.milk.length)],
+    // Only add flavor/toppings if they exist for this level
+    flavor: ingredients.flavor.length > 0 
+      ? ingredients.flavor[Math.floor(Math.random() * ingredients.flavor.length)] 
+      : undefined,
+    toppings: ingredients.toppings.length > 0 
+      ? [ingredients.toppings[Math.floor(Math.random() * ingredients.toppings.length)]] 
+      : [],
+    timeLimit: 12000, // 12 seconds default
   };
-}
+};
 
-export function getLevelOrders(level: number) {
-  const levelKey = `level${level}` as keyof typeof levelConfig;
-
-  return Array.from({ length: 5 }, () =>
-    generateOrder(levelKey)
-  );
-}
+export const getLevelOrders = (level: number, count: number = 10): Order[] => {
+  return Array.from({ length: count }, () => generateOrder(level));
+};

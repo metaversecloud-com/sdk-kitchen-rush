@@ -1,51 +1,48 @@
 import React from "react";
-import { Order } from "../types/Order";
+import "../styles/Ingredients.css";
 
 interface IngredientsProps {
-  tray: Partial<Order>;
-  onSelect: (category: keyof Order, value: string) => void;
+  tray: any;
+  onSelect: (category: string, value: string) => void;
+  availableIngredients: any;
 }
 
-const INGREDIENTS = {
-  size: ["Small", "Medium", "Large"],
-  temp: ["Hot", "Iced"],
-  milk: ["Whole", "Oat", "Almond", "None"],
-  flavor: ["Vanilla", "Caramel", "Mocha", "None"],
-  toppings: ["Whip", "Caramel Drizzle", "Chocolate Drizzle", "Cinnamon"],
-};
-
-const Ingredients = ({ tray, onSelect }: IngredientsProps) => {
-  const isSelected = (category: keyof Order, value: string): boolean => {
-    if (category === "toppings") {
-      return (tray.toppings ?? []).includes(value);
-    }
-    return tray[category] === value;
-  };
-
+const Ingredients = ({ tray, onSelect, availableIngredients }: IngredientsProps) => {
   return (
-    <div className="ingredients">
-      {Object.entries(INGREDIENTS).map(([category, options]) => (
-        <div key={category} className="ingredient-category">
-          <h3>{category}</h3>
-          <div className="ingredient-options">
-            {options.map((option) => (
-              <button
-                key={option}
-                className={
-                  isSelected(category as keyof Order, option)
-                    ? "selected"
-                    : ""
-                }
-                onClick={() =>
-                  onSelect(category as keyof Order, option)
-                }
-              >
-                {option}
-              </button>
-            ))}
+    <div className="ingredients-container">
+      {Object.entries(availableIngredients).map(([category, options]: [string, any]) => {
+        // Check if the player has already picked something for this category
+        const isLocked = tray[category] !== undefined && tray[category] !== "";
+
+        return (
+          <div key={category} className={`ingredient-row ${isLocked ? "locked" : ""}`}>
+            <label className="category-label">
+              {category} {isLocked && "🔒"} 
+            </label>
+            <div className="options-grid">
+              {options.map((option: string) => {
+                const isActive = tray[category] === option;
+
+                return (
+                  <button
+                    key={option}
+                    // Add a 'disabled' class if a choice was already made
+                    className={`option-btn ${isActive ? "selected" : ""} ${isLocked && !isActive ? "disabled" : ""}`}
+                    onClick={() => {
+                      // ONLY call onSelect if the category is currently empty
+                      if (!isLocked) {
+                        onSelect(category, option);
+                      }
+                    }}
+                  >
+                    {option}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };

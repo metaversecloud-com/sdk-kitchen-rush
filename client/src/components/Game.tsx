@@ -1,19 +1,36 @@
-import React, { useEffect } from "react";
-import useOrderManager from "../hooks/useOrderManager";
-import useGameManager from "../hooks/useGameManager";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+// Components
+import PageContainer from "./PageContainer"; 
 import Order from "./Order";
 import Ingredients from "./Ingredients";
+
+// Hooks & Config
+import useOrderManager from "../hooks/useOrderManager";
+import useGameManager from "../hooks/useGameManager";
+import { levelConfig } from "../config/levelConfig";
+
+// Styles
 import "../styles/Game.css";
-import "../styles/Ingredients.css";
 
 interface GameProps {
-  orders: any[]; // you can type this later as Order[]
+  orders: any[]; 
 }
 
 const Game = ({ orders }: GameProps) => {
+  const navigate = useNavigate();
+  const [currentLevel, setCurrentLevel] = useState<number>(1);
+
   const orderManager = useOrderManager(
-    () => console.log("game over"),
-    () => console.log("level complete")
+    () => navigate("/game-over"), 
+    () => {
+      if (currentLevel < 4) {
+        setCurrentLevel(prev => prev + 1);
+      } else {
+        navigate("/game-over");
+      }
+    }
   );
 
   const {
@@ -28,52 +45,69 @@ const Game = ({ orders }: GameProps) => {
     advance,
     updateTray,
     timeRemaining,
-    timerId,
-    clearTray,
-    resetStreak,
-    resetAngryCustomer,
   } = orderManager;
 
   const { handleCloseShop } = useGameManager(orderManager);
 
-  // set orders from Level.tsx (NOT hardcoded anymore)
   useEffect(() => {
-    setSourceQueue(orders);
+    if (orders && orders.length > 0) {
+      setSourceQueue(orders);
+    }
   }, [orders]);
 
-  // start first order
   useEffect(() => {
     if (sourceQueue.length > 0 && !activeOrder) {
       advance();
     }
-  }, [sourceQueue]);
+  }, [sourceQueue, activeOrder]);
 
-  // start timer when order changes
   useEffect(() => {
-    if (activeOrder) handleViewOrder(activeOrder);
+    if (activeOrder) {
+      handleViewOrder(activeOrder);
+    }
   }, [activeOrder]);
 
+  const activeIngredients = levelConfig[currentLevel as keyof typeof levelConfig].ingredients;
+
   return (
-    <div className="game">
-      <div className="hud">
-        <span>Score: 0</span>
-        <span>Streak: {streak}</span>
-        <span>⏱ {timeRemaining}s</span>
-        <span>😠 {angryCustomerCount}/5</span>
+    <PageContainer isLoading={false}>
+      <div className="game-screen-wrapper">
+        
+        {/* Absolute X button */}
+        <button className="close-shop-corner" onClick={handleCloseShop}>✕</button>
+
+        {/* Top HUD */}
+        <div className="hud">
+          <span>Level: {currentLevel}</span>
+          <span>Streak: {streak}</span>
+          <span>⏱ {timeRemaining}s</span>
+          <span>😠 {angryCustomerCount}/5</span>
+        </div>
+
+        {/* Order Card */}
+        <div className="order-area">
+          {activeOrder && <Order order={activeOrder} isActive={true} />}
+        </div>
+
+        {/* Ingredients List */}
+        <Ingredients 
+          tray={tray} 
+          onSelect={updateTray} 
+          availableIngredients={activeIngredients} 
+        />
+
+        {/* Fixed Bottom Action Bar */}
+        <div className="bottom-actions">
+          <button className="serve-button" onClick={handleServeOrder}>
+            SERVE ORDER
+          </button>
+          
+          <button className="close-button-outline" onClick={handleCloseShop}>
+            Close Shop
+          </button>
+        </div>
       </div>
-
-      {activeOrder && <Order order={activeOrder} isActive={true} />}
-
-      <button className="serve-button" onClick={handleServeOrder}>
-        Serve
-      </button>
-
-      <Ingredients tray={tray} onSelect={updateTray} />
-
-      <button className="close-button" onClick={handleCloseShop}>
-        Close Shop
-      </button>
-    </div>
+    </PageContainer>
   );
 };
 

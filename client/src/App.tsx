@@ -2,7 +2,10 @@ import { useContext, useEffect, useMemo, useState } from "react";
 import { Route, Routes, useNavigate, useSearchParams } from "react-router-dom";
 
 // pages
-import { Error, Home, OrderScreen, Level, GameOver } from "./pages";
+import { Error, Home, GameOver } from "./pages";
+
+//config
+import { getLevelOrders } from "./config/orderConfig";
 
 // context
 import { GlobalDispatchContext } from "./context/GlobalContext";
@@ -85,11 +88,12 @@ const App = () => {
   // }
 
   return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/game" element={<Game />} />
-      <Route path="*" element={<Error />} />
-    </Routes>
+<Routes>
+  <Route path="/" element={<Home />} />
+  <Route path="/game" element={<Game orders={getLevelOrders(1)} />} />
+  <Route path="/game-over" element={<GameOver />} />
+  <Route path="*" element={<Error />} /> 
+</Routes>
   );
 };
 
