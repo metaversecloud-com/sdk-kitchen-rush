@@ -17,7 +17,7 @@ import "../styles/Game.css";
 
 const Game = () => {
   const navigate = useNavigate();
-  const [currentLevel, setCurrentLevel] = useState<number>(1);
+  const [currentLevel, setCurrentLevel] = useState<number>(2);
 
   const handleLevelComplete = () => {
     if (currentLevel < 4) {
@@ -40,9 +40,10 @@ const Game = () => {
     setSourceQueue,
     advance,
     updateTray,
+    ordersServed,
     timeRemaining,
   } = useOrderManager(
-    () => navigate("/game-over"),
+    () => navigate("/game-over", { state: { score, ordersServed } }),
     handleLevelComplete
   );
 

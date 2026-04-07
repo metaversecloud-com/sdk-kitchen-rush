@@ -22,6 +22,9 @@ const useOrderManager = (
   const [streak, setStreak] = useState<number>(0);
   const timerRef = useRef<number | undefined>(undefined);
 
+  // to increment orders served
+  const [ordersServed, setOrdersServed] = useState<number>(0);
+
   // handles time logic
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const timerIntervalRef = useRef<number | undefined>(undefined);
@@ -88,6 +91,7 @@ const useOrderManager = (
 
   const handleSuccessfulOrder = (): void => {
     if (!activeOrder) return
+    setOrdersServed(prev => prev + 1);
     incrementStreak()
     addPoints(10, getSpeedBonus(timeRemaining, activeOrder.timeLimit), getStreakMultiplier(streak))
     clearTray()
@@ -176,6 +180,8 @@ const useOrderManager = (
     handleViewOrder,
     handleCloseShop,
     updateTray,
+    setOrdersServed,
+    ordersServed,
     resetStreak,
     resetAngryCustomer,
     clearTray,
