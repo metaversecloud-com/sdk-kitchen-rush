@@ -97,3 +97,11 @@
   font-size: 1rem;
   cursor: pointer;
 }
+
+/* FEEDBACK */
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+  20% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}

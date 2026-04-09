@@ -1,12 +1,17 @@
 import { Order } from "../types/Order"
+import { Feedback,  FeedbackType } from "../types/Feedback"
 import { compareIngredients } from "../utils/compareIngredients"
 import { getSpeedBonus } from "../utils/speedMultiplier"
 import { getStreakMultiplier } from "../utils/streakMultiplier"
 import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
-
-const MAX_ANGRY_CUSTOMERS = 5;
-
+  
+import { 
+  MAX_ANGRY_CUSTOMERS,
+  PENALTY,
+  BASE_POINTS
+} from '../data/gameConstants'
+  
 const useOrderManager = (
   onGameOver: () => void,
   onLevelComplete: () => void
@@ -28,7 +33,14 @@ const useOrderManager = (
   // handles time logic
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const timerIntervalRef = useRef<number | undefined>(undefined);
-  
+
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
+
+  const triggerFeedback = (message: string, type: FeedbackType): void => {
+    setFeedback({ message, type })
+    setTimeout(() => setFeedback(null), 2000)
+  }
+
   // TIMER COUNTDOWN
   useEffect(() => {
     if (timeRemaining <= 0) return
@@ -59,7 +71,7 @@ const useOrderManager = (
   }
 
   const applyPenalty = (): void => {
-    setScore(prev => Math.max(0, prev - 5))
+    setScore(prev => Math.max(0, prev - PENALTY))
   }
 
   const resetScore = (): void => {
@@ -87,14 +99,23 @@ const useOrderManager = (
     applyPenalty()
     resetStreak()
     clearTray()
+    triggerFeedback("Oops, wrong order!", "error")
   }
 
   const handleSuccessfulOrder = (): void => {
     if (!activeOrder) return
     setOrdersServed(prev => prev + 1);
     incrementStreak()
-    addPoints(10, getSpeedBonus(timeRemaining, activeOrder.timeLimit), getStreakMultiplier(streak))
+    addPoints(BASE_POINTS, getSpeedBonus(timeRemaining, activeOrder.timeLimit), getStreakMultiplier(streak))
     clearTray()
+    
+    // player feedback
+    const newStreak = streak + 1
+    if (newStreak === 5 || newStreak === 10 || newStreak === 15) {
+      triggerFeedback(`🔥 ${newStreak} Streak!`, "milestone")
+    } else {
+      triggerFeedback("Order successfully completed!", "success")
+    }
   }
 
   const handleTimeoutRef = useRef<() => void>(() => {});
@@ -127,6 +148,7 @@ const useOrderManager = (
     handleOrderFailure()
     const nextOrder = advance()
     if (nextOrder === null) onLevelComplete()
+    triggerFeedback("Order expired!", "timeout")
   }
 
   // CLOSE SHOP
@@ -177,6 +199,7 @@ const useOrderManager = (
     handleServeOrder,
     handleOrderFailure,
     handleSuccessfulOrder,
+    feedback, 
     handleViewOrder,
     handleCloseShop,
     updateTray,

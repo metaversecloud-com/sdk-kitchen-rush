@@ -1,8 +1,20 @@
-// function to calculate speed multiplier
+import { 
+  STREAK_MULTIPLIER_LOW,
+  STREAK_MULTIPLIER_MID,
+  STREAK_MULTIPLIER_HIGH,
+  STREAK_MULTIPLIER_HIGHER,
+  STREAK_MULTIPLIER_HIGHEST,
+  STREAK_MULTIPLIER_MID_THRESHOLD,
+  STREAK_MULTIPLIER_HIGH_THRESHOLD,
+  STREAK_MULTIPLIER_HIGHER_THRESHOLD,
+  STREAK_MULTIPLIER_HIGHEST_THRESHOLD
+} from '../data/gameConstants'
+
+// function to calculate streak
 export const getStreakMultiplier = (streak: number): number => {
-    if (streak <= 2) return 1
-    else if (streak <= 5) return 2
-    else if (streak <= 8) return 3
-    else if (streak <= 11) return 4
-    else return 5       
+  if (streak < STREAK_MULTIPLIER_MID_THRESHOLD) return STREAK_MULTIPLIER_LOW
+  else if (streak < STREAK_MULTIPLIER_HIGH_THRESHOLD) return STREAK_MULTIPLIER_MID
+  else if (streak < STREAK_MULTIPLIER_HIGHER_THRESHOLD) return STREAK_MULTIPLIER_HIGH
+  else if (streak < STREAK_MULTIPLIER_HIGHEST_THRESHOLD) return STREAK_MULTIPLIER_HIGHER
+  else return STREAK_MULTIPLIER_HIGHEST
 }

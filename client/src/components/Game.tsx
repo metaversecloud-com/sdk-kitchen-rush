@@ -6,6 +6,8 @@ import PageContainer from "./PageContainer";
 import Order from "./Order";
 import Ingredients from "./Ingredients";
 import Tray from "./Tray";
+import FeedbackToast from "./FeedbackToast"
+
 
 // Hooks & Config
 import useOrderManager from "../hooks/useOrderManager";
@@ -14,6 +16,10 @@ import { levelOrders } from "../config/levelOrders";
 
 // Styles
 import "../styles/Game.css";
+
+// types
+import { Feedback } from '../types/Feedback'
+
 
 const Game = () => {
   const navigate = useNavigate();
@@ -33,6 +39,7 @@ const Game = () => {
     score,
     tray,
     streak,
+    feedback,
     handleServeOrder,
     handleViewOrder,
     handleCloseShop,
@@ -88,6 +95,9 @@ const Game = () => {
           {activeOrder && <Order order={activeOrder} isActive={true} />}
           <Tray tray={tray} />
         </div>
+
+        {/* feedback  */}
+        <FeedbackToast feedback={feedback} />
 
         {/* Ingredients */}
         <Ingredients
