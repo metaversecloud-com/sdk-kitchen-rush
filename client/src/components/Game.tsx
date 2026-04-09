@@ -16,8 +16,13 @@ import "../styles/Game.css";
 
 const Game = () => {
   const navigate = useNavigate();
-  const { levelId } = useParams(); // Get level from URL
-  const [currentLevel, setCurrentLevel] = useState<number>(Number(levelId) || 1);
+  const { levelId } = useParams();
+  
+  // 1. Get current level from URL
+  const currentLevel = Number(levelId) || 1;
+
+  // 2. Get the specific config for this level
+  const config = levelConfig[currentLevel as keyof typeof levelConfig];
 
   const orderManager = useOrderManager(
     () => navigate("/game-over"), 
@@ -28,10 +33,10 @@ const Game = () => {
       } else {
         navigate("/game-over");
       }
-    }
+    },
+    currentLevel
   );
 
-  // DESTRUCTURE everything you need from orderManager
   const {
     activeOrder,
     angryCustomerCount,
@@ -48,15 +53,14 @@ const Game = () => {
     timeRemaining,
   } = orderManager;
 
-  // Sync Level from URL to state
-  useEffect(() => {
-    if (levelId) setCurrentLevel(Number(levelId));
-  }, [levelId]);
-
   // Load orders when level changes
   useEffect(() => {
     const orders = levelOrders[currentLevel as keyof typeof levelOrders];
-    if (orders) setSourceQueue(orders);
+    if (orders) {
+      // Shuffle the orders before setting them
+      const shuffled = [...orders].sort(() => Math.random() - 0.5);
+      setSourceQueue(shuffled);
+    }
   }, [currentLevel, setSourceQueue]);
 
   useEffect(() => {
@@ -66,10 +70,14 @@ const Game = () => {
   }, [sourceQueue, activeOrder, advance]);
 
   useEffect(() => {
-    if (activeOrder) handleViewOrder(activeOrder);
-  }, [activeOrder, handleViewOrder]);
+    // Every time a NEW order appears, start the timer
+    if (activeOrder) {
+      handleViewOrder(activeOrder);
+    }
+  }, [activeOrder]);
 
-  const activeIngredients = levelConfig[currentLevel as keyof typeof levelConfig].ingredients;
+  // Use the ingredients from our config object
+  const activeIngredients = config.ingredients;
 
   return (
     <PageContainer isLoading={false}>
@@ -77,17 +85,24 @@ const Game = () => {
         <button className="close-shop-corner" onClick={handleCloseShop}>✕</button>
 
         <div className="hud">
-          <span>Level: {currentLevel}</span>
+          <span>{config.title}</span> 
           <span>Score: {score}</span>
           <span>Streak: {streak}</span>
           <span>⏱ {timeRemaining}s</span>
           <span>😠 {angryCustomerCount}/5</span>
         </div>
 
-        <div className="order-tray-row">
-          {activeOrder && <Order order={activeOrder} isActive={true} />}
-          <Tray tray={tray} />
-        </div>
+      <div className="order-tray-row">
+        {/* The Tray is now just a normal child, so justify-content: center hits it */}
+        <Tray tray={tray} /> 
+        
+        {/* The Order is absolute, so it will snap to the top-right of the row */}
+        {activeOrder && (
+          <div className="order-container">
+            <Order order={activeOrder} isActive={true} timeRemaining={timeRemaining} />
+          </div>
+        )}
+      </div>
 
         <Ingredients
           tray={tray}
