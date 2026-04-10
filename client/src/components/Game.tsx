@@ -96,8 +96,9 @@ const Game = () => {
           <Tray tray={tray} />
         </div>
 
-        {/* feedback  */}
-        <FeedbackToast feedback={feedback} />
+        <button className="serve-button" onClick={handleServeOrder}>
+            SERVE ORDER
+        </button>
 
         {/* Ingredients */}
         <Ingredients
@@ -106,11 +107,11 @@ const Game = () => {
           availableIngredients={activeIngredients}
         />
 
+          {/* feedback  */}
+        <FeedbackToast feedback={feedback} />
+
         {/* Bottom actions */}
         <div className="bottom-actions">
-          <button className="serve-button" onClick={handleServeOrder}>
-            SERVE ORDER
-          </button>
           <button className="close-button-outline" onClick={handleCloseShop}>
             Close Shop
           </button>

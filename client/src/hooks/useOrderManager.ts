@@ -160,7 +160,7 @@ const useOrderManager = (
     resetAngryCustomer()
     setSourceQueue([])
     setActiveOrder(null)
-    navigate('/')
+    navigate('/game-over', { state: { score, ordersServed } })
   }
 
   // TRAY

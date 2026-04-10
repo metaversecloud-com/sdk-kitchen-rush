@@ -3,11 +3,16 @@
 /* ---------------------- */
 .order-card {
   width: 100%;
-  max-width: 350px;
-  border: 2px solid #4a90e2; /* Matches your 'active' look */
+  background: #f1f1f1;   
+  max-width: 180px;
+  border: 2px solid #4a90e2;
   border-radius: 15px;
-  padding: 20px;
+  padding: 4px 6px;
   background: white;
+  -webkit-border-radius: 15px;
+  -moz-border-radius: 15px;
+  -ms-border-radius: 15px;
+  -o-border-radius: 15px;
 }
 
 /* Active highlight */
@@ -20,10 +25,11 @@
 /* HEADER                 */
 /* ---------------------- */
 .order-header h3 {
-  font-size: 0.9rem;         /* smaller text */
+  font-size: 0.6rem;         /* smaller text */
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 2px;
 }
 
 
@@ -58,47 +64,64 @@
 /* VISUALIZATION BOX      */
 /* ---------------------- */
 .order-visual {
-  height: 120px; /* Taller box for the 'Image' feel */
+  height: 55px; /* Taller box for the 'Image' feel */
   background: #f8f9fa;
   border: 2px dashed #cbd5e0;
-  margin-bottom: 15px;
+  margin-bottom: 6px;
   display: flex;
   flex-wrap: wrap;
   align-content: center;
   justify-content: center;
-  gap: 5px;
+  gap: 3px;
 }
 
 .visual-item {
-  padding: 3px 6px;
-  background: #e8e8e8;
+  padding: 1px 3px;
+  background: transparent;
   border-radius: 5px;
-  font-size: 0.75rem;        /* smaller text */
+  font-size: 0.5rem;        /* smaller text */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ---------------------- */
 /* DETAILS                */
 /* ---------------------- */
 .order-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* 2 columns */
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 2px;
 }
 
 .detail-group label {
-  font-size: 0.8rem;
+  font-size: 0.55rem;
 }
 
 .options-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 3px;
 }
 
 .option {
-  padding: 3px 6px;
-  background: #f1f1f1;
+  padding: 1px 3px;
+  background: transparent;
   border-radius: 5px;
   border: 1px solid #dcdcdc;
-  font-size: 0.75rem;
+  font-size: 0.6rem;
+}
+
+.ingredient-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  display: block;
 }
