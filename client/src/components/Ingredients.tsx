@@ -1,49 +1,40 @@
-import React from "react";
-import "../styles/Ingredients.css";
-import { Order } from "../types/Order";
+import React from 'react';
+import { levelConfig } from "../config/levelConfig";
 
-interface IngredientsProps {
-  // Using Partial<Order> matches how you handle the tray state in the hook
-  tray: Partial<Order>; 
-  // Changed category from string to keyof Order to fix the type mismatch
-  onSelect: (category: keyof Order, value: string) => void;
-  availableIngredients: any;
-}
+const Ingredients = ({ onSelect, currentTray, level }: { onSelect: any, currentTray: any, level: number }) => {
+  // Use the number level to get the config
+  const config = levelConfig[level as keyof typeof levelConfig];
 
-const Ingredients = ({ tray, onSelect, availableIngredients }: IngredientsProps) => {
+  console.log("Ingredients Component - Level received:", level);
+  console.log("Ingredients Component - Config found:", config);
+
+  if (!config || !config.ingredients) {
+    return <div className="loading">Loading ingredients for Level {level}...</div>;
+  }
+
   return (
-    <div className="ingredients-container">
-      {Object.entries(availableIngredients).map(([category, options]) => {
-        // We cast 'category' as keyof Order so TS knows it can index the 'tray'
-        const catKey = category as keyof Order;
-        
-        // This check prevents changing an ingredient once it's picked (unless it's reset)
-        const isLocked = tray[catKey] !== undefined && tray[catKey] !== "";
-
-        // If the config has an empty array (like 'flavor' in Level 1), don't render the row
-        if (!Array.isArray(options) || options.length === 0) return null;
+    <div className="ingredients-grid">
+      {Object.entries(config.ingredients).map(([category, options]) => {
+        // Skip flavor/toppings if the array is empty (like in Level 1)
+        if (!options || options.length === 0) return null;
 
         return (
-          <div key={category} className="ingredient-row">
-            <label className="category-label">{category}</label>
-            <div className="options-grid">
-              {(options as string[]).map((option: string) => {
-                const isSelected = tray[catKey] === option;
-                
+          <div key={category} className="ingredient-category">
+            <h3 className="category-title">{category}</h3>
+            <div className="options-row">
+              {options.map((option: string) => {
+                // Toppings are an array, everything else is a string
+                const isActive = Array.isArray(currentTray[category])
+                  ? currentTray[category].includes(option)
+                  : currentTray[category] === option;
+
                 return (
                   <button
                     key={option}
-                    type="button"
-                    className={`option-btn ${isSelected ? "selected" : ""} ${
-                      isLocked && !isSelected ? "disabled" : ""
-                    }`}
-                    onClick={() => {
-                      if (!isLocked) {
-                        onSelect(catKey, option);
-                      }
-                    }}
+                    className={`ingredient-btn ${isActive ? "active" : ""}`}
+                    onClick={() => onSelect(category, option)}
                   >
-                    {option.replace("_", " ")}
+                    {option.replace('_', ' ')}
                   </button>
                 );
               })}

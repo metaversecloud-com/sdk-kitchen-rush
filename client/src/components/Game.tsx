@@ -10,7 +10,6 @@ import Tray from "./Tray";
 // Hooks & Config
 import useOrderManager from "../hooks/useOrderManager";
 import { levelConfig } from "../config/levelConfig";
-import { levelOrders } from "../config/levelOrders";
 
 import "../styles/Game.css";
 
@@ -23,6 +22,7 @@ const Game = () => {
 
   // 2. Get the specific config for this level
   const config = levelConfig[currentLevel as keyof typeof levelConfig];
+  console.log("Current Level:", currentLevel, "Config Found:", config);
 
   const orderManager = useOrderManager(
     () => navigate("/game-over"), 
@@ -50,18 +50,20 @@ const Game = () => {
     setSourceQueue,
     advance,
     updateTray,
+    clearTray,
     timeRemaining,
   } = orderManager;
 
   // Load orders when level changes
   useEffect(() => {
-    const orders = levelOrders[currentLevel as keyof typeof levelOrders];
-    if (orders) {
-      // Shuffle the orders before setting them
-      const shuffled = [...orders].sort(() => Math.random() - 0.5);
-      setSourceQueue(shuffled);
-    }
-  }, [currentLevel, setSourceQueue]);
+    // Clear any leftover ingredients from the previous level/order
+    clearTray();
+    
+    // Call advance to generate the FIRST random order of the level
+    advance();
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentLevel]); // This triggers EVERY time the level changes
 
   useEffect(() => {
     if (sourceQueue.length > 0 && !activeOrder) {
@@ -82,44 +84,46 @@ const Game = () => {
   return (
     <PageContainer isLoading={false}>
       <div className="game-screen-wrapper">
-        <button className="close-shop-corner" onClick={handleCloseShop}>✕</button>
-
-        <div className="hud">
-          <span>{config.title}</span> 
-          <span>Score: {score}</span>
-          <span>Streak: {streak}</span>
-          <span>⏱ {timeRemaining}s</span>
-          <span>😠 {angryCustomerCount}/5</span>
-        </div>
-
-      <div className="order-tray-row">
-        {/* The Tray is now just a normal child, so justify-content: center hits it */}
-        <Tray tray={tray} /> 
-        
-        {/* The Order is absolute, so it will snap to the top-right of the row */}
-        {activeOrder && (
-          <div className="order-container">
-            <Order order={activeOrder} isActive={true} timeRemaining={timeRemaining} />
+          {/* 1. THE HUD */}
+          <div className="hud">
+            {/* Change currentLevel.title to config.title */}
+            <div className="hud-item"><span className="hud-label">Level:</span> {config.title}</div>
+            <div className="hud-item"><span className="hud-label">Score:</span> {score}</div>
+            <div className="hud-item"><span className="hud-label">Streak:</span> {streak}</div>
+            <div className="hud-item">⏱️ {timeRemaining}s</div>
+            <div className="hud-item">😡 {angryCustomerCount}/5</div>
           </div>
-        )}
-      </div>
 
-        <Ingredients
-          tray={tray}
-          onSelect={updateTray}
-          availableIngredients={activeIngredients}
-        />
+          {/* 2. THE PLAY AREA: Tray is center, Order is top-right */}
+          <div className="order-tray-row">
+            <Tray tray={tray} />
+            
+            {activeOrder && (
+              <div className="order-container">
+                <Order 
+                  order={activeOrder} 
+                  isActive={true} 
+                  timeRemaining={timeRemaining}
+                  currentLevel={currentLevel} // CRITICAL: Fixes flavor display
+                />
+              </div>
+            )}
+          </div>
 
-        <div className="bottom-actions">
-          <button className="serve-button" onClick={handleServeOrder}>
-            SERVE ORDER
-          </button>
-          <button className="close-button-outline" onClick={handleCloseShop}>
-            Close Shop
-          </button>
+          {/* 3. INGREDIENTS */}
+          <Ingredients onSelect={updateTray} currentTray={tray} level={currentLevel} />
+
+          {/* 4. ACTION BUTTONS */}
+          <div className="bottom-actions">
+            <button className="serve-button" onClick={handleServeOrder}>
+              SERVE ORDER
+            </button>
+            <button className="close-button-outline" onClick={handleCloseShop}>
+              Close Shop
+            </button>
+          </div>
         </div>
-      </div>
-    </PageContainer>
+      </PageContainer>
   );
 };
 
