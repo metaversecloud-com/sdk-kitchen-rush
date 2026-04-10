@@ -3,14 +3,18 @@ import { compareIngredients } from "../utils/compareIngredients"
 import { getSpeedBonus } from "../utils/speedMultiplier"
 import { getStreakMultiplier } from "../utils/streakMultiplier"
 import { useState, useEffect, useRef } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
+import { levelConfig } from "../config/levelConfig";
 
 const MAX_ANGRY_CUSTOMERS = 5;
 
 const useOrderManager = (
   onGameOver: () => void,
-  onLevelComplete: () => void
+  // Expects both the score AND the current angry count
+  onLevelComplete: (finalScore: number, finalAngryCount: number) => void, 
+  currentLevel: number 
 ) => {
+  const location = useLocation();
   const navigate = useNavigate()
 
   // STATE
@@ -21,6 +25,13 @@ const useOrderManager = (
   const [tray, setTray] = useState<Partial<Order>>({})
   const [streak, setStreak] = useState<number>(0);
   const timerRef = useRef<number | undefined>(undefined);
+  const [totalServed, setTotalServed] = useState(0);
+
+  const scoreRef = useRef(0);
+  const servedRef = useRef(0);
+
+  const { state } = useLocation();
+  const inheritedScore = state?.inheritedScore || 0;
 
   // handles time logic
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
@@ -35,6 +46,9 @@ const useOrderManager = (
     return () => clearInterval(interval)
   }, [timeRemaining])
 
+  useEffect(() => { scoreRef.current = score; }, [score]);
+  useEffect(() => { servedRef.current = totalServed; }, [totalServed]);
+
   // QUEUE
   const dequeue = (): Order | null => {
     if (sourceQueue.length === 0) return null
@@ -43,12 +57,36 @@ const useOrderManager = (
     return next
   }
 
+  const startOrderTimer = (durationMs: number) => {
+    clearTimeout(timerRef.current);
+    clearInterval(timerIntervalRef.current);
+    
+    setTimeRemaining(durationMs / 1000);
+
+    timerIntervalRef.current = window.setInterval(() => {
+        setTimeRemaining(prev => Math.max(0, prev - 1));
+    }, 1000);
+
+    timerRef.current = window.setTimeout(() => {
+        handleTimeoutRef.current();
+    }, durationMs);
+};
+
   const advance = (): Order | null => {
-    const nextOrder = dequeue()
-    if (nextOrder === null) return null
-    setActiveOrder(nextOrder)
-    return nextOrder
-  }
+    // We pass currentLevel to make sure it uses the right config
+    const nextOrder = generateRandomOrder(currentLevel);
+    
+    // LOGGING: Check your browser console (F12) to see if this changes
+    console.log("New Order Generated:", nextOrder);
+
+    setActiveOrder(nextOrder);
+    
+    // Reset the timer for the new order
+    const config = levelConfig[currentLevel as keyof typeof levelConfig];
+    startOrderTimer(config.timer); 
+    
+    return nextOrder;
+  };
 
   // SCORING
   const addPoints = (basePoints: number, speedBonus: number, streakMultiplier: number): void => {
@@ -64,27 +102,45 @@ const useOrderManager = (
   }
 
   // ORDER HANDLERS
-  const handleServeOrder = (): void => {
-    clearTimeout(timerRef.current)
-    if (!activeOrder) return
-    const isCorrect = compareIngredients(tray, activeOrder)
-    if (isCorrect) {
-      handleSuccessfulOrder()
+  const handleServeOrder = () => {
+    if (compareIngredients(tray, activeOrder)) {
+      // 1. SUCCESS LOGIC
+      handleSuccessfulOrder();
+      
+      const newTotal = totalServed + 1;
+      setTotalServed(newTotal);
+      
+      const config = levelConfig[currentLevel as keyof typeof levelConfig];
+      
+      if (newTotal >= config.threshold) {
+        // pass score AND angryCustCount
+        if (newTotal >= config.threshold) {
+          onLevelComplete(score, angryCustomerCount); 
+        }
+      } else {
+        advance(); 
+      }
     } else {
-      handleOrderFailure()
+      // 2. FAILURE LOGIC
+      // This now calls handleOrderFailure, which we updated to call advance()
+      handleOrderFailure();
     }
-    const nextOrder = advance()
-    if (nextOrder === null) onLevelComplete()
-  }
+  };
 
   const handleOrderFailure = (): void => {
-    const newCount = angryCustomerCount + 1
-    setAngryCustomerCount(newCount)
-    if (newCount >= MAX_ANGRY_CUSTOMERS) onGameOver()
-    applyPenalty()
-    resetStreak()
-    clearTray()
-  }
+    const newCount = angryCustomerCount + 1;
+    setAngryCustomerCount(newCount);
+    
+    applyPenalty();
+    resetStreak();
+    clearTray();
+
+    if (newCount >= MAX_ANGRY_CUSTOMERS) {
+      handleCloseShop(); // Game over if too many mistakes
+    } else {
+      advance(); // <--- THIS is the key. Move to next order immediately.
+    }
+  };
 
   const handleSuccessfulOrder = (): void => {
     if (!activeOrder) return
@@ -101,23 +157,23 @@ const useOrderManager = (
   });
 
   const handleViewOrder = (order: Order): void => {
-    clearTimeout(timerRef.current)
-    setTimeRemaining(order.timeLimit / 1000)
-    clearInterval(timerIntervalRef.current)
-    setTimeRemaining(order.timeLimit / 1000)
+    // Now that levelConfig is imported, this line won't crash!
+    const config = levelConfig[currentLevel as keyof typeof levelConfig];
+    const levelTimer = config.timer; 
+    
+    clearTimeout(timerRef.current);
+    clearInterval(timerIntervalRef.current);
+    
+    setTimeRemaining(levelTimer / 1000);
+
     timerIntervalRef.current = setInterval(() => {
-      setTimeRemaining(prev => {
-        if (prev <= 1) {
-          clearInterval(timerIntervalRef.current)
-          return 0
-        }
-        return prev - 1
-      })
-    }, 1000) as unknown as number
+      setTimeRemaining(prev => Math.max(0, prev - 1));
+    }, 1000) as unknown as number;
+
     timerRef.current = setTimeout(() => {
-      handleTimeoutRef.current()  // always calls latest version
-    }, order.timeLimit) as unknown as number
-  }
+      handleTimeoutRef.current();
+    }, levelTimer) as unknown as number;
+  };
 
   const handleTimeout = (): void => {
     handleOrderFailure()
@@ -127,32 +183,71 @@ const useOrderManager = (
 
   // CLOSE SHOP
   const handleCloseShop = (): void => {
-    clearTimeout(timerRef.current)
-    clearTray()
-    resetStreak()
-    resetScore()
-    resetAngryCustomer()
-    setSourceQueue([])
-    setActiveOrder(null)
-    navigate('/')
-  }
+      clearTimeout(timerRef.current);
+      clearInterval(timerIntervalRef.current);
+      
+      // Use .current to get the absolute latest values!
+      navigate('/game-over', { 
+          state: { 
+              score: scoreRef.current,           
+              ordersServed: servedRef.current 
+          } 
+      });
+  };
 
   // TRAY
   const updateTray = (category: keyof Order, value: string): void => {
-    if (category === "toppings") {
-      setTray(prev => {
-        const current = prev.toppings ?? []
-        return {
-          ...prev,
-          toppings: current.includes(value)
-            ? current.filter(t => t !== value)
-            : [...current, value]
+    setTray(prev => {
+      // For toppings, we allow adding multiple, but NOT removing
+      if (category === "toppings") {
+        const currentToppings = prev.toppings || [];
+        
+        // If topping already exists, do nothing (prevents deselection)
+        if (currentToppings.includes(value)) return prev;
+        
+        // If we have room (max 3), add the new topping
+        if (currentToppings.length < 3) {
+          return { ...prev, toppings: [...currentToppings, value] };
         }
-      })
-      return
+        return prev;
+      }
+
+      // For everything else (size, milk, etc.), once it's set, we don't allow "none"
+      // Unless the tray is empty or they are changing to a DIFFERENT choice.
+      // If you want to lock it so they can't even CHANGE their mind:
+      if (prev[category]) return prev; 
+
+      return { ...prev, [category]: value };
+    });
+  };
+
+  // This builds a random order using the rules from your config
+const generateRandomOrder = (level: number): Order => {
+    const config = levelConfig[level as keyof typeof levelConfig];
+    
+    const order: any = {
+        // Use a better random ID to force React to re-render the Order card
+        id: Math.floor(1000 + Math.random() * 9000).toString(),
+        size: config.ingredients.size[Math.floor(Math.random() * config.ingredients.size.length)],
+        temp: config.ingredients.temp[Math.floor(Math.random() * config.ingredients.temp.length)],
+        milk: config.ingredients.milk[Math.floor(Math.random() * config.ingredients.milk.length)],
+        timeLimit: config.timer,
+    };
+
+    // Ensure flavor exists in config before picking
+    if (config.ingredients.flavor && config.ingredients.flavor.length > 0) {
+        const flavor = config.ingredients.flavor[Math.floor(Math.random() * config.ingredients.flavor.length)];
+        order.flavor = flavor; // Keep "none" if it picks "none"
     }
-    setTray(prev => ({ ...prev, [category]: value }))
-  }
+
+    if (config.ingredients.toppings && config.ingredients.toppings.length > 0) {
+        const numToppings = Math.floor(Math.random() * 2) + 1; // 1 or 2 toppings
+        const shuffled = [...config.ingredients.toppings].sort(() => 0.5 - Math.random());
+        order.toppings = shuffled.slice(0, numToppings);
+    }
+
+    return order as Order;
+};
 
   // HELPERS
   const resetAngryCustomer = (): void => setAngryCustomerCount(0)
@@ -176,6 +271,7 @@ const useOrderManager = (
     handleViewOrder,
     handleCloseShop,
     updateTray,
+    generateRandomOrder,
     resetStreak,
     resetAngryCustomer,
     clearTray,

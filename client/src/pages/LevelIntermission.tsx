@@ -1,17 +1,31 @@
 import React from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom"; // Added useLocation
 import { levelConfig } from "../config/levelConfig";
-import PageContainer from "./PageContainer";
+import { PageContainer } from "../components";
 import "../styles/LevelIntermission.css";
 
 const LevelIntermission = () => {
   const navigate = useNavigate();
+  const location = useLocation(); // Initialize location to grab the state
   const { levelId } = useParams();
   
-  // Find the specific config for this level
+  // 1. CATCH the data from the previous level
+  const inheritedScore = location.state?.inheritedScore || 0;
+  const inheritedAngry = location.state?.inheritedAngry || 0;
+
   const config = levelConfig[Number(levelId) as keyof typeof levelConfig];
 
   if (!config) return <div>Level configuration not found.</div>;
+
+  const handleStartBrewing = () => {
+    // 2. PASS the data forward to the Game component
+    navigate(`/game/${levelId}`, {
+      state: {
+        inheritedScore: inheritedScore,
+        inheritedAngry: inheritedAngry
+      }
+    });
+  };
 
   return (
     <PageContainer isLoading={false}>
@@ -22,6 +36,11 @@ const LevelIntermission = () => {
           
           <div className="description-box">
             <p>{config.description}</p>
+            {/* Optional: Show the player their current standing */}
+            <p className="stats-preview">
+              Current Score: <strong>{inheritedScore}</strong> | 
+              Angry Faces: <strong>{inheritedAngry}/5</strong>
+            </p>
           </div>
 
           <div className="instructions-section">
@@ -35,7 +54,7 @@ const LevelIntermission = () => {
 
           <button 
             className="start-button" 
-            onClick={() => navigate(`/game/${levelId}`)}
+            onClick={handleStartBrewing} // Use the new handler
           >
             START BREWING
           </button>

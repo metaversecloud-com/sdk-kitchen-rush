@@ -26,7 +26,7 @@ export const Home = () => {
   }, []);
 
  const handleStart = () => {
-  navigate("/game"); // Changed from "/level" to "/game"
+  navigate("/level-start/1");
 };
 
   return (

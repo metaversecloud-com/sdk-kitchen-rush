@@ -25,17 +25,25 @@ const Game = () => {
   console.log("Current Level:", currentLevel, "Config Found:", config);
 
   const orderManager = useOrderManager(
-    () => navigate("/game-over"), 
-    () => {
-      const nextLevel = currentLevel + 1;
-      if (nextLevel <= 4) {
-        navigate(`/level-start/${nextLevel}`);
-      } else {
-        navigate("/game-over");
-      }
-    },
-    currentLevel
-  );
+      () => navigate("/game-over"), 
+      (scoreAtEndOfLevel: number, angryAtEndOfLevel: number) => { 
+        const nextLevel = currentLevel + 1;
+        if (nextLevel <= 4) {
+          // Send BOTH pieces of data to the next level
+          navigate(`/level-start/${nextLevel}`, { 
+            state: { 
+              inheritedScore: scoreAtEndOfLevel,
+              inheritedAngry: angryAtEndOfLevel 
+            } 
+          });
+        } else {
+          navigate("/game-over", { 
+            state: { score: scoreAtEndOfLevel } 
+          });
+        }
+      },
+      currentLevel
+    );
 
   const {
     activeOrder,
@@ -55,28 +63,15 @@ const Game = () => {
   } = orderManager;
 
   // Load orders when level changes
-  useEffect(() => {
-    // Clear any leftover ingredients from the previous level/order
+useEffect(() => {
+    // 1. Reset cup for new level
     clearTray();
     
-    // Call advance to generate the FIRST random order of the level
+    // 2. Get first order
     advance();
-    
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentLevel]); // This triggers EVERY time the level changes
 
-  useEffect(() => {
-    if (sourceQueue.length > 0 && !activeOrder) {
-      advance();
-    }
-  }, [sourceQueue, activeOrder, advance]);
-
-  useEffect(() => {
-    // Every time a NEW order appears, start the timer
-    if (activeOrder) {
-      handleViewOrder(activeOrder);
-    }
-  }, [activeOrder]);
+    // 3. IMPORTANT: Timer logic is handled automatically when 
+  }, [currentLevel]);
 
   // Use the ingredients from our config object
   const activeIngredients = config.ingredients;
