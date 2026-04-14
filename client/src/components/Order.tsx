@@ -1,6 +1,5 @@
 import React from 'react';
 import '../styles/Order.css';
-import { OrderProps } from '../types/OrderProps';
 
 // ICONS
 import smallImg from "../assets/ingredients/small.png";
@@ -37,58 +36,69 @@ const ingredientIcons: Record<string, string> = {
   whipped: whippedImg,
 };
 
-// Added timeRemaining and currentLevel to the props destructuring
 const Order = ({ order, isActive, timeRemaining, currentLevel }: any) => { 
-  // Timer Logic
   const totalTime = order.timeLimit / 1000; 
   const timePercent = timeRemaining ? (timeRemaining / totalTime) * 100 : 0;
 
+  const RecipeRow = ({ value, minLevel = 1 }: { value: string | undefined, minLevel?: number }) => {
+    // Hidden if the level isn't high enough yet
+    if (currentLevel < minLevel) return null;
+
+    let displayValue = value;
+    let iconKey = value?.toLowerCase() || "none";
+
+    if (displayValue === "whipped_cream") {
+      iconKey = "whipped"; 
+      displayValue = "Whipped";
+    }
+
+    if (!displayValue || displayValue === "" || displayValue === "No" || displayValue === "none") {
+      displayValue = "None";
+      iconKey = "none";
+    }
+
+    return (
+      <div className="recipe-row">
+        <img src={ingredientIcons[iconKey]} alt="" className="recipe-bullet-icon" />
+        <span className="recipe-text">{displayValue}</span>
+      </div>
+    );
+  };
+
   return (
     <div className={isActive ? "order-card active" : "order-card"}>
-      
-      {/* 1. Timer Bar */}
-      <div className="timer-bar-container" style={{height: '6px', background: '#eee', borderRadius: '3px', overflow: 'hidden', marginBottom: '8px'}}>
-        <div style={{
-          width: `${timePercent}%`,
-          height: '100%',
-          background: timePercent < 30 ? '#ef4444' : '#22c55e',
-          transition: 'width 1s linear'
-        }} />
+      <div className="timer-container">
+        <div className="timer-bar" style={{ width: `${timePercent}%`, background: timePercent < 30 ? '#ef4444' : '#22c55e' }} />
       </div>
 
-      {/* 2. Visual Icon Row */}
-      <div className="order-visual" style={{display: 'flex', gap: '5px', marginBottom: '8px', justifyContent: 'center'}}>
-        <img src={ingredientIcons[order.size.toLowerCase()]} alt={order.size} className="ingredient-icon" style={{width: '20px'}} />
-        <img src={ingredientIcons[order.temp.toLowerCase()]} alt={order.temp} className="ingredient-icon" style={{width: '20px'}} />
-        <img src={ingredientIcons[order.milk.toLowerCase()]} alt={order.milk} className="ingredient-icon" style={{width: '20px'}} />
-        {order.flavor && order.flavor !== 'none' && (
-           <img src={ingredientIcons[order.flavor.toLowerCase()]} alt={order.flavor} className="ingredient-icon" style={{width: '20px'}} />
-        )}
-      </div>
+      <label className="recipe-label">Recipe</label>
 
-      {/* 3. Order Details Grid */}
-      <div className="order-details">
-        <div className="detail-group">
-          <label style={{fontSize: '10px', color: '#64748b'}}>RECIPE</label>
-          <div className="item"><strong>{order.size} {order.temp}</strong></div>
-          <div className="item">{order.milk} Milk</div>
-          
-          {order.flavor && order.flavor !== 'none' && (
-            <div className="item" style={{color: '#b45309'}}>+ {order.flavor}</div>
-          )}
-        </div>
-
-        {order.toppings && order.toppings.length > 0 && (
-          <div className="detail-group" style={{marginTop: '4px', borderTop: '1px dashed #ccc', paddingTop: '4px'}}>
-            <label style={{fontSize: '10px', color: '#64748b'}}>TOPPINGS</label>
-            <div className="options-row" style={{display: 'flex', flexWrap: 'wrap', gap: '4px'}}>
-              {order.toppings.map((t: string) => (
-                <span key={t} className="option" style={{fontSize: '11px', background: '#f0fdf4', padding: '2px 4px', borderRadius: '4px'}}>
-                  {t}
-                </span>
-              ))}
+      <div className="order-details-list">
+        <RecipeRow value={order.size} />
+        <RecipeRow value={order.temp} />
+        <RecipeRow value={order.milk} />
+        
+        {/* Only show Flavor row if Level 2 or higher */}
+        <RecipeRow value={order.flavor} minLevel={2} />
+        
+        {/* Toppings Section: Only show if Level 3 or higher */}
+        {currentLevel >= 3 && (
+          order.toppings && order.toppings.length > 0 ? (
+            order.toppings.map((t: string) => {
+              const isWhipped = t === "whipped_cream";
+              return (
+                <div className="recipe-row" key={t}>
+                  <img src={ingredientIcons[isWhipped ? "whipped" : t.toLowerCase()]} alt="" className="recipe-bullet-icon" />
+                  <span className="recipe-text">{isWhipped ? "Whipped" : t}</span>
+                </div>
+              );
+            })
+          ) : (
+            <div className="recipe-row">
+              <img src={ingredientIcons["none"]} alt="" className="recipe-bullet-icon" />
+              <span className="recipe-text">No Toppings</span>
             </div>
-          </div>
+          )
         )}
       </div>
     </div>

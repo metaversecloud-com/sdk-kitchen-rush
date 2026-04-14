@@ -1,57 +1,31 @@
-/* THE MINI TICKET */
 .order-card {
   display: flex;
   flex-direction: column;
   padding: 8px;
-  width: 120px !important;
-  background: #fffcf0;
+  width: 110px !important;
+  background: #dddddd;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
+  box-shadow: 2px 2px 0px rgba(0,0,0,0.05);
 }
 
-/* Header with Level/Timer first */
-.order-header {
-  order: 1; 
-  margin-bottom: 4px;
-}
-
-/* HEADER - Level & Timer */
-.order-header h3 {
-  font-size: 0.5rem;          /* Tiny header */
-  margin-bottom: 2px;
-  text-transform: uppercase;
-  color: #64748b;
-}
-
+/* TIMER */
 .timer-container {
   width: 100%;
-  height: 4px;                /* Thinner timer */
+  height: 5px;
   background: #e2e8f0;
   border-radius: 10px;
   overflow: hidden;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .timer-bar {
   height: 100%;
-  background: #ef4444;
   transition: width 1s linear;
 }
 
-/* THE EMOJI/ICON ROW */
-.order-visual {
-  min-height: 25px;
-  background: rgba(255,255,255,0.5);
-  border: 1px dashed #cbd5e0;
-  margin-bottom: 4px;
-  display: flex;
-  justify-content: center;
-  gap: 2px;
-  padding: 2px;
-}
-
+/* RECIPE HEADER */
 .recipe-label {
-  order: 2;
   font-size: 0.5rem;
   font-weight: 900;
   text-transform: uppercase;
@@ -59,47 +33,98 @@
   border-bottom: 1px solid #eee;
   margin-bottom: 4px;
   display: block;
+  text-align: center;
 }
 
-.visual-item {
-  font-size: 0.8rem;         /* Emojis look better a bit bigger */
-}
-
-/* THE TEXT DETAILS */
-.order-details {
-  order: 4;
+.recipe-row {
   display: flex;
-  flex-direction: column; /* This forces the newlines */
-  gap: 2px;
+  align-items: center;
+  gap: 6px; /* Space between icon and text */
 }
 
-.detail-group label {
-  font-size: 0.45rem;        /* Tiny labels like "MILK" */
-  font-weight: 800;
-  color: #94a3b8;
-  text-transform: uppercase;
+.recipe-bullet-icon {
+  width: 16px !important; /* Extra small for the list view */
+  height: 16px !important;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
-.option, .item {
-  font-size: 0.7rem !important; /* The actual order text */
+.recipe-text {
+  font-size: 0.65rem;
   font-weight: 700;
   color: #1e293b;
-  line-height: 1.1;
+  text-transform: capitalize;
 }
 
-/* --- INGREDIENT BUTTON FIXES --- */
-/* (This applies to the icons you click) */
+/* Make topping text a different color so they stand out as extras */
+.topping-row .recipe-text {
+  color: #059669; /* Nice green for toppings */
+  font-size: 0.6rem;
+}
+
+.recipe-label {
+  font-size: 0.45rem;
+  font-weight: 900;
+  color: #94a3b8;
+  text-transform: uppercase;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 2px;
+  text-align: center;
+}
+
+/* ICON ROW */
+.order-visual {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 6px;
+  padding: 2px;
+  background: rgba(255,255,255,0.4);
+  border-radius: 4px;
+}
 
 .ingredient-icon {
-  width: 32px !important;     /* ICON BIGGER */
-  height: 32px !important;
+  width: 20px !important; 
+  height: 20px !important;
   object-fit: contain;
-  margin-bottom: 2px;
 }
 
-.option-text {
-  font-size: 0.6rem !important; /* TEXT SMALLER */
+/* LIST DETAILS */
+.order-details-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px; /* Space between rows */
+  margin-top: 4px;
+}
+
+.option {
+  font-size: 0.7rem !important;
   font-weight: 700;
-  text-transform: lowercase;   /* Lowercase looks cleaner when tiny */
-  color: #475569;
+  color: #1e293b;
+  line-height: 1.2;
+  text-transform: capitalize;
+  display: block; /* Force new line */
+}
+
+.flavor-text {
+  color: #b45309;
+}
+
+/* TOPPINGS */
+.toppings-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px dashed #cbd5e0;
+}
+
+.topping-tag {
+  font-size: 0.55rem;
+  background: #f0fdf4;
+  color: #166534;
+  padding: 1px 3px;
+  border-radius: 3px;
+  font-weight: 700;
 }

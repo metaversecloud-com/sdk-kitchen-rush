@@ -44,10 +44,13 @@ const ingredientIcons: Record<string, string> = {
   hot: hotImg,
   iced: icedImg, 
   oat: oatImg,
-  none: noMilkImg, // Note: LevelConfig should ideally use "no-milk" or "no-flavor"
+  none: noMilkImg,
+  "no-flavor": noFlavorImg,
+  "no-milk": noMilkImg,
   cinnamon: cinnamonImg,
   sprinkles: sprinklesImg,
   whipped: whippedImg,
+  whipped_cream: whippedImg, // Map both names to the same image
 };
 
 const Ingredients = ({ tray, onSelect, level }: IngredientsProps) => {
@@ -77,17 +80,20 @@ const Ingredients = ({ tray, onSelect, level }: IngredientsProps) => {
                     key={option}
                     type="button"
                     className={`option-btn ${isSelected ? "selected" : ""}`}
-                    onClick={() => onSelect(category, option)}
-                  >
-                    {/* Ensure we lowercase the option for the icon lookup */}
-                    {ingredientIcons[option.toLowerCase()] && (
+                    onClick={() => onSelect(category as any, option)} // Added as any to bypass strict type check if needed
+                      >
+                    {/* THE FIX: Check for the icon using lowercase and handling underscores */}
+                    {ingredientIcons[option.toLowerCase().replace('-', '_')] || ingredientIcons[option.toLowerCase()] ? (
                       <img
-                        src={ingredientIcons[option.toLowerCase()]}
+                        src={ingredientIcons[option.toLowerCase()] || ingredientIcons[option.toLowerCase().replace('_', '')]}
                         alt={option}
                         className="ingredient-icon"
                       />
+                    ) : (
+                      /* Fallback if icon is still missing */
+                      <div className="placeholder-icon" /> 
                     )}
-                    <span className="option-text">{option}</span>
+                    <span className="option-text">{option.replace('_', ' ')}</span>
                   </button>
                 );
               })}

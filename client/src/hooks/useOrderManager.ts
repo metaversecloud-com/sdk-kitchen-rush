@@ -180,7 +180,7 @@ const useOrderManager = (
     size: "",
     temp: "",
     milk: "",
-    flavor: "none",
+    flavor: "",
     toppings: []
   });
 
