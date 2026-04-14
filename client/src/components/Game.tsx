@@ -23,34 +23,27 @@ const Game = () => {
   const navigate = useNavigate();
   const { levelId } = useParams();
   
-  // 1. Get current level from URL
   const currentLevel = Number(levelId) || 1;
-
-  // 2. Get the specific config for this level
   const config = levelConfig[currentLevel as keyof typeof levelConfig];
-  console.log("Current Level:", currentLevel, "Config Found:", config);
 
-  const orderManager = useOrderManager(
-      () => navigate("/game-over"), 
-      (scoreAtEndOfLevel: number, angryAtEndOfLevel: number) => { 
-        const nextLevel = currentLevel + 1;
-        if (nextLevel <= 4) {
-          // Send BOTH pieces of data to the next level
-          navigate(`/level-start/${nextLevel}`, { 
-            state: { 
-              inheritedScore: scoreAtEndOfLevel,
-              inheritedAngry: angryAtEndOfLevel 
-            } 
-          });
-        } else {
-          navigate("/game-over", { 
-            state: { score: scoreAtEndOfLevel } 
-          });
-        }
-      },
-      currentLevel
-    );
+  // 1. Define the completion logic first
+  const handleLevelComplete = (scoreAtEndOfLevel: number, angryAtEndOfLevel: number) => {
+    const nextLevel = currentLevel + 1;
+    if (nextLevel <= 4) {
+      navigate(`/level-start/${nextLevel}`, { 
+        state: { 
+          inheritedScore: scoreAtEndOfLevel,
+          inheritedAngry: angryAtEndOfLevel 
+        } 
+      });
+    } else {
+      navigate("/game-over", { 
+        state: { score: scoreAtEndOfLevel } 
+      });
+    }
+  };
 
+  // 2. Single hook call - destructure everything here
   const {
     activeOrder,
     angryCustomerCount,
@@ -61,8 +54,6 @@ const Game = () => {
     handleServeOrder,
     handleViewOrder,
     handleCloseShop,
-    sourceQueue,
-    setSourceQueue,
     advance,
     updateTray,
     clearTray,
@@ -70,27 +61,19 @@ const Game = () => {
     timeRemaining,
   } = useOrderManager(
     () => navigate("/game-over", { state: { score, ordersServed } }),
-    handleLevelComplete
+    handleLevelComplete,
+    currentLevel
   );
 
   // Load orders when level changes
-useEffect(() => {
-    // 1. Reset cup for new level
+  useEffect(() => {
     clearTray();
-    
-    // 2. Get first order
     advance();
-
-    // 3. IMPORTANT: Timer logic is handled automatically when 
   }, [currentLevel]);
 
-  // Use the ingredients from our config object
-  const activeIngredients = config.ingredients;
-
-      return (
+  return (
     <PageContainer isLoading={false}>
       <div className="game-screen-wrapper">
-        {/* 1. THE HUD */}
         <div className="hud">
           <div className="hud-item"><span className="hud-label">Level:</span> {config.title}</div>
           <div className="hud-item"><span className="hud-label">Score:</span> {score}</div>
@@ -99,10 +82,8 @@ useEffect(() => {
           <div className="hud-item">😡 {angryCustomerCount}/5</div>
         </div>
 
-        {/* 2. THE PLAY AREA: Tray is center, Order is top-right */}
         <div className="order-tray-row">
           <Tray tray={tray} />
-          
           {activeOrder && (
             <div className="order-container">
               <Order 
@@ -115,14 +96,11 @@ useEffect(() => {
           )}
         </div>
 
-        {/* 3. INGREDIENTS */}
-        <Ingredients onSelect={updateTray} currentTray={tray} level={currentLevel} />
+        <Ingredients onSelect={updateTray} tray={tray} level={currentLevel} />
 
-        {/* 4. FEEDBACK (The new stuff from dev) */}
-        {/* Make sure 'feedback' is destructured from orderManager at the top! */}
-        {orderManager.feedback && <FeedbackToast feedback={orderManager.feedback} />}
+        {/* Use the destructured feedback directly */}
+        {feedback && <FeedbackToast feedback={feedback} />}
 
-        {/* 5. ACTION BUTTONS */}
         <div className="bottom-actions">
           <button className="serve-button" onClick={handleServeOrder}>
             SERVE ORDER

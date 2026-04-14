@@ -1,5 +1,6 @@
 import React from 'react';
 import { levelConfig } from "../config/levelConfig";
+import { Order } from "../types/Order";
 
 // SIZES
 import smallImg from "../assets/ingredients/small.png";
@@ -25,8 +26,9 @@ import whippedImg from "../assets/ingredients/whipped.png";
 
 interface IngredientsProps {
   tray: any;
-  onSelect: (category: string, value: string) => void;
-  level: number; // Pass the level number from Game.tsx
+  // Change 'string' to 'keyof Order' here:
+  onSelect: (category: keyof Order, value: string) => void; 
+  level: number;
 }
 
 // Icon Mapping
@@ -49,15 +51,14 @@ const ingredientIcons: Record<string, string> = {
 };
 
 const Ingredients = ({ tray, onSelect, level }: IngredientsProps) => {
-  // 1. Get the config for the current level
+  //1. get config for current level
   const config = levelConfig[level as keyof typeof levelConfig];
 
-  if (!config) return null;
+  if (!config || !tray) return null;
 
   return (
     <div className="ingredients-grid">
       {Object.entries(config.ingredients).map(([category, options]) => {
-        // Skip if category has no options for this level
         if (!options || (options as string[]).length === 0) return null;
 
         return (
@@ -65,8 +66,8 @@ const Ingredients = ({ tray, onSelect, level }: IngredientsProps) => {
             <label className="category-label">{category}</label>
             <div className="options-grid">
               {(options as string[]).map((option: string) => {
-                // Determine if this specific button is "selected"
-                // Toppings are an array, others are strings
+                
+                // ADD EXTRA SAFETY HERE: Use optional chaining ?.
                 const isSelected = category === 'toppings' 
                   ? tray[category]?.includes(option)
                   : tray[category] === option;
@@ -78,9 +79,10 @@ const Ingredients = ({ tray, onSelect, level }: IngredientsProps) => {
                     className={`option-btn ${isSelected ? "selected" : ""}`}
                     onClick={() => onSelect(category, option)}
                   >
-                    {ingredientIcons[option] && (
+                    {/* Ensure we lowercase the option for the icon lookup */}
+                    {ingredientIcons[option.toLowerCase()] && (
                       <img
-                        src={ingredientIcons[option]}
+                        src={ingredientIcons[option.toLowerCase()]}
                         alt={option}
                         className="ingredient-icon"
                       />
