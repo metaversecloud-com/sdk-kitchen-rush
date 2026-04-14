@@ -2,14 +2,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 20px;
   width: 100%;
-  max-width: 300px;
+  max-width: 320px;
   margin: 0 auto;
   position: relative;
-  min-height: auto;
   padding: 10px;
-  gap: 10px;
+  gap: 8px;
+  overflow-x: hidden;
 }
 
 /* Bring back the styled HUD bar */
@@ -18,59 +17,61 @@
   justify-content: space-around;
   align-items: center;
   background: #ffffff;
-  padding: 15px 30px;
-  border-radius: 50px;
-  width: 90%;
-  max-width: 1000px;
+  padding: 5px 15px;      /* Very thin padding */
+  border-radius: 30px;
+  width: 95%;
+  max-width: 300px;       /* Keep it narrow for Topia */
   border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-  margin-bottom: 30px;
-  /* Compatibility prefixes from dev */
-  -webkit-border-radius: 50px;
-  -moz-border-radius: 50px;
+  margin: 0 auto 10px auto;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .hud-item {
   display: flex;
+  flex-direction: column; /* Stack label over value to save horizontal space */
   align-items: center;
-  gap: 8px;
-  font-weight: 700;
+  font-weight: 800;
   color: #1e293b;
-  font-size: 1rem;
+  font-size: 0.7rem;      /* Smaller text */
+  gap: 0px;
 }
 
-/* Style the icons/labels inside HUD */
 .hud-label {
-  color: #64748b;
-  font-size: 0.8rem;
+  color: #94a3b8;
+  font-size: 0.5rem;      /* Tiny labels */
   text-transform: uppercase;
 }
 
 /* Container holding the Tray and the Receipt */
 .order-tray-row {
   display: flex;
-  gap: 20px;
-  align-items: center;
+  flex-direction: row;      /* Change from column to row */
+  align-items: flex-end;    /* Aligns the bottom of the ticket with the tray */
   justify-content: center;
-  position: relative;
+  gap: 10px;                /* Space between tray and ticket */
   width: 100%;
+  position: relative;
+  padding: 0 5px;
 }
 
 /* THE TRAY: Now the Main Focus */
 .tray-container {
-  width: 400px !important;  /* Big and wide */
-  height: 200px !important;
-  border: 4px dashed #3b82f6;
+  flex: 2;                  /* Takes up more space than the order card */
+  min-width: 160px;         /* Minimum width to keep it usable */
+  min-height: 120px !important; 
   background: #ffffff;
-  border-radius: 24px;
+  border: 3px solid #3b82f6;
+  border-radius: 16px;
   display: flex;
-  flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  gap: 15px;
-  padding: 20px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-  position: relative; /* Added this to allow children to position themselves if needed */
+  padding: 10px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.tray-container img {
+  width: 55px !important;
+  height: 55px !important;
 }
 
 /* Updated Close Shop corner from dev (but made it clickable size) */
@@ -93,14 +94,42 @@
 }
 
 /* THE ORDER RECEIPT: Small and in the corner */
+.order-container {
+  flex: 1;                  /* Takes up less space than the tray */
+  display: flex;
+  justify-content: center;
+}
+
 .order-card {
-  position: absolute !important;
-  top: 0;
-  right: 0;
-  width: 180px !important; /* Smaller size */
-  z-index: 10;
-  transform: rotate(2deg);
-  pointer-events: none; /* User doesn't need to click the receipt */
+  width: 100px !important;    /* Narrower to fit side-by-side */
+  padding: 6px !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 6px !important;
+  background: #fffcf0 !important;
+  transform: rotate(1deg);    /* Slight tilt the other way */
+}
+
+/* Shrink text inside the ticket specifically */
+.order-card h3 {
+  font-size: 0.5rem !important;
+  margin-bottom: 2px !important;
+}
+
+.order-card .item, 
+.order-card .option {
+  font-size: 0.7rem !important;
+  line-height: 1 !important;
+  margin: 1px 0 !important;
+}
+
+.order-visual {
+  min-height: 20px !important;
+  gap: 2px !important;
+  margin-bottom: 2px !important;
+}
+
+.order-visual span {
+  font-size: 0.8rem !important; /* Smaller emojis/icons for the ticket */
 }
 
 /* Container for the buttons at the bottom */
@@ -165,43 +194,59 @@
 .ingredients-grid {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 12px; /* Tighter gap */
   width: 100%;
-  max-width: 800px;
-  margin: 20px auto;
-  padding: 0 15px;
+  max-width: 320px; /* Keep it tight for Topia */
+  margin: 0 auto;
 }
 
 .category-title {
-  font-size: 0.9rem;
+  font-size: 0.8rem;
+  font-weight: 800;
   text-transform: uppercase;
   color: #64748b;
-  margin-bottom: 10px;
-  letter-spacing: 0.05em;
-  text-align: left;
+  margin-bottom: 5px;
+  display: block;
 }
 
 .options-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  justify-content: flex-start;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 2 per row */
+  gap: 8px;
+  width: 100%;
+  justify-items: center;
+}
+
+.options-row:has(> :nth-child(3)) {
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .ingredient-btn {
-  padding: 12px 20px;
+  /* Your compatibility and base styles */
+  padding: 10px 5px;
   background-color: white;
   border: 2px solid #e2e8f0;
   border-radius: 12px;
   cursor: pointer;
-  font-weight: 600;
   text-transform: capitalize;
   transition: all 0.2s ease;
   color: #1e293b;
-  min-width: 100px;
+  width: 100%;
+  /* Flex layout to stack and center */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
   /* Compatibility fixes */
   -webkit-border-radius: 12px;
   -moz-border-radius: 12px;
+}
+
+.ingredient-btn img {
+  width: 32px;  /* Increased from ~20px */
+  height: 32px;
+  object-fit: contain;
 }
 
 .ingredient-btn:hover {
