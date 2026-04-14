@@ -2,7 +2,7 @@ import { useContext, useEffect, useMemo, useState } from "react";
 import { Route, Routes, useNavigate, useSearchParams } from "react-router-dom";
 
 // pages
-import { Error, Home, GameOver } from "./pages";
+import { Error, Home, GameOver, LevelIntermission} from "./pages";
 
 //config
 import { getLevelOrders } from "./config/orderConfig";
@@ -88,19 +88,15 @@ const App = () => {
   // }
 
   return (
-  <Routes>
-    {/* 1. The Welcome/Home screen MUST be first and use 'index' or path="/" */}
-    <Route path="/" element={<Home />} /> 
-    
-    {/* 2. The Game screen */}
-    <Route path="/game" element={<Game orders={getLevelOrders(2)} />} />
-    
-    {/* 3. The Game Over screen */}
-    <Route path="/game-over" element={<GameOver />} />
-    
-    {/* 4. The Catch-all (Under Construction) */}
-    <Route path="*" element={<Error />} />
-  </Routes>
+<Routes>
+  <Route path="/" element={<Home />} /> 
+  <Route path="/level-start/:levelId" element={<LevelIntermission />} />
+  
+  <Route path="/game/:levelId" element={<Game />} /> 
+  
+  <Route path="/game-over" element={<GameOver />} />
+  <Route path="*" element={<Error />} />
+</Routes>
   );
 };
 

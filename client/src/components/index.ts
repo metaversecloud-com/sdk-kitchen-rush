@@ -1,7 +1,8 @@
-export * from "./Accordion.js";
-export * from "./AdminView.js";
-export * from "./AdminIconButton.js";
-export * from "./ConfirmationModal.js";
-export * from "./Loading.js";
-export * from "./PageContainer.js";
-export * from "./PageFooter.js";
+// src/components/index.ts
+export * from "./Accordion";
+export * from "./AdminView";
+export * from "./AdminIconButton";
+export * from "./ConfirmationModal";
+export * from "./Loading";
+export * from "./PageContainer";
+export * from "./PageFooter";

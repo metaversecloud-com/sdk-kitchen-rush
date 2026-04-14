@@ -1,108 +1,110 @@
-/* ---------------------- */
-/* SMALLER ORDER CARD     */
-/* ---------------------- */
 .order-card {
   width: 100%;
-  background: #f1f1f1;   
-  max-width: 180px;
-  border: 2px solid #4a90e2;
-  border-radius: 15px;
-  padding: 4px 6px;
+  max-width: 180px;         /* Keeps the receipt compact */
   background: white;
+  border: 2px solid #4a90e2; /* Blue border helps player find it quickly */
+  border-radius: 15px;
+  padding: 12px;             /* Slightly more than dev for breathing room */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+  
+  /* Browser Compatibility */
   -webkit-border-radius: 15px;
   -moz-border-radius: 15px;
-  -ms-border-radius: 15px;
-  -o-border-radius: 15px;
 }
 
-/* Active highlight */
 .order-card.active {
-  border-color: #4a90e2;
-  box-shadow: 0 0 6px rgba(74,144,226,0.4);
+  border: 2px solid #3b82f6;
+  box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.2);
 }
 
 /* ---------------------- */
-/* HEADER                 */
+/* HEADER & COMPACT TIMER */
 /* ---------------------- */
 .order-header h3 {
-  font-size: 0.6rem;         /* smaller text */
+  font-size: 0.6rem;         /* Tiny text for Topia iframe */
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2px;
 }
 
-
-.timer-bar {
-  width: 70px;               /* smaller bar */
+.timer-container {
+  width: 70px;               /* Compact bar from dev */
   height: 6px;
+  background: #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 4px;
 }
 
 .timer-bar {
-  width: 100%;
-  height: 6px;
-  background: #e0e0e0;
-  border-radius: 4px;
-  overflow: hidden;
+  height: 100%;
+  background: #ef4444;       /* Red to make the small bar pop */
+  transition: width 1s linear;
 }
 
 .timer-fill {
   height: 100%;
-  width: 100%;
-  background: #4a90e2;
-  border-radius: 4px;
-  transform-origin: left;
-  animation: countdown var(--timer-duration, 12s) linear forwards;
 }
 
-@keyframes countdown {
-  from { width: 100%; }
-  to { width: 0%; }
-}
-
-/* ---------------------- */
-/* VISUALIZATION BOX      */
-/* ---------------------- */
+/* Icon Row */
 .order-visual {
-  height: 55px; /* Taller box for the 'Image' feel */
+  height: auto;              /* Allow it to shrink */
+  min-height: 40px;
   background: #f8f9fa;
-  border: 2px dashed #cbd5e0;
-  margin-bottom: 6px;
+  border: 1px dashed #cbd5e0;
+  margin-bottom: 8px;
   display: flex;
   flex-wrap: wrap;
   align-content: center;
   justify-content: center;
-  gap: 3px;
+  gap: 4px;
+  padding: 4px;
 }
 
 .visual-item {
-  padding: 1px 3px;
-  background: transparent;
-  border-radius: 5px;
-  font-size: 0.5rem;        /* smaller text */
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 2px 4px;
+  background: #f8fafc;
+  border-radius: 4px;
+  font-size: 0.6rem;         /* Small for Topia */
+  color: #475569;
+  border: 1px solid #e2e8f0;
 }
 
 /* ---------------------- */
-/* DETAILS                */
+/* DETAILS GRID (Topia Optimized) */
 /* ---------------------- */
 .order-details {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* 2 columns */
-  flex-direction: column;
+  grid-template-columns: 1fr 1fr; /* Two tight columns */
   gap: 4px;
 }
 
 .detail-group {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
 .detail-group label {
-  font-size: 0.55rem;
+  font-size: 0.55rem;        /* Tiny label */
+  font-weight: 800;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+.option {
+  padding: 1px 4px;
+  background: white;
+  border-radius: 4px;
+  border: 1px solid #dcdcdc;
+  font-size: 0.65rem;
+  font-weight: 600;
 }
 
 .options-row {
@@ -111,17 +113,22 @@
   gap: 3px;
 }
 
-.option {
-  padding: 1px 3px;
-  background: transparent;
-  border-radius: 5px;
-  border: 1px solid #dcdcdc;
-  font-size: 0.6rem;
+/* Kept your logic highlights for speed-reading */
+.flavor-highlight {
+  background: #fef3c7;
+  border-color: #f59e0b;
 }
 
+.topping-tag {
+  background: #dcfce7;
+  border-color: #4ade80;
+  color: #166534;
+}
+
+/* Icon support from dev */
 .ingredient-icon {
-  width: 24px;
-  height: 24px;
+  width: 18px;               /* Scaled down for iframe */
+  height: 18px;
   object-fit: contain;
   display: block;
 }

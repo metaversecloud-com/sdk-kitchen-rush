@@ -1,37 +1,25 @@
-// renders order card visually
-// need icons for each ingredient
-// a timer progress bar
-// a visual distinction;
+import React from 'react';
 import '../styles/Order.css';
-import { OrderProps } from '../types/OrderProps'
+import { OrderProps } from '../types/OrderProps';
 
-// SIZE
+// ICONS
 import smallImg from "../assets/ingredients/small.png";
 import mediumImg from "../assets/ingredients/medium.png";
 import largeImg from "../assets/ingredients/large.png";
-
-// TEMP
 import hotImg from "../assets/ingredients/hot.png";
 import icedImg from "../assets/ingredients/iced.png";
-
-// MILK
 import almondImg from "../assets/ingredients/almond.png";
 import oatImg from "../assets/ingredients/oat.png";
 import wholeImg from "../assets/ingredients/whole.png";
 import noMilkImg from "../assets/ingredients/no-milk.png";
-
-// FLAVOR
 import vanillaImg from "../assets/ingredients/vanilla.png";
 import caramelImg from "../assets/ingredients/caramel.png";
 import mochaImg from "../assets/ingredients/mocha.png";
-import noFlavorImg from "../assets/ingredients/no-flavor.png";
-
-// TOPPINGS
 import cinnamonImg from "../assets/ingredients/cinnamon.png";
 import sprinklesImg from "../assets/ingredients/sprinkles.png";
 import whippedImg from "../assets/ingredients/whipped.png";
 
-const ingredientIcons: Record <string, string> = {
+const ingredientIcons: Record<string, string> = {
   almond: almondImg,
   caramel: caramelImg,
   vanilla: vanillaImg,
@@ -44,129 +32,67 @@ const ingredientIcons: Record <string, string> = {
   iced: icedImg, 
   oat: oatImg,
   none: noMilkImg,
-  // none: noFlavorImg,
   cinnamon: cinnamonImg,
   sprinkles: sprinklesImg,
   whipped: whippedImg,
 };
 
-const Order = ({order, isActive}: OrderProps) => { 
-   console.log("ORDER VALUES:", order);
-    console.log("ICON LOOKUP:", {
-    size: ingredientIcons[order.size],
-    temp: ingredientIcons[order.temp],
-    milk: ingredientIcons[order.milk],
-    flavor: ingredientIcons[order.flavor],
-    toppings: order.toppings?.map(t => ingredientIcons[t])
-  });
-    return (
-      <div className={isActive ? "order-card active" : "order-card"}>
+// Added timeRemaining and currentLevel to the props destructuring
+const Order = ({ order, isActive, timeRemaining, currentLevel }: any) => { 
+  // Timer Logic
+  const totalTime = order.timeLimit / 1000; 
+  const timePercent = timeRemaining ? (timeRemaining / totalTime) * 100 : 0;
 
-      {/* HEADER */}
-      <div className="order-header">
-        <h3>Current Order</h3>
-
-        {/* {isActive && (
-          <div className="timer-bar">
-            <div 
-            className="timer-fill"
-            style={{ '--timer-duration': `${order.timeLimit / 1000}s` } as React.CSSProperties}
-          />
-          </div>
-        )} */}
-      </div>
-
-      {/* VISUALIZATION BOX */}
-      <div className="order-visual">
-        {/* Replace these with icons later */}
-        <div className="visual-item">
-          <img src={ingredientIcons[order.size.toLowerCase()]} alt={order.size} className="ingredient-icon" />
-        </div>
-
-         <div className="visual-item">
-          <img src={ingredientIcons[order.temp.toLowerCase()]} alt={order.temp} className="ingredient-icon" />
-        </div>
-        <div className="visual-item">
-          <img src={ingredientIcons[order.milk.toLowerCase()]} alt={order.milk} className="ingredient-icon" />
-        </div>
-
-        {order.flavor && (
-          <div className="visual-item">
-            <img src={ingredientIcons[order.flavor.toLowerCase()]} alt={order.flavor} className="ingredient-icon" />
-          </div>
-        )}
-
-        {order.toppings?.map(t => (
-          <div className="visual-item" key={t}>
-            <img src={ingredientIcons[t.toLowerCase()]} alt={t} className="ingredient-icon" />
-          </div>
-        ))}
-      </div>
+  return (
+    <div className={isActive ? "order-card active" : "order-card"}>
       
+      {/* 1. Timer Bar */}
+      <div className="timer-bar-container" style={{height: '6px', background: '#eee', borderRadius: '3px', overflow: 'hidden', marginBottom: '8px'}}>
+        <div style={{
+          width: `${timePercent}%`,
+          height: '100%',
+          background: timePercent < 30 ? '#ef4444' : '#22c55e',
+          transition: 'width 1s linear'
+        }} />
+      </div>
 
-      {/* INGREDIENT SECTIONS */}
-      <div className="order-details">
-
-        <div className="detail-group">
-          <label>Size</label>
-          <div className="options-row">
-            <span className="option">
-              <img src={ingredientIcons[order.size.toLowerCase()]} alt={order.size} className="ingredient-icon" />
-            </span>
-          </div>
-        </div>
-
-        <div className="detail-group">
-          <label>Temp</label>
-          <div className="options-row">
-            <span className="option">
-              <img src={ingredientIcons[order.temp.toLowerCase()]} alt={order.temp} className="ingredient-icon" />
-            </span>
-          </div>
-        </div>
-
-        <div className="detail-group">
-          <label>Milk</label>
-          <div className="options-row">
-            <span className="option">
-              <img src={ingredientIcons[order.milk.toLowerCase()]} alt={order.milk} className="ingredient-icon" />
-            </span>
-          </div>
-        </div>
-
-        {order.flavor && (
-          <div className="detail-group">
-            <label>Flavor</label>
-            <div className="options-row">
-              <span className="option">
-              <img src={ingredientIcons[order.flavor.toLowerCase()]} alt={order.flavor} className="ingredient-icon" />
-            </span>
-            </div>
-          </div>
+      {/* 2. Visual Icon Row */}
+      <div className="order-visual" style={{display: 'flex', gap: '5px', marginBottom: '8px', justifyContent: 'center'}}>
+        <img src={ingredientIcons[order.size.toLowerCase()]} alt={order.size} className="ingredient-icon" style={{width: '20px'}} />
+        <img src={ingredientIcons[order.temp.toLowerCase()]} alt={order.temp} className="ingredient-icon" style={{width: '20px'}} />
+        <img src={ingredientIcons[order.milk.toLowerCase()]} alt={order.milk} className="ingredient-icon" style={{width: '20px'}} />
+        {order.flavor && order.flavor !== 'none' && (
+           <img src={ingredientIcons[order.flavor.toLowerCase()]} alt={order.flavor} className="ingredient-icon" style={{width: '20px'}} />
         )}
+      </div>
 
-        {order.toppings && (
-          <div className="detail-group">
-            <label>Toppings</label>
-            <div className="options-row">
-              {order.toppings.map(t => (
-                <span className="option" key={t}>
-                  <img
-                    src={ingredientIcons[t.toLowerCase()]}
-                    alt={t}
-                    className="ingredient-icon"
-                  />
+      {/* 3. Order Details Grid */}
+      <div className="order-details">
+        <div className="detail-group">
+          <label style={{fontSize: '10px', color: '#64748b'}}>RECIPE</label>
+          <div className="item"><strong>{order.size} {order.temp}</strong></div>
+          <div className="item">{order.milk} Milk</div>
+          
+          {order.flavor && order.flavor !== 'none' && (
+            <div className="item" style={{color: '#b45309'}}>+ {order.flavor}</div>
+          )}
+        </div>
+
+        {order.toppings && order.toppings.length > 0 && (
+          <div className="detail-group" style={{marginTop: '4px', borderTop: '1px dashed #ccc', paddingTop: '4px'}}>
+            <label style={{fontSize: '10px', color: '#64748b'}}>TOPPINGS</label>
+            <div className="options-row" style={{display: 'flex', flexWrap: 'wrap', gap: '4px'}}>
+              {order.toppings.map((t: string) => (
+                <span key={t} className="option" style={{fontSize: '11px', background: '#f0fdf4', padding: '2px 4px', borderRadius: '4px'}}>
                   {t}
                 </span>
               ))}
             </div>
           </div>
         )}
-
       </div>
     </div>
+  );
+}
 
-    );
-};
-
-export default Order
+export default Order;

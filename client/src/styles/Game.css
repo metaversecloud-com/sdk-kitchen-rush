@@ -1,9 +1,8 @@
-
-/* WRAPPER */
 .game-screen-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding-top: 20px;
   width: 100%;
   max-width: 300px;
   margin: 0 auto;
@@ -13,109 +12,225 @@
   gap: 10px;
 }
 
-
-/* HUD*/
+/* Bring back the styled HUD bar */
 .hud {
   display: flex;
   justify-content: space-around;
-  background: #f8f9fa;
-  padding: 10px 12px;
-  border-radius: 0px;
-  width: 100%;
-  border: 1px solid #e0e0e0;
+  align-items: center;
+  background: #ffffff;
+  padding: 15px 30px;
+  border-radius: 50px;
+  width: 90%;
+  max-width: 1000px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  margin-bottom: 30px;
+  /* Compatibility prefixes from dev */
   -webkit-border-radius: 50px;
   -moz-border-radius: 50px;
-  -ms-border-radius: 50px;
-  -o-border-radius: 50px;
 }
 
-.hud span {
-  font-size: 0.7rem;
-  font-weight: bold;
+.hud-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: #1e293b;
+  font-size: 1rem;
 }
 
-/* ORDER + TRAY ROW*/
+/* Style the icons/labels inside HUD */
+.hud-label {
+  color: #64748b;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+/* Container holding the Tray and the Receipt */
 .order-tray-row {
   display: flex;
-  gap: 10px;
+  gap: 20px;
   align-items: center;
   justify-content: center;
+  position: relative;
   width: 100%;
 }
 
-/* CLOSE BUTTON (corner)  */
-.close-shop-corner {
-  position: absolute;
-  top: -10px;
-  right: -10px;
-  background: #eee;
-  border: none;
-  border-radius: 50%;
-  width: 10px;
-  height: 10px;
-  cursor: pointer;
+/* THE TRAY: Now the Main Focus */
+.tray-container {
+  width: 400px !important;  /* Big and wide */
+  height: 200px !important;
+  border: 4px dashed #3b82f6;
+  background: #ffffff;
+  border-radius: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  position: relative; /* Added this to allow children to position themselves if needed */
 }
 
+/* Updated Close Shop corner from dev (but made it clickable size) */
+.close-shop-corner {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #ff4d4d; /* Red so it's visible */
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;  /* Changed from 10px to 30px so a human can click it */
+  height: 30px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  z-index: 10;
+}
 
-/* BOTTOM ACTIONS */
+/* THE ORDER RECEIPT: Small and in the corner */
+.order-card {
+  position: absolute !important;
+  top: 0;
+  right: 0;
+  width: 180px !important; /* Smaller size */
+  z-index: 10;
+  transform: rotate(2deg);
+  pointer-events: none; /* User doesn't need to click the receipt */
+}
+
+/* Container for the buttons at the bottom */
 .bottom-actions {
   margin-top: 10px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
+  align-items: center;    /* Centers buttons horizontally */
+  justify-content: center; /* Centers buttons vertically within the container */
+  gap: 15px;
+  width: 100%;            /* Ensure it spans the full width of the screen */
+  max-width: 500px;       /* Keeps buttons from stretching too far on wide screens */
+  margin-left: auto;      /* Works with margin-right to center the whole block */
+  margin-right: auto;
 }
 
+/* The big blue Serve button */
 .serve-button {
   background: #4a90e2;
   color: white;
-  padding: 6px 10px;
-  border-radius: 8px;
+  padding: 16px 0;        /* Better height for clicking */
+  border-radius: 12px;
   border: none;
   font-weight: bold;
-  font-size: 0.8rem;
+  font-size: 1.1rem;
   cursor: pointer;
-  width: auto;
-  min-width: 120px;
-  -webkit-border-radius: 8px;
-  -moz-border-radius: 8px;
-  -ms-border-radius: 8px;
-  -o-border-radius: 8px;
+  width: 100%;            /* Fills the 500px container */
+  display: block;         /* Ensures it behaves as a block element */
+
+  /* Browser Compatibility Fixes from dev */
+  -webkit-border-radius: 12px;
+  -moz-border-radius: 12px;
+  -ms-border-radius: 12px;
+  -o-border-radius: 12px;
 }
 
 .serve-button:hover {
   background: #3a78c2;
+  transform: translateY(-2px);
 }
 
+.serve-button:active {
+  transform: translateY(0);
+}
+
+/* The Close Shop link/button */
 .close-button-outline {
   background: transparent;
   color: #4a90e2;
   border: none;
   text-decoration: underline;
   cursor: pointer;
-  font-size: 0.8rem;
+  font-size: 1rem;
+  width: auto;            /* Only as wide as the text */
   padding: 4px 6px;
 }
 
-.close-button {
-  background: #4a90e2;
-  color: white;
-  padding: 12px 20px;
-  border-radius: 5px;
-  border: none;
-  font-size: 1rem;
-  cursor: pointer;
-  -webkit-border-radius: 5px;
-  -moz-border-radius: 5px;
-  -ms-border-radius: 5px;
-  -o-border-radius: 5px;
+.close-button-outline:hover {
+  color: #ef4444; /* Turns red when you hover to warn you're quitting */
 }
 
-/* FEEDBACK */
+.ingredients-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 0 15px;
+}
+
+.category-title {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 10px;
+  letter-spacing: 0.05em;
+  text-align: left;
+}
+
+.options-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: flex-start;
+}
+
+.ingredient-btn {
+  padding: 12px 20px;
+  background-color: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  text-transform: capitalize;
+  transition: all 0.2s ease;
+  color: #1e293b;
+  min-width: 100px;
+  /* Compatibility fixes */
+  -webkit-border-radius: 12px;
+  -moz-border-radius: 12px;
+}
+
+.ingredient-btn:hover {
+  border-color: #94a3b8;
+  background-color: #f8fafc;
+  transform: translateY(-1px);
+}
+
+.ingredient-btn.active {
+  background-color: #3b82f6; /* Bright blue */
+  border-color: #2563eb;
+  color: white;
+  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+}
+
+/* FEEDBACK ANIMATION (Kept from dev) */
 @keyframes fadeInOut {
-  0% { opacity: 0; transform: translateX(-50%) translateY(-10px); -webkit-transform: translateX(-50%) translateY(-10px); -moz-transform: translateX(-50%) translateY(-10px); -ms-transform: translateX(-50%) translateY(-10px); -o-transform: translateX(-50%) translateY(-10px); }
-  15% { opacity: 1; transform: translateX(-50%) translateY(0); }
-  60% { opacity: 1; }
-  100% { opacity: 0; }
+  0% { 
+    opacity: 0; 
+    transform: translateX(-50%) translateY(-10px); 
+  }
+  15% { 
+    opacity: 1; 
+    transform: translateX(-50%) translateY(0); 
+  }
+  80% { 
+    opacity: 1; 
+  }
+  100% { 
+    opacity: 0; 
+  }
 }

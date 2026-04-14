@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom"; // Added useParams
 
 // Components
 import PageContainer from "./PageContainer";
@@ -12,9 +12,7 @@ import FeedbackToast from "./FeedbackToast"
 // Hooks & Config
 import useOrderManager from "../hooks/useOrderManager";
 import { levelConfig } from "../config/levelConfig";
-import { levelOrders } from "../config/levelOrders";
 
-// Styles
 import "../styles/Game.css";
 
 // types
@@ -23,16 +21,29 @@ import { Feedback } from '../types/Feedback'
 
 const Game = () => {
   const navigate = useNavigate();
-  const [currentLevel, setCurrentLevel] = useState<number>(2);
+  const { levelId } = useParams();
+  
+  const currentLevel = Number(levelId) || 1;
+  const config = levelConfig[currentLevel as keyof typeof levelConfig];
 
-  const handleLevelComplete = () => {
-    if (currentLevel < 4) {
-      setCurrentLevel(prev => prev + 1);
+  // 1. Define the completion logic first
+  const handleLevelComplete = (scoreAtEndOfLevel: number, angryAtEndOfLevel: number) => {
+    const nextLevel = currentLevel + 1;
+    if (nextLevel <= 4) {
+      navigate(`/level-start/${nextLevel}`, { 
+        state: { 
+          inheritedScore: scoreAtEndOfLevel,
+          inheritedAngry: angryAtEndOfLevel 
+        } 
+      });
     } else {
-      navigate("/game-over");
+      navigate("/game-over", { 
+        state: { score: scoreAtEndOfLevel } 
+      });
     }
   };
 
+  // 2. Single hook call - destructure everything here
   const {
     activeOrder,
     angryCustomerCount,
@@ -43,80 +54,61 @@ const Game = () => {
     handleServeOrder,
     handleViewOrder,
     handleCloseShop,
-    sourceQueue,
-    setSourceQueue,
     advance,
     updateTray,
+    clearTray,
     ordersServed,
     timeRemaining,
   } = useOrderManager(
     () => navigate("/game-over", { state: { score, ordersServed } }),
-    handleLevelComplete
+    handleLevelComplete,
+    currentLevel
   );
 
   // Load orders when level changes
   useEffect(() => {
-    const orders = levelOrders[currentLevel];
-    if (orders) setSourceQueue(orders);
+    clearTray();
+    advance();
   }, [currentLevel]);
-
-  // Advance queue when source queue updates and no active order
-  useEffect(() => {
-    if (sourceQueue.length > 0 && !activeOrder) {
-      advance();
-    }
-  }, [sourceQueue, activeOrder]);
-
-  // Start timer when active order changes
-  useEffect(() => {
-    if (activeOrder) handleViewOrder(activeOrder);
-  }, [activeOrder]);
-
-  const activeIngredients = levelConfig[currentLevel as keyof typeof levelConfig].ingredients;
 
   return (
     <PageContainer isLoading={false}>
       <div className="game-screen-wrapper">
-
-        {/* Close button */}
-        <button className="close-shop-corner" onClick={handleCloseShop}>✕</button>
-
-        {/* HUD */}
         <div className="hud">
-          <span>Level: {currentLevel}</span>
-          <span>Score: {score}</span>
-          <span>Streak: {streak}</span>
-          <span>⏱ {timeRemaining}s</span>
-          <span>😠 {angryCustomerCount}/5</span>
+          <div className="hud-item"><span className="hud-label">Level:</span> {config.title}</div>
+          <div className="hud-item"><span className="hud-label">Score:</span> {score}</div>
+          <div className="hud-item"><span className="hud-label">Streak:</span> {streak}</div>
+          <div className="hud-item">⏱️ {timeRemaining}s</div>
+          <div className="hud-item">😡 {angryCustomerCount}/5</div>
         </div>
 
-        {/* Order + Tray */}
         <div className="order-tray-row">
-          {activeOrder && <Order order={activeOrder} isActive={true} />}
           <Tray tray={tray} />
+          {activeOrder && (
+            <div className="order-container">
+              <Order 
+                order={activeOrder} 
+                isActive={true} 
+                timeRemaining={timeRemaining}
+                currentLevel={currentLevel} 
+              />
+            </div>
+          )}
         </div>
 
-        <button className="serve-button" onClick={handleServeOrder}>
-            SERVE ORDER
-        </button>
+        <Ingredients onSelect={updateTray} tray={tray} level={currentLevel} />
 
-        {/* Ingredients */}
-        <Ingredients
-          tray={tray}
-          onSelect={updateTray}
-          availableIngredients={activeIngredients}
-        />
+        {/* Use the destructured feedback directly */}
+        {feedback && <FeedbackToast feedback={feedback} />}
 
-          {/* feedback  */}
-        <FeedbackToast feedback={feedback} />
-
-        {/* Bottom actions */}
         <div className="bottom-actions">
+          <button className="serve-button" onClick={handleServeOrder}>
+            SERVE ORDER
+          </button>
           <button className="close-button-outline" onClick={handleCloseShop}>
             Close Shop
           </button>
         </div>
-
       </div>
     </PageContainer>
   );
