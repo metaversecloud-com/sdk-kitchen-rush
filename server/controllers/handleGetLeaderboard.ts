@@ -9,9 +9,7 @@ export const handleGetLeaderboard = async (req: Request, res: Response) => {
     const droppedAsset = await getDroppedAsset(credentials);
     await droppedAsset.fetchDataObject();
 
-    const leaderboardData = (
-      droppedAsset.dataObject as { leaderboard?: Record<string, string> }
-    )?.leaderboard ?? {};
+    const leaderboardData = droppedAsset.dataObject?.leaderboard ?? {};
 
     const leaderboard = parseLeaderboard(leaderboardData);
 

@@ -1,7 +1,5 @@
 import { Credentials } from "../types/Credentials";
 
-const MAX_LEADERBOARD_ENTRIES = 25;
-
 export type LeaderboardEntry = {
   profileId: string;
   displayName: string;
@@ -23,7 +21,7 @@ export const parseLeaderboard = (
     });
   }
 
-  return entries.sort((a, b) => b.score - a.score);
+  return entries.sort((a, b) => b.score - a.score).slice(0, 25);
 };
 
 export const updateLeaderboard = async ({
@@ -39,50 +37,10 @@ export const updateLeaderboard = async ({
   try {
     const { displayName, profileId, urlSlug } = credentials;
 
-    const leaderboardData = (
-      droppedAsset.dataObject as { leaderboard?: Record<string, string> }
-    )?.leaderboard ?? {};
-
-    // Only update if new score is better than existing
-    if (leaderboardData[profileId]) {
-      const [, existingScoreStr] = leaderboardData[profileId].split("|");
-      const existingScore = parseInt(existingScoreStr) || 0;
-      if (existingScore >= score) return;
-    }
-
-    // Update entry
-    leaderboardData[profileId] = `${displayName}|${score}`;
-
-    // Enforce top 25
-    const sorted = parseLeaderboard(leaderboardData);
-    const trimmed = sorted.slice(0, MAX_LEADERBOARD_ENTRIES);
-    const trimmedData: Record<string, string> = {};
-    for (const entry of trimmed) {
-      trimmedData[entry.profileId] = `${entry.displayName}|${entry.score}`;
-    }
-
-    if ((droppedAsset.dataObject as { leaderboard?: Record<string, string> })?.leaderboard) {
-      await droppedAsset.updateDataObject(
-        { leaderboard: trimmedData },
-        {
-          lock: {
-            lockId: `leaderboard-${profileId}`,
-            releaseLock: true,
-          },
-          analytics: [{ analyticName: "leaderboard_update", profileId, uniqueKey: profileId, urlSlug }],
-        }
-      );
-    } else {
-      await droppedAsset.updateDataObject(
-        { leaderboard: trimmedData },
-        {
-          lock: {
-            lockId: `leaderboard-${profileId}`,
-            releaseLock: true,
-          }
-        }
-      );
-    }
+   await droppedAsset.updateDataObject(
+    { leaderboard: { [profileId]: `${displayName}|${score}` } },
+    { lock: { lockId: `leaderboard-${profileId}`, releaseLock: true } }
+  );
   } catch (error) {
     return error as Error;
   }
