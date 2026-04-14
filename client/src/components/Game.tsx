@@ -6,12 +6,18 @@ import PageContainer from "./PageContainer";
 import Order from "./Order";
 import Ingredients from "./Ingredients";
 import Tray from "./Tray";
+import FeedbackToast from "./FeedbackToast"
+
 
 // Hooks & Config
 import useOrderManager from "../hooks/useOrderManager";
 import { levelConfig } from "../config/levelConfig";
 
 import "../styles/Game.css";
+
+// types
+import { Feedback } from '../types/Feedback'
+
 
 const Game = () => {
   const navigate = useNavigate();
@@ -51,6 +57,7 @@ const Game = () => {
     score,
     tray,
     streak,
+    feedback,
     handleServeOrder,
     handleViewOrder,
     handleCloseShop,
@@ -59,8 +66,12 @@ const Game = () => {
     advance,
     updateTray,
     clearTray,
+    ordersServed,
     timeRemaining,
-  } = orderManager;
+  } = useOrderManager(
+    () => navigate("/game-over", { state: { score, ordersServed } }),
+    handleLevelComplete
+  );
 
   // Load orders when level changes
 useEffect(() => {
@@ -76,49 +87,52 @@ useEffect(() => {
   // Use the ingredients from our config object
   const activeIngredients = config.ingredients;
 
-  return (
+      return (
     <PageContainer isLoading={false}>
       <div className="game-screen-wrapper">
-          {/* 1. THE HUD */}
-          <div className="hud">
-            {/* Change currentLevel.title to config.title */}
-            <div className="hud-item"><span className="hud-label">Level:</span> {config.title}</div>
-            <div className="hud-item"><span className="hud-label">Score:</span> {score}</div>
-            <div className="hud-item"><span className="hud-label">Streak:</span> {streak}</div>
-            <div className="hud-item">⏱️ {timeRemaining}s</div>
-            <div className="hud-item">😡 {angryCustomerCount}/5</div>
-          </div>
-
-          {/* 2. THE PLAY AREA: Tray is center, Order is top-right */}
-          <div className="order-tray-row">
-            <Tray tray={tray} />
-            
-            {activeOrder && (
-              <div className="order-container">
-                <Order 
-                  order={activeOrder} 
-                  isActive={true} 
-                  timeRemaining={timeRemaining}
-                  currentLevel={currentLevel} // CRITICAL: Fixes flavor display
-                />
-              </div>
-            )}
-          </div>
-
-          {/* 3. INGREDIENTS */}
-          <Ingredients onSelect={updateTray} currentTray={tray} level={currentLevel} />
-
-          {/* 4. ACTION BUTTONS */}
-          <div className="bottom-actions">
-            <button className="serve-button" onClick={handleServeOrder}>
-              SERVE ORDER
-            </button>
-            <button className="close-button-outline" onClick={handleCloseShop}>
-              Close Shop
-            </button>
-          </div>
+        {/* 1. THE HUD */}
+        <div className="hud">
+          <div className="hud-item"><span className="hud-label">Level:</span> {config.title}</div>
+          <div className="hud-item"><span className="hud-label">Score:</span> {score}</div>
+          <div className="hud-item"><span className="hud-label">Streak:</span> {streak}</div>
+          <div className="hud-item">⏱️ {timeRemaining}s</div>
+          <div className="hud-item">😡 {angryCustomerCount}/5</div>
         </div>
-      </PageContainer>
+
+        {/* 2. THE PLAY AREA: Tray is center, Order is top-right */}
+        <div className="order-tray-row">
+          <Tray tray={tray} />
+          
+          {activeOrder && (
+            <div className="order-container">
+              <Order 
+                order={activeOrder} 
+                isActive={true} 
+                timeRemaining={timeRemaining}
+                currentLevel={currentLevel} 
+              />
+            </div>
+          )}
+        </div>
+
+        {/* 3. INGREDIENTS */}
+        <Ingredients onSelect={updateTray} currentTray={tray} level={currentLevel} />
+
+        {/* 4. FEEDBACK (The new stuff from dev) */}
+        {/* Make sure 'feedback' is destructured from orderManager at the top! */}
+        {orderManager.feedback && <FeedbackToast feedback={orderManager.feedback} />}
+
+        {/* 5. ACTION BUTTONS */}
+        <div className="bottom-actions">
+          <button className="serve-button" onClick={handleServeOrder}>
+            SERVE ORDER
+          </button>
+          <button className="close-button-outline" onClick={handleCloseShop}>
+            Close Shop
+          </button>
+        </div>
+      </div>
+    </PageContainer>
   );
 };
 
