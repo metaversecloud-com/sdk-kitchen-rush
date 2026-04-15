@@ -126,9 +126,12 @@ const useOrderManager = (
       // Success
       const newTotal = totalServed + 1;
       setTotalServed(newTotal);
-      setStreak(prev => prev + 1);
+      const newStreak = streak + 1;
+      setStreak(newStreak);
+      servedRef.current = newTotal;
+      // setStreak(prev => prev + 1);
       
-      const speedBonus = getSpeedBonus(timeRemaining, activeOrder?.timeLimit || 10000);
+      const speedBonus = getSpeedBonus(timeRemaining * 1000, activeOrder?.timeLimit || 10000);
       const points = (BASE_POINTS * getStreakMultiplier(streak)) + speedBonus;
       setScore(prev => prev + points);
       
@@ -140,7 +143,7 @@ const useOrderManager = (
         // Stop timers before navigating
         clearTimeout(timerRef.current);
         clearInterval(timerIntervalRef.current);
-        onLevelComplete(score + points, angryCustomerCount);
+        onLevelComplete(scoreRef.current + points, angryCustomerCount);
       } else {
         advance();
       }

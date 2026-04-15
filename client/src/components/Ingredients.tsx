@@ -60,7 +60,7 @@ const Ingredients = ({ tray, onSelect, level }: IngredientsProps) => {
   if (!config || !tray) return null;
 
   return (
-    <div className="ingredients-grid">
+    <div className="ingredients-container">
       {Object.entries(config.ingredients).map(([category, options]) => {
         if (!options || (options as string[]).length === 0) return null;
 
