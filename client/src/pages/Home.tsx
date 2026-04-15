@@ -6,10 +6,9 @@ import { PageContainer } from "@/components";
 
 // context
 import { GlobalDispatchContext, GlobalStateContext } from "@/context/GlobalContext";
-import { ErrorType } from "@/context/types";
 
-// utils
-import { backendAPI, setErrorMessage, setGameState } from "@/utils";
+// styles
+import "../styles//Home.css";
 
 export const Home = () => {
   const dispatch = useContext(GlobalDispatchContext);
@@ -21,70 +20,91 @@ export const Home = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // TEMP: skip backend while building UI
     setIsLoading(false);
   }, []);
 
- const handleStart = () => {
-  navigate("/level-start/1");
-};
+  const handleStart = () => {
+    navigate("/level-start/1");
+  };
 
   return (
     <PageContainer isLoading={isLoading} headerText="Kitchen Rush">
-      <div className="flex flex-col items-center justify-center w-full text-center gap-6 mt-6">
-        
-        {/* Game Image */}
-        {imgSrc ? (
-          <img
-            className="w-60 h-40 object-cover rounded-xl"
-            alt="Kitchen Rush"
-            src={imgSrc}
-          />
-        ) : (
-          <div className="w-60 h-40 bg-gray-300 rounded-xl flex items-center justify-center">
-            Game Image
+      <div className="home-screen">
+        <div className="home-card">
+          <div className="home-top">
+            <div className="home-badge">☕ Coffee Game</div>
+            <h1 className="home-title">Kitchen Rush</h1>
+            <p className="home-subtitle">
+              Make drinks fast, keep customers happy, and build your streak.
+            </p>
           </div>
-        )}
 
-        {/* Description */}
-        <div className="max-w-md text-left space-y-3">
-          <p className="mb-3 font-semibold">
-              Welcome to Kitchen Rush! 🍽️
-            </p>
-            
-            <p className="mb-4">
-              Make coffee for your customers before time runs out!
-            </p>
+          {/* game image */}
+          <div className="home-image-wrap">
+            {imgSrc ? (
+              <img
+                className="home-image"
+                alt="Kitchen Rush"
+                src={imgSrc}
+              />
+            ) : (
+              <div className="home-image home-image-placeholder">
+                <span>☕</span>
+              </div>
+            )}
+          </div>
 
-            <p className="font-semibold">How to play:</p>
-            <ul className="list-disc ml-6 mb-4 space-y-1">
-              <li>👀 Look at the order</li>
-              <li>🥤 Pick the right size, temperature, and milk</li>
-              <li>✅ Press <strong>Serve</strong> when you're ready</li>
-            </ul>
+            {/* instructions */}
+          <div className="home-content">
+            <div className="info-card">
+              <h2>How to Play</h2>
+              <div className="info-list">
+                <div className="info-item">
+                  <span className="info-icon">👀</span>
+                  <span>Check the customer’s order</span>
+                </div>
+                <div className="info-item">
+                  <span className="info-icon">🥤</span>
+                  <span>Pick the right size, temperature, and milk</span>
+                </div>
+                <div className="info-item">
+                  <span className="info-icon">✅</span>
+                  <span>Press <strong>Serve</strong> when the tray is ready</span>
+                </div>
+              </div>
+            </div>
 
-            <p className="font-semibold">Be careful!</p>
-            <ul className="list-disc ml-6 mb-4 space-y-1">
-              <li>❌ Wrong order or too slow = 😠 sad face</li>
-              <li>😠 5 sad faces = Game Over</li>
-            </ul>
+            <div className="info-card warning-card">
+              <h2>Watch Out</h2>
+              <div className="info-list">
+                <div className="info-item">
+                  <span className="info-icon">⏱️</span>
+                  <span>Run out of time and customers get upset</span>
+                </div>
+                <div className="info-item">
+                  <span className="info-icon">❌</span>
+                  <span>Wrong orders also cost you</span>
+                </div>
+                <div className="info-item">
+                  <span className="info-icon">😠</span>
+                  <span>5 angry customers = game over</span>
+                </div>
+              </div>
+            </div>
 
-            <p className="mb-2">
-              🔥 Get streaks for bonus points!
-            </p>
-            
-            <p className="font-bold text-center text-left">
-              Ready to play? Let’s go! 🎉
-          </p>
+            <div className="streak-box">
+              🔥 Build streaks for bonus points
+            </div>
+          </div>
+
+            {/* start button */}
+          <div className="home-actions">
+            <button onClick={handleStart} className="start-button">
+              Start Game
+            </button>
+            <p className="home-footer-text">Ready to serve? Let’s go.</p>
+          </div>
         </div>
-
-        {/* Start Button */}
-        <button
-          onClick={handleStart}
-          className="bg-blue-300 px-6 py-3 rounded-xl text-lg"
-        >
-          Start Game
-        </button>
       </div>
     </PageContainer>
   );

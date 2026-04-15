@@ -128,6 +128,7 @@ const useOrderManager = (
       setTotalServed(newTotal);
       const newStreak = streak + 1;
       setStreak(newStreak);
+      servedRef.current = newTotal;
       // setStreak(prev => prev + 1);
       
       const speedBonus = getSpeedBonus(timeRemaining * 1000, activeOrder?.timeLimit || 10000);

@@ -3,7 +3,7 @@ import { errorHandler, getCredentials, getDroppedAsset } from "@utils/index.js";
 import { updateLeaderboard } from "@utils/leaderboardUtils.js";
 
 export const handleUpdateLeaderboard = async (req: Request, res: Response) => {
-  console.log("handleUpdateLeaderboard called", req.body, req.query);
+  // console.log("handleUpdateLeaderboard called", req.body, req.query);
   try {
     const credentials = getCredentials(req.query);
     const { score } = req.body;
