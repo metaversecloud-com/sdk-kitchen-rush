@@ -28,6 +28,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use("/api", router);
 
+app.get("/", (req, res) => {
+  res.json({ message: "Hello from server!" });
+});
+
 if (process.env.NODE_ENV === "development") {
   const corsOptions = {
     origin: ["http://localhost:3000", "http://localhost:5173"],
