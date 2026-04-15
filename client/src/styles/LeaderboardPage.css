@@ -1,0 +1,49 @@
+.reset-button {
+    background: #4a90e2;
+    color: white;
+    padding: 14px 0;
+    border-radius: 8px;
+    border: none;
+    font-weight: bold;
+    font-size: 0.8rem;
+    width: 100%;
+    cursor: pointer;
+    -webkit-border-radius: 8px;
+    -moz-border-radius: 8px;
+    -ms-border-radius: 8px;
+    -o-border-radius: 8px;
+}
+
+.back-button {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+
+    background: #4a90e2;
+    color: white;
+
+    padding: 6px 10px;  /* smaller */
+    border-radius: 6px;
+    border: none;
+
+    font-weight: bold;
+    font-size: 0.8rem; /* smaller text */
+    cursor: pointer;
+
+    width: auto;  
+    height: auto;
+    -webkit-border-radius: 8px;
+    -moz-border-radius: 8px;
+    -ms-border-radius: 8px;
+    -o-border-radius: 8px;
+}
+
+
+.page {
+  max-width: 420px; /* keeps everything tight */
+  margin: 0 auto;  /* centers the whole page */
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* space between elements */
+}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { backendAPI } from "@/utils";
+import PageContainer from "./PageContainer";
 
 type LeaderboardEntry = {
   profileId: string;
@@ -25,6 +26,10 @@ const Leaderboard = () => {
 
   return (
     <div className="items-center">
+      <div className="admin-button"> <PageContainer isLoading={false}>
+          <div> </div>
+      </PageContainer>
+           </div>
       <h2 className="h2">🏆 Top 25</h2>
       {leaderboard.length === 0 ? (
         <p className="p2">No scores yet. Be the first!</p>

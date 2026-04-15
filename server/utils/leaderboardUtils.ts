@@ -37,6 +37,14 @@ export const updateLeaderboard = async ({
   try {
     const { displayName, profileId, urlSlug } = credentials;
 
+    // Check existing score first
+    const existingEntry = droppedAsset.dataObject?.leaderboard?.[profileId];
+    if (existingEntry) {
+      const [, existingScoreStr] = existingEntry.split("|");
+      const existingScore = parseInt(existingScoreStr) || 0;
+      if (existingScore >= score) return; // don't update if not better
+    }
+    
    await droppedAsset.updateDataObject(
     { leaderboard: { [profileId]: `${displayName}|${score}` } },
     { lock: { lockId: `leaderboard-${profileId}`, releaseLock: true } }

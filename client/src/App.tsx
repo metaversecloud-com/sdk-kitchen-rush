@@ -2,7 +2,7 @@ import { useContext, useEffect, useMemo, useState } from "react";
 import { Route, Routes, useNavigate, useSearchParams } from "react-router-dom";
 
 // pages
-import { Error, Home, GameOver, LevelIntermission} from "./pages";
+import { Error, Home, GameOver, LevelIntermission, LeaderboardPage} from "./pages";
 
 //config
 import { getLevelOrders } from "./config/orderConfig";
@@ -95,6 +95,7 @@ const App = () => {
   <Route path="/game/:levelId" element={<Game />} /> 
   
   <Route path="/game-over" element={<GameOver />} />
+  <Route path="/leaderboard-page" element={<LeaderboardPage assetId={interactiveParams.assetId} />} /> 
   <Route path="*" element={<Error />} />
 </Routes>
   );
