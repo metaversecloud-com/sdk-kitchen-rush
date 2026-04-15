@@ -1,8 +1,10 @@
-FROM --platform=linux/arm64 node:20.10-alpine3.19
+FROM --platform=linux/arm64 node:22-alpine
 WORKDIR /app
-ADD server ./server
-ADD client ./client
 ADD package* ./
 ADD node_modules ./node_modules
+ADD server/dist ./server/dist
+ADD server/package* ./server/
+ADD server/node_modules ./server/node_modules
+ADD client/build ./client/build
 EXPOSE 3000
 ENTRYPOINT [ "npm", "start" ]
