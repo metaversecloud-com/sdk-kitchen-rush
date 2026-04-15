@@ -46,7 +46,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20.10
+          node-version: 20.19.0
           cache: 'npm'
       - run: git config --global user.email devops@topia.io
       - run: git config --global user.name Devops
