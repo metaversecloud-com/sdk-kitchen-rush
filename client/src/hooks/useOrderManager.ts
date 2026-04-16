@@ -6,6 +6,7 @@ import { getStreakMultiplier } from "../utils/streakMultiplier"
 import { useState, useEffect, useRef } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import { levelConfig } from "../config/levelConfig";
+import { trackEvent } from "../utils/analyticsAPI";
 
 import { 
   MAX_ANGRY_CUSTOMERS,
@@ -23,7 +24,9 @@ const useOrderManager = (
 
   // STATE
   const [score, setScore] = useState<number>(state?.inheritedScore || 0);
-  const [angryCustomerCount, setAngryCustomerCount] = useState<number>(state?.inheritedAngry || 0);
+  const [angryCustomerCount, setAngryCustomerCount] = useState<number>(() => {
+    return parseInt(sessionStorage.getItem('angryCount') || '0') || state?.inheritedAngry || 0;
+  });
   const [activeOrder, setActiveOrder] = useState<Order | null>(null);
   const [sourceQueue, setSourceQueue] = useState<Order[]>([]);
   
@@ -37,7 +40,9 @@ const useOrderManager = (
   });
 
   const [streak, setStreak] = useState<number>(0);
-  const [totalServed, setTotalServed] = useState(0);
+  const [totalServed, setTotalServed] = useState<number>(() => {
+    return parseInt(sessionStorage.getItem('ordersServed') || '0');
+  });
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
 
@@ -48,11 +53,23 @@ const useOrderManager = (
   const servedRef = useRef(totalServed);
   const angryRef = useRef(angryCustomerCount);
 
+  // constants to track milestones for analytics
+  const STREAK_MILESTONES = [3, 5, 10];
+  const MAX_LEVEL = 4;
+
   // Sync refs so callbacks always have the fresh value
   useEffect(() => { scoreRef.current = score; }, [score]);
   useEffect(() => { servedRef.current = totalServed; }, [totalServed]);
   useEffect(() => { angryRef.current = angryCustomerCount; }, [angryCustomerCount]);
 
+  // keeps total served in sync
+  useEffect(() => {
+    sessionStorage.setItem('ordersServed', totalServed.toString());
+  }, [totalServed]);
+
+  // keeps angry customers in sync
+  useEffect(() => { sessionStorage.setItem('angryCount', angryCustomerCount.toString()); }, [angryCustomerCount]);
+  
   const triggerFeedback = (message: string, type: FeedbackType): void => {
     setFeedback({ message, type });
     setTimeout(() => setFeedback(null), 2000);
@@ -95,6 +112,9 @@ const useOrderManager = (
   };
 
   const advance = (): void => {
+    if (totalServed === 0 && angryCustomerCount === 0) {
+      trackEvent("gamesStarted");
+    }
     const nextOrder = generateRandomOrder(currentLevel);
     setActiveOrder(nextOrder);
     const config = levelConfig[currentLevel as keyof typeof levelConfig];
@@ -117,16 +137,28 @@ const useOrderManager = (
   };
 
   const handleTimeout = (): void => {
-    triggerFeedback("Order expired!", "timeout");
+    trackEvent("ordersTimedout");
     handleOrderFailure("Customer got tired of waiting!");
+  };
+
+  const handleManualCloseShop = (): void => {
+    trackEvent("gamesEndedEarly");
+    handleCloseShop();
   };
 
   const handleServeOrder = () => {
     if (compareIngredients(tray, activeOrder)) {
+      // track orders served
+      trackEvent("correctOrdersServed");
       // Success
       const newTotal = totalServed + 1;
       setTotalServed(newTotal);
+
       const newStreak = streak + 1;
+       if (STREAK_MILESTONES.includes(newStreak)) {
+        trackEvent("streakMilestonesReached");
+      }
+     
       setStreak(newStreak);
       servedRef.current = newTotal;
       // setStreak(prev => prev + 1);
@@ -148,6 +180,7 @@ const useOrderManager = (
         advance();
       }
     } else {
+      trackEvent("wrongOrdersServed");
       handleOrderFailure();
     }
   };
@@ -155,6 +188,8 @@ const useOrderManager = (
   const handleCloseShop = (): void => {
     clearTimeout(timerRef.current);
     clearInterval(timerIntervalRef.current);
+    sessionStorage.removeItem('ordersServed');
+    sessionStorage.removeItem('angryCount');
     navigate('/game-over', { 
       state: { 
         score: scoreRef.current, 

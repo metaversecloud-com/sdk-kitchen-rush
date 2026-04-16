@@ -13,10 +13,12 @@ export const LeaderboardPage = ({ assetId }: { assetId: string }) => {
 
   return (
     <PageContainer isLoading={false}>
-        <button className="back-button" onClick={handleGoBack}> Go back </button>
-        <div className="page">
-            <div className="leaderboard"> <Leaderboard /> </div>
-            <button className="reset-button"> <ResetLeaderboardButton assetId={assetId}/> </button>
+      <div className="leaderboard-page-wrapper">
+          <div className="page">
+            <button className="back-button" onClick={handleGoBack}> Go back </button>
+              <div className="leaderboard"> <Leaderboard /> </div>
+              <button className="reset-button"> <ResetLeaderboardButton assetId={assetId}/> </button>
+          </div>
         </div>
     </PageContainer>
   )

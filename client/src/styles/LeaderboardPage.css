@@ -1,49 +1,32 @@
-.reset-button {
-    background: #4a90e2;
-    color: white;
-    padding: 14px 0;
-    border-radius: 8px;
-    border: none;
-    font-weight: bold;
-    font-size: 0.8rem;
-    width: 100%;
-    cursor: pointer;
-    -webkit-border-radius: 8px;
-    -moz-border-radius: 8px;
-    -ms-border-radius: 8px;
-    -o-border-radius: 8px;
+.leaderboard-page-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.page {
+  max-width: 360px;
+  width: 100%;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 .back-button {
-    position: fixed;
-    top: 12px;
-    left: 12px;
-
-    background: #4a90e2;
-    color: white;
-
-    padding: 6px 10px;  /* smaller */
-    border-radius: 6px;
-    border: none;
-
-    font-weight: bold;
-    font-size: 0.8rem; /* smaller text */
-    cursor: pointer;
-
-    width: auto;  
-    height: auto;
-    -webkit-border-radius: 8px;
-    -moz-border-radius: 8px;
-    -ms-border-radius: 8px;
-    -o-border-radius: 8px;
-}
-
-
-.page {
-  max-width: 420px; /* keeps everything tight */
-  margin: 0 auto;  /* centers the whole page */
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px; /* space between elements */
+  align-self: flex-start; /* sits left inside the card */
+  background: #4a90e2;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  font-weight: bold;
+  font-size: 0.8rem;
+  cursor: pointer;
 }

@@ -1,33 +1,30 @@
 .ingredients-container {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
   width: 100%;
   max-width: 260px;
   margin: 0 auto;
 }
 
 .ingredient-row {
-  display: row;
-  flex-direction: space-between;
-  align-items: center;
-   gap: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
 }
 
 .category-label {
-  font-size: 0.6rem;
+  font-size: 0.5rem;
   text-transform: uppercase;
   color: #888;
-  margin: 0px;
+  margin: 0;
   font-weight: bold;
-  width: 60px;           /* keeps row short */
-  text-align: right;
 }
 
 .options-grid {
   display: flex;
-  flex-wrap: wrap; /* Forces buttons side-by-side */
-  justify-content: flex-start;
+  flex-wrap: wrap;
   gap: 4px;
   width: 100%;
 }
@@ -38,33 +35,15 @@
   background: white;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   transition: all 0.2s;
-  flex: 1; /* Makes all buttons in a row the same width */
+  flex: 0 0 auto;
   max-width: 70px;
   display: flex;
-  align-items: center;     /* centers vertically */
-  justify-content: center; /* centers horizontally */
-}
-
-.option-btn.selected {
-  background: #ebf5ff;
-  border-color: #4a90e2;
-  color: #4a90e2;
-  font-weight: bold;
-}
-
-.option-btn.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  background: #f9f9f9;
-}
-
-.ingredient-icon {
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
-  margin-right: 4px;
+  align-items: center;
   justify-content: center;
-  align-items: center; 
+}
+
+.ingredient-row:last-child {
+  grid-column: 1 / -1;
 }
