@@ -55,12 +55,10 @@ const Game = () => {
     streak,
     feedback,
     handleServeOrder,
-    handleViewOrder,
-    handleCloseShop,
+    handleManualCloseShop,
     advance,
     updateTray,
     clearTray,
-    ordersServed,
     timeRemaining,
   } = useOrderManager(
     () => navigate("/game-over", { state: { score, ordersServed } }),
@@ -110,7 +108,7 @@ const Game = () => {
           <button className="serve-button" onClick={handleServeOrder}>
             SERVE ORDER
           </button>
-          <button className="close-button-outline" onClick={handleCloseShop}>
+          <button className="close-button-outline" onClick={handleManualCloseShop}>
             Close Shop
           </button>
         </div>

@@ -55,20 +55,11 @@ const useOrderManager = (
 
   // constants to track milestones for analytics
   const STREAK_MILESTONES = [3, 5, 10];
-  const MAX_LEVEL = 4;
 
   // Sync refs so callbacks always have the fresh value
   useEffect(() => { scoreRef.current = score; }, [score]);
   useEffect(() => { servedRef.current = totalServed; }, [totalServed]);
   useEffect(() => { angryRef.current = angryCustomerCount; }, [angryCustomerCount]);
-
-  // keeps total served in sync
-  useEffect(() => {
-    sessionStorage.setItem('ordersServed', totalServed.toString());
-  }, [totalServed]);
-
-  // keeps angry customers in sync
-  useEffect(() => { sessionStorage.setItem('angryCount', angryCustomerCount.toString()); }, [angryCustomerCount]);
   
   const triggerFeedback = (message: string, type: FeedbackType): void => {
     setFeedback({ message, type });
@@ -124,12 +115,14 @@ const useOrderManager = (
   const handleOrderFailure = (message: string = "Oops, wrong order!"): void => {
     const newCount = angryCustomerCount + 1;
     setAngryCustomerCount(newCount);
+    sessionStorage.setItem("angryCount", newCount.toString());
     setScore(prev => Math.max(0, prev - PENALTY));
     setStreak(0);
     clearTray();
     triggerFeedback(message, "error");
 
     if (newCount >= MAX_ANGRY_CUSTOMERS) {
+      trackEvent("gamesCompleted");
       handleCloseShop();
     } else {
       advance();
@@ -141,6 +134,7 @@ const useOrderManager = (
     handleOrderFailure("Customer got tired of waiting!");
   };
 
+  // handler to manually close shop
   const handleManualCloseShop = (): void => {
     trackEvent("gamesEndedEarly");
     handleCloseShop();
@@ -153,6 +147,7 @@ const useOrderManager = (
       // Success
       const newTotal = totalServed + 1;
       setTotalServed(newTotal);
+      sessionStorage.setItem("ordersServed", newTotal.toString());
 
       const newStreak = streak + 1;
        if (STREAK_MILESTONES.includes(newStreak)) {
@@ -242,7 +237,8 @@ const useOrderManager = (
     handleCloseShop,
     updateTray,
     advance,
-    clearTray
+    clearTray,
+    handleManualCloseShop,
   };
 };
 
