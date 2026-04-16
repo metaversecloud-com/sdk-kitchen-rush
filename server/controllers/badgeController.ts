@@ -1,34 +1,35 @@
 // server/controllers/badgeController.ts
 import { Request, Response } from "express";
-import { Visitor } from "../utils/topiaInit.js";
+import { getVisitor } from "../utils/getVisitor.js"; // Import your project's existing helper
 import { getCachedInventoryItems } from "../utils/inventoryCache.js";
 import { checkBadgeEligibility } from "../utils/badgeLogic.js";
 
 export const handleBadgeCheck = async (req: Request, res: Response) => {
   try {
     const { stats, wasCorrect } = req.body;
-    const { urlSlug, visitorId } = req.query;
+    
+    // In your project, credentials come from the query
+    const credentials = req.query as any;
 
-    if (!visitorId || !urlSlug) {
+    if (!credentials.visitorId || !credentials.urlSlug) {
       return res.status(400).json({ error: "Missing visitorId or urlSlug" });
     }
 
-    // 1. Prepare the Visitor instance
-    const currentVisitor = Visitor.create(Number(visitorId), urlSlug as string);
+    // 1. Use your project's helper to get the visitor and their inventory
+    // This handles the "Property getInventory does not exist" error for you!
+    const { visitor, visitorInventory } = await getVisitor(credentials);
 
-    // 2. Fetch the Visitor's current inventory so we don't double-grant
-    // In your SDK, this is usually .getInventory() or .fetchInventory()
-    const visitorInventory = await currentVisitor.getInventory();
+    // 2. Convert visitorInventory (object) to an array for your badge logic
+    const inventoryArray = Object.values(visitorInventory);
 
     // 3. Determine which badges they qualify for
-    // Pass the visitor's current items so logic can filter out existing ones
-    const eligibleBadgeNames = checkBadgeEligibility({ ...stats, wasCorrect }, visitorInventory);
+    const eligibleBadgeNames = checkBadgeEligibility({ ...stats, wasCorrect }, inventoryArray);
 
     if (eligibleBadgeNames.length === 0) {
       return res.status(200).json({ success: true, awarded: [] });
     }
 
-    // 4. Fetch all available Badge Assets from the Ecosystem cache
+    // 4. Fetch Ecosystem Assets to get the assetIds needed for granting
     const allItems = await getCachedInventoryItems();
     const awardedThisTurn: string[] = [];
 
@@ -38,12 +39,9 @@ export const handleBadgeCheck = async (req: Request, res: Response) => {
       
       if (badgeAsset) {
         try {
-          /** * FIX: grantInventoryItem usually takes (assetId, count) 
-           * or (assetId, { count: 1 }) 
-           */
+          // Use the visitor instance provided by your getVisitor helper
           const assetId = badgeAsset.assetId || badgeAsset.id;
-          await currentVisitor.grantInventoryItem(assetId, 1);
-          
+          await visitor.grantInventoryItem(assetId, 1);
           awardedThisTurn.push(badgeName);
         } catch (grantError) {
           console.error(`Failed to grant ${badgeName}:`, grantError);
