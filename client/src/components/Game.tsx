@@ -7,6 +7,7 @@ import Order from "./Order";
 import Ingredients from "./Ingredients";
 import Tray from "./Tray";
 import FeedbackToast from "./FeedbackToast"
+import BadgeToast from './BadgeToast';
 
 // Hooks & Config
 import useOrderManager from "../hooks/useOrderManager";
@@ -24,6 +25,7 @@ const Game = () => {
   
   const currentLevel = Number(levelId) || 1;
   const config = levelConfig[currentLevel as keyof typeof levelConfig];
+  const [activeBadge, setActiveBadge] = useState<{name: string, icon: string} | null>(null);
 
   // 1. Define the completion logic first
   const handleLevelComplete = (scoreAtEndOfLevel: number, angryAtEndOfLevel: number) => {
@@ -46,6 +48,29 @@ const Game = () => {
     navigate('/leaderboard-page')
   }
 
+  const getBadgeIcon = (name: string) => {
+  // Convert "First Order Up" to "first_order_up.png" or similar
+  const fileName = name.toLowerCase().replace(/\s+/g, '_');
+  try {
+    return require(`../assets/badges/${fileName}.png`);
+  } catch {
+    return require(`../assets/badges/default_badge.png`);
+  }
+};
+
+// Update your handleServe/Sync logic to call this
+const showBadgePopup = (name: string) => {
+  setActiveBadge({ 
+    name, 
+    icon: getBadgeIcon(name) 
+  });
+  
+  // Hide it after 4 seconds
+  setTimeout(() => {
+    setActiveBadge(null);
+  }, 4000);
+};
+
   // 2. Single hook call - destructure everything here
   const {
     activeOrder,
@@ -65,6 +90,7 @@ const Game = () => {
   } = useOrderManager(
     () => navigate("/game-over", { state: { score, ordersServed } }),
     handleLevelComplete,
+    showBadgePopup,
     currentLevel
   );
 
@@ -114,6 +140,15 @@ const Game = () => {
             Close Shop
           </button>
         </div>
+
+          {activeBadge && (
+            <BadgeToast 
+              badgeName={activeBadge.name} 
+              iconPath={activeBadge.icon} 
+              onClose={() => setActiveBadge(null)} 
+            />
+          )}
+
       </div>
     </PageContainer>
   );

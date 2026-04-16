@@ -15,7 +15,8 @@ import {
 
 const useOrderManager = (
   onGameOver: () => void,
-  onLevelComplete: (finalScore: number, finalAngryCount: number) => void, 
+  onLevelComplete: (finalScore: number, finalAngryCount: number) => void,
+  onBadgeUnlocked: (name: string) => void,
   currentLevel: number 
 ) => {
   const navigate = useNavigate();
@@ -228,8 +229,7 @@ const syncBadges = async (updatedStats: any, wasCorrect: boolean) => {
 
     if (data.awarded && data.awarded.length > 0) {
       data.awarded.forEach((badgeName: string) => {
-        // Simple alert for now, you can make this a fancy popup later!
-        alert(`🏆 Achievement Unlocked: ${badgeName}`);
+        onBadgeUnlocked(badgeName);
       });
     }
   } catch (error) {
