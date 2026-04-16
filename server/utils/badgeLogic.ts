@@ -1,5 +1,3 @@
-import { Order } from "../types/Order";
-
 // server/utils/badgeLogic.ts
 
 export const checkBadgeEligibility = (stats: any, currentInventory: any[]) => {
