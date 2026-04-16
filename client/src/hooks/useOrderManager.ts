@@ -40,6 +40,13 @@ const useOrderManager = (
   const [totalServed, setTotalServed] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
+  
+  const [stats, setStats] = useState({
+  totalCorrect: 0,
+  currentStreak: 0,
+  lastOrderToppingsCount: 0,
+  lastOrderTimeRemaining: 0, // Store as a decimal (e.g., 0.1 for 10%)
+});
 
   // REFS for timers and stale state prevention
   const timerRef = useRef<number | undefined>(undefined);
@@ -121,36 +128,51 @@ const useOrderManager = (
     handleOrderFailure("Customer got tired of waiting!");
   };
 
-  const handleServeOrder = () => {
-    if (compareIngredients(tray, activeOrder)) {
-      // Success
-      const newTotal = totalServed + 1;
-      setTotalServed(newTotal);
-      const newStreak = streak + 1;
-      setStreak(newStreak);
-      servedRef.current = newTotal;
-      // setStreak(prev => prev + 1);
-      
-      const speedBonus = getSpeedBonus(timeRemaining * 1000, activeOrder?.timeLimit || 10000);
-      const points = (BASE_POINTS * getStreakMultiplier(streak)) + speedBonus;
-      setScore(prev => prev + points);
-      
-      clearTray();
-      triggerFeedback(streak + 1 >= 5 ? `🔥 ${streak + 1} Streak!` : "Perfect!", "success");
-
-      const config = levelConfig[currentLevel as keyof typeof levelConfig];
-      if (newTotal >= config.threshold) {
-        // Stop timers before navigating
-        clearTimeout(timerRef.current);
-        clearInterval(timerIntervalRef.current);
-        onLevelComplete(scoreRef.current + points, angryCustomerCount);
-      } else {
-        advance();
-      }
-    } else {
-      handleOrderFailure();
-    }
+const handleServeOrder = () => {
+  const isCorrect = compareIngredients(tray, activeOrder);
+  
+  // Calculate stats for the server
+  const config = levelConfig[currentLevel as keyof typeof levelConfig];
+  const timePercent = timeRemaining / (config.timer / 1000);
+  
+  const newStats = {
+    totalCorrect: isCorrect ? stats.totalCorrect + 1 : stats.totalCorrect,
+    currentStreak: isCorrect ? stats.currentStreak + 1 : 0,
+    lastOrderToppingsCount: tray.toppings?.length || 0,
+    lastOrderTimeRemaining: timePercent,
   };
+
+  // Update local stats state
+  setStats(newStats);
+
+  // Send to server!
+  syncBadges(newStats, isCorrect);
+
+  if (isCorrect) {
+    // ... your existing success logic (score, streak, etc.)
+    const newTotal = totalServed + 1;
+    setTotalServed(newTotal);
+    const newStreak = streak + 1;
+    setStreak(newStreak);
+    
+    const speedBonus = getSpeedBonus(timeRemaining * 1000, activeOrder?.timeLimit || 10000);
+    const points = (BASE_POINTS * getStreakMultiplier(streak)) + speedBonus;
+    setScore(prev => prev + points);
+    
+    clearTray();
+    triggerFeedback(newStreak >= 5 ? `🔥 ${newStreak} Streak!` : "Perfect!", "success");
+
+    if (newTotal >= config.threshold) {
+      clearTimeout(timerRef.current);
+      clearInterval(timerIntervalRef.current);
+      onLevelComplete(scoreRef.current + points, angryCustomerCount);
+    } else {
+      advance();
+    }
+  } else {
+    handleOrderFailure();
+  }
+};
 
   const handleCloseShop = (): void => {
     clearTimeout(timerRef.current);
@@ -187,6 +209,34 @@ const useOrderManager = (
     toppings: []
   });
 
+  // Add this inside useOrderManager but before handleServeOrder
+const syncBadges = async (updatedStats: any, wasCorrect: boolean) => {
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // This calls the route we created in your Express server
+    const response = await fetch(`/api/check-badges?${urlParams.toString()}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        stats: updatedStats,
+        wasCorrect
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.awarded && data.awarded.length > 0) {
+      data.awarded.forEach((badgeName: string) => {
+        // Simple alert for now, you can make this a fancy popup later!
+        alert(`🏆 Achievement Unlocked: ${badgeName}`);
+      });
+    }
+  } catch (error) {
+    console.error("Failed to sync badges:", error);
+  }
+};
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -207,7 +257,8 @@ const useOrderManager = (
     handleCloseShop,
     updateTray,
     advance,
-    clearTray
+    clearTray,
+    syncBadges
   };
 };
 
