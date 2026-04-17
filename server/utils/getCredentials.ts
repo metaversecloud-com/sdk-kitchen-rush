@@ -9,12 +9,8 @@ export const getCredentials = (query: any): Credentials => {
       throw `Missing required body parameters: ${missingFields.join(", ")}`;
     }
 
-    // if (process.env.INTERACTIVE_KEY !== query.interactivePublicKey) {
-    //   throw "Provided public key does not match";
-    // }
-
-    if (query.interactivePublicKey && process.env.INTERACTIVE_KEY !== query.interactivePublicKey) {
-      console.warn("⚠️ Public key mismatch, but proceeding anyway for local dev.");
+    if (process.env.INTERACTIVE_KEY !== query.interactivePublicKey) {
+      throw "Provided public key does not match";
     }
 
     return {

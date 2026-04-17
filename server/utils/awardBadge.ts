@@ -7,18 +7,23 @@ export const awardBadge = async ({ credentials, badgeName }: { credentials: Cred
     // 1. Find the badge in ecosystem
     // const inventoryItems = await getCachedInventoryItems({ credentials });
     // const badge = inventoryItems?.find((item) => item.name === badgeName && item.type === "BADGE");
-
+    const { profileId, assetId, interactiveNonce } = credentials;
     const user = await User.create({
       profileId: credentials.profileId,
-      credentials
+      credentials: {
+      ...credentials,
+      assetId,
+      interactiveNonce
+    }
     });
 
-    // We pass a 'partial' item object with just the name
+    // Pass a 'partial' item object with just the name
     await user.grantInventoryItem({ name: badgeName, type: "BADGE" } as any, 1);
 
     console.log(`Successfully granted ${badgeName} to ${credentials.profileId}`);
     
     return { success: true };
+
     } catch (error) {
         // If it fails (like a 401), we log it but don't let it crash the whole process
         console.error("Utility Error (Direct Grant):", error);

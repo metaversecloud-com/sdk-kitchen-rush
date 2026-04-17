@@ -1,37 +1,47 @@
 import { Request, Response } from "express";
 import { getCredentials } from "../utils/getCredentials.js";
 import { awardBadge } from "../utils/awardBadge.js"; // This fixes "Cannot find name awardBadge"
-import { Visitor } from "../utils/topiaInit.js"; // This fixes "Cannot find name Visitor"
+import { Visitor, World } from "../utils/topiaInit.js"; // This fixes "Cannot find name Visitor"
+import { getVisitor } from "../utils/getVisitor.js";
+import { errorHandler } from "../utils/errorHandler.js";
 
 export const handleAwardBadge = async (req: Request, res: Response) => {
   try {
-    // 1. Get credentials from the query string
+    // 1. Get credentials exactly like Lina
     const credentials = getCredentials(req.query);
-    
-    // ERROR FIX: Cast req.body so TS knows it has badgeName
     const { badgeName } = req.body as { badgeName: string };
 
-    // 2. Execute the award utility
+    // 2. Award the badge
     const result = await awardBadge({ credentials, badgeName });
 
-    // 3. Setup Visitor for feedback
-    // Factory .get returns the instance we need
-    const visitorInstance = await Visitor.get(credentials.visitorId, credentials.urlSlug, { credentials });
+    // 3. Helper to get the visitor and the "world" object
+    // getVisitor likely returns { visitor } where visitor is the instance
+    const { visitor } = await getVisitor(credentials);
     
-    // 4. Fire effects (Fire-and-forget pattern)
-    visitorInstance.fireToast({
-      title: "🎉 Badge Unlocked!",
-      text: `Congratulations! You earned: ${badgeName}`,
-    }).catch(() => {});
+    // Lina's example also shows creating a 'world' instance for global effects
+    const world = World.create(credentials.urlSlug, { credentials });
 
-    visitorInstance.triggerParticle({ name: "confetti_1", duration: 3 }).catch(() => {});
+    // 4. Fire effects using the verified instances
+    await world.fireToast({ 
+      title: "🎉 Badge Unlocked!", 
+      text: `Congratulations! You earned: ${badgeName}` 
+    }).catch(error => errorHandler({ 
+      error, 
+      functionName: "handleAwardBadge", 
+      message: "Error triggering effects or awarding badge" 
+    }));
 
-    console.log(`✅ ${badgeName} awarded to ${credentials.displayName}`);
+    visitor.triggerParticle({ name: "confetti_1", duration: 3 }).catch(() => {});
 
+    console.log(`✅ ${badgeName} awarded!`);
     return res.json(result);
+
   } catch (error) {
-    console.error("AWARD ERROR:", error);
-    // Cast to any to avoid "Expression is not callable" errors on standard Express responses
-    return (res as any).status(500).json({ success: false });
+    return errorHandler({
+      error,
+      functionName: "handleAwardBadge",
+      message: "Failed to award badge or fire effects",
+      req, res
+    });
   }
 };
