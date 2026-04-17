@@ -1,31 +1,73 @@
-// server/utils/inventoryCache.ts
-import { Topia } from "./topiaInit.js"; // Use the initialized Topia instance
-import { Credentials } from "../types/index.js";
+import { Credentials } from "../types";
+import { Ecosystem } from "./topiaInit.js";
+import { standardizeError } from "./standardizeError.js";
+import { InventoryItemInterface } from "@rtsdk/topia";
 
-let cachedItems: any[] = [];
-let lastFetch = 0;
-const CACHE_TTL = 1000 * 60 * 60; // 1 hour cache
+interface CachedInventory {
+  items: InventoryItemInterface[];
+  timestamp: number;
+}
 
-export const getCachedInventoryItems = async (credentials: Credentials) => {
-  const now = Date.now();
-  if (cachedItems.length > 0 && now - lastFetch < CACHE_TTL) {
-    return cachedItems;
-  }
+// Cache duration: 6 hours in milliseconds
+const CACHE_DURATION_MS = 6 * 60 * 60 * 1000;
 
+// In-memory cache
+let inventoryCache: CachedInventory | null = null;
+
+/**
+ * Get ecosystem inventory items with caching
+ * - Fetches from cache if available and not expired
+ * - Refreshes cache if expired or missing
+ * - Can force refresh by passing forceRefresh: true
+ */
+export const getCachedInventoryItems = async ({
+  credentials,
+  forceRefresh = false,
+}: {
+  credentials: Credentials;
+  forceRefresh?: boolean;
+}): Promise<InventoryItemInterface[]> => {
   try {
-    // 1. In this version, you typically access the ecosystem 
-    // through the topia instance using your project's credentials.
-    const topia = new Topia(credentials);
-    const ecosystem = await topia.ecosystem();
-    
-    // 2. Fetch the items from that ecosystem instance
-    const items = await ecosystem.fetchInventoryItems(); 
-    
-    cachedItems = items;
-    lastFetch = now;
-    return cachedItems;
+    const now = Date.now();
+
+    // Check if cache is valid and not expired
+    const isCacheValid = inventoryCache !== null && !forceRefresh && now - inventoryCache.timestamp < CACHE_DURATION_MS;
+
+    if (isCacheValid) {
+      return inventoryCache!.items;
+    }
+
+    // Fetch fresh inventory items
+    console.log("Fetching fresh inventory items from ecosystem");
+    const ecosystem = Ecosystem.create({ credentials });
+    await ecosystem.fetchInventoryItems();
+
+    // Update cache
+    inventoryCache = {
+      items: (ecosystem.inventoryItems as InventoryItemInterface[])
+        .map((item) => ({
+          ...item,
+          metadata: {
+            ...(item.metadata || {}),
+            sortOrder: typeof item.metadata?.sortOrder === "number" ? item.metadata.sortOrder : 0,
+          },
+        }))
+        .sort((a, b) => {
+          const aOrder = a.metadata?.sortOrder ?? 0;
+          const bOrder = b.metadata?.sortOrder ?? 0;
+          return aOrder - bOrder;
+        }),
+      timestamp: now,
+    };
+
+    return inventoryCache.items;
   } catch (error) {
-    console.error("Failed to fetch ecosystem inventory items:", error);
-    return [];
+    // If fetch fails but we have stale cache, return it as fallback
+    if (inventoryCache !== null) {
+      console.warn("Failed to fetch fresh inventory, using stale cache", error);
+      return inventoryCache.items;
+    }
+
+    throw standardizeError(error);
   }
 };

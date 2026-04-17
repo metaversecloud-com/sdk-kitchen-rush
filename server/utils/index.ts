@@ -6,3 +6,4 @@ export * from "./getVersion.js";
 export * from "./getVisitor.js";
 export * from "./standardizeError.js";
 export * from "./topiaInit.js";
+export * from "./awardBadge.js";

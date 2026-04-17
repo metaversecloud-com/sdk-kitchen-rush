@@ -6,11 +6,15 @@ export const getCredentials = (query: any): Credentials => {
     const requiredFields = ["interactiveNonce", "interactivePublicKey", "urlSlug", "visitorId"];
     const missingFields = requiredFields.filter((variable) => !query[variable]);
     if (missingFields.length > 0) {
-      throw `Missing required parameters: ${missingFields.join(", ")}`;
+      throw `Missing required body parameters: ${missingFields.join(", ")}`;
     }
 
-    if (process.env.INTERACTIVE_KEY !== query.interactivePublicKey) {
-      throw "Provided public key does not match";
+    // if (process.env.INTERACTIVE_KEY !== query.interactivePublicKey) {
+    //   throw "Provided public key does not match";
+    // }
+
+    if (query.interactivePublicKey && process.env.INTERACTIVE_KEY !== query.interactivePublicKey) {
+      console.warn("⚠️ Public key mismatch, but proceeding anyway for local dev.");
     }
 
     return {

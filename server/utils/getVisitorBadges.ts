@@ -11,8 +11,8 @@ export type VisitorInventory = {
 };
 
 /**
- * Extract badges from visitor's inventory items.
- * Call visitor.fetchInventoryItems() before using this function.
+ * Extract badges from visitor's inventory items
+ * Call visitor.fetchInventoryItems() before using this function
  */
 export const getVisitorBadges = (visitorInventoryItems: any[]): VisitorInventory => {
   const visitorInventory: VisitorInventory = { badges: {} };

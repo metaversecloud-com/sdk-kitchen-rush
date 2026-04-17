@@ -1,8 +1,7 @@
 import express from "express";
 import { handleGetGameState, handleGetLeaderboard, handleUpdateLeaderboard, handleResetLeaderboard} from "./controllers/index.js";
 import { getVersion } from "@utils/getVersion.js";
-import { handleGameResults } from "./controllers/gameController.js";
-import { handleBadgeCheck } from "./controllers/badgeController.js";
+import { handleAwardBadge } from "./controllers/badgeController.js";
 
 const router = express.Router();
 const SERVER_START_DATE = new Date();
@@ -29,7 +28,6 @@ router.get("/game-state", handleGetGameState);
 router.get("/leaderboard", handleGetLeaderboard);
 router.post("/leaderboard/update", handleUpdateLeaderboard);
 router.post("/leaderboard/reset", handleResetLeaderboard)
-router.post("/process-game", handleGameResults);
-router.post("/check-badges", handleBadgeCheck);
+router.post("/award-badge", handleAwardBadge);
 
 export default router;

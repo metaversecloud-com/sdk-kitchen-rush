@@ -1,4 +1,4 @@
-import { Credentials } from "../types/index.js";
+import { Credentials } from "../types.js";
 import { getCachedInventoryItems } from "./inventoryCache.js";
 
 export type BadgeRecord = {
@@ -11,11 +11,11 @@ export type BadgeRecord = {
 };
 
 /**
- * Get all active badges from ecosystem inventory.
- * Uses cached inventory items for performance.
+ * Get all active badges from ecosystem inventory
+ * Uses cached inventory items for performance
  */
 export const getBadges = async (credentials: Credentials): Promise<BadgeRecord> => {
-  const inventoryItems = await getCachedInventoryItems(credentials);
+  const inventoryItems = await getCachedInventoryItems({ credentials });
 
   const badges: BadgeRecord = {};
 
