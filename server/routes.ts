@@ -1,5 +1,5 @@
 import express from "express";
-import { handleGetGameState, handleGetLeaderboard, handleUpdateLeaderboard, handleResetLeaderboard} from "./controllers/index.js";
+import { handleGetGameState, handleGetLeaderboard, handleUpdateLeaderboard, handleResetLeaderboard, handleIncrementAnalytics} from "./controllers/index.js";
 import { getVersion } from "@utils/getVersion.js";
 import { handleAwardBadge } from "./controllers/badgeController.js";
 
@@ -29,5 +29,6 @@ router.get("/leaderboard", handleGetLeaderboard);
 router.post("/leaderboard/update", handleUpdateLeaderboard);
 router.post("/leaderboard/reset", handleResetLeaderboard)
 router.post("/award-badge", handleAwardBadge);
+router.post("/analytics/increment", handleIncrementAnalytics)
 
 export default router;

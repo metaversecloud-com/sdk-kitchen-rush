@@ -144,7 +144,7 @@ const {
           <button className="serve-button" onClick={handleServeOrder}>
             SERVE ORDER
           </button>
-          <button className="close-button-outline" onClick={handleCloseShop}>
+          <button className="close-button-outline" onClick={handleManualCloseShop}>
             Close Shop
           </button>
         </div>

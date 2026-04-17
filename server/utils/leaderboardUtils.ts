@@ -45,10 +45,16 @@ export const updateLeaderboard = async ({
       if (existingScore >= score) return; // don't update if not better
     }
     
-   await droppedAsset.updateDataObject(
-    { leaderboard: { [profileId]: `${displayName}|${score}` } },
-    { lock: { lockId: `leaderboard-${profileId}`, releaseLock: true } }
-  );
+    // original logic
+  //  await droppedAsset.updateDataObject(
+  //   { leaderboard: { [profileId]: `${displayName}|${score}` } },
+  //   { lock: { lockId: `leaderboard-${profileId}`, releaseLock: true } }
+  // );
+  // so leaderboard doesn't automatically replace previous player
+  await droppedAsset.updateDataObject(
+  { [`leaderboard.${profileId}`]: `${displayName}|${score}` },
+  { lock: { lockId: `leaderboard-${profileId}`, releaseLock: true } }
+);
   } catch (error) {
     return error as Error;
   }

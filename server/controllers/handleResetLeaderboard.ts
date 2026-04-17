@@ -19,9 +19,9 @@ export const handleResetLeaderboard = async (req: Request, res: Response, next: 
     const leaderboard = data?.leaderboard;
     // check before resetting
     if (!leaderboard || Object.keys(leaderboard).length === 0) {
-
       return res.status(200).json({ message: "Leaderboard already empty" });
     }
+    
     if (!data || !data.leaderboard) {
       await droppedAsset.setDataObject(
         {

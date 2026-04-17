@@ -1,6 +1,7 @@
 import React from 'react';
 import { levelConfig } from "../config/levelConfig";
 import { Order } from "../types/Order";
+import "../styles/Ingredients.css";
 
 // SIZES
 import smallImg from "../assets/ingredients/small.png";
@@ -54,53 +55,64 @@ const ingredientIcons: Record<string, string> = {
 };
 
 const Ingredients = ({ tray, onSelect, level }: IngredientsProps) => {
-  //1. get config for current level
   const config = levelConfig[level as keyof typeof levelConfig];
 
   if (!config || !tray) return null;
 
+  const leftCategories = ["size", "temp", "milk"];
+  const rightCategories = ["flavor", "toppings"];
+
+  const renderCategory = (category: string) => {
+    const options = config.ingredients[category as keyof typeof config.ingredients];
+
+    if (!options || (options as string[]).length === 0) return null;
+
+    return (
+      <div key={category} className="ingredient-row">
+        <label className="category-label">{category}</label>
+        <div className="options-grid">
+          {(options as string[]).map((option: string) => {
+            const isSelected =
+              category === "toppings"
+                ? tray[category]?.includes(option)
+                : tray[category] === option;
+
+            const normalizedOption = option.toLowerCase();
+
+            return (
+              <button
+                key={option}
+                type="button"
+                className={`option-btn ${isSelected ? "selected" : ""}`}
+                onClick={() => onSelect(category as keyof Order, option)}
+              >
+                {ingredientIcons[normalizedOption] ? (
+                  <img
+                    src={ingredientIcons[normalizedOption]}
+                    alt={option}
+                    className="ingredient-icon"
+                  />
+                ) : (
+                  <div className="placeholder-icon" />
+                )}
+                <span className="option-text">{option.replace("_", " ")}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="ingredients-container">
-      {Object.entries(config.ingredients).map(([category, options]) => {
-        if (!options || (options as string[]).length === 0) return null;
+    <div className="ingredients-layout">
+      <div className="ingredients-column">
+        {leftCategories.map(renderCategory)}
+      </div>
 
-        return (
-          <div key={category} className="ingredient-row">
-            <label className="category-label">{category}</label>
-            <div className="options-grid">
-              {(options as string[]).map((option: string) => {
-                
-                // ADD EXTRA SAFETY HERE: Use optional chaining ?.
-                const isSelected = category === 'toppings' 
-                  ? tray[category]?.includes(option)
-                  : tray[category] === option;
-
-                return (
-                  <button
-                    key={option}
-                    type="button"
-                    className={`option-btn ${isSelected ? "selected" : ""}`}
-                    onClick={() => onSelect(category as any, option)} // Added as any to bypass strict type check if needed
-                      >
-                    {/* THE FIX: Check for the icon using lowercase and handling underscores */}
-                    {ingredientIcons[option.toLowerCase().replace('-', '_')] || ingredientIcons[option.toLowerCase()] ? (
-                      <img
-                        src={ingredientIcons[option.toLowerCase()] || ingredientIcons[option.toLowerCase().replace('_', '')]}
-                        alt={option}
-                        className="ingredient-icon"
-                      />
-                    ) : (
-                      /* Fallback if icon is still missing */
-                      <div className="placeholder-icon" /> 
-                    )}
-                    <span className="option-text">{option.replace('_', ' ')}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })}
+      <div className="ingredients-column">
+        {rightCategories.map(renderCategory)}
+      </div>
     </div>
   );
 };

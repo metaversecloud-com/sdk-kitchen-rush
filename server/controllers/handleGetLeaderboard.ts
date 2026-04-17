@@ -3,6 +3,7 @@ import { errorHandler, getCredentials, getDroppedAsset } from "@utils/index.js";
 import { parseLeaderboard } from "@utils/leaderboardUtils.js";
 
 export const handleGetLeaderboard = async (req: Request, res: Response) => {
+  console.log("handleGetLeaderboard called", req.body, req.query);
   try {
     const credentials = getCredentials(req.query);
 

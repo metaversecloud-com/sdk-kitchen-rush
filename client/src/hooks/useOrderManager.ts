@@ -6,11 +6,12 @@ import { getStreakMultiplier } from "../utils/streakMultiplier"
 import { useState, useEffect, useRef } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import { levelConfig } from "../config/levelConfig";
+import { trackEvent } from "../utils/analyticsAPI";
 
 import { 
   MAX_ANGRY_CUSTOMERS,
   PENALTY,
-  BASE_POINTS
+  BASE_POINTS,
 } from '../data/gameConstants'
 
 const useOrderManager = (
@@ -24,9 +25,14 @@ const useOrderManager = (
 
   // STATE
   const [score, setScore] = useState<number>(state?.inheritedScore || 0);
-  const [angryCustomerCount, setAngryCustomerCount] = useState<number>(state?.inheritedAngry || 0);
+  const [angryCustomerCount, setAngryCustomerCount] = useState<number>(() => {
+    return parseInt(sessionStorage.getItem('angryCount') || '0') || state?.inheritedAngry || 0;
+  });
   const [activeOrder, setActiveOrder] = useState<Order | null>(null);
   const [sourceQueue, setSourceQueue] = useState<Order[]>([]);
+
+  // Define which streaks trigger the special feedback and badges
+  const STREAK_MILESTONES = [5, 10, 25];
   
   // FIX: Initialize with empty strings so Ingredients.tsx doesn't crash on undefined
   const [tray, setTray] = useState<Partial<Order>>({
@@ -37,8 +43,15 @@ const useOrderManager = (
     toppings: []
   });
 
-  const [streak, setStreak] = useState<number>(0);
-  const [totalServed, setTotalServed] = useState(0);
+  const [streak, setStreak] = useState<number>(() => {
+    return parseInt(sessionStorage.getItem('streak') || '0');
+  });
+  // totalServed = orders this level
+  const [totalServed, setTotalServed] = useState<number>(0);
+  //  cumulativeServed = total across whole game 
+  const [cumulativeServed, setCumulativeServed] = useState<number>(() => {
+    return parseInt(sessionStorage.getItem('ordersServed') || '0');
+  });
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   
@@ -66,7 +79,7 @@ const useOrderManager = (
   useEffect(() => { scoreRef.current = score; }, [score]);
   useEffect(() => { servedRef.current = totalServed; }, [totalServed]);
   useEffect(() => { angryRef.current = angryCustomerCount; }, [angryCustomerCount]);
-
+  
   const triggerFeedback = (message: string, type: FeedbackType): void => {
     setFeedback({ message, type });
     setTimeout(() => setFeedback(null), 2000);
@@ -109,6 +122,9 @@ const useOrderManager = (
   };
 
   const advance = (): void => {
+    if (totalServed === 0 && angryCustomerCount === 0) {
+      trackEvent("gamesStarted");
+    }
     const nextOrder = generateRandomOrder(currentLevel);
     setActiveOrder(nextOrder);
     const config = levelConfig[currentLevel as keyof typeof levelConfig];
@@ -117,13 +133,17 @@ const useOrderManager = (
 
   const handleOrderFailure = (message: string = "Oops, wrong order!"): void => {
     const newCount = angryCustomerCount + 1;
+    angryRef.current = newCount;
     setAngryCustomerCount(newCount);
+    sessionStorage.setItem("angryCount", newCount.toString());
     setScore(prev => Math.max(0, prev - PENALTY));
     setStreak(0);
+    sessionStorage.setItem('streak', '0');
     clearTray();
     triggerFeedback(message, "error");
 
     if (newCount >= MAX_ANGRY_CUSTOMERS) {
+      trackEvent("gamesCompleted");
       handleCloseShop();
     } else {
       advance();
@@ -131,58 +151,53 @@ const useOrderManager = (
   };
 
   const handleTimeout = (): void => {
-    triggerFeedback("Order expired!", "timeout");
+    trackEvent("ordersTimedout");
     handleOrderFailure("Customer got tired of waiting!");
+  };
+
+  // handler to manually close shop
+  const handleManualCloseShop = (): void => {
+    trackEvent("gamesEndedEarly");
+    handleCloseShop();
   };
 
 const handleServeOrder = () => {
   const isCorrect = compareIngredients(tray, activeOrder);
   const config = levelConfig[currentLevel as keyof typeof levelConfig];
 
-  //check check
-  console.log("Is order correct?", isCorrect);
-  console.log("Current totalServed state:", totalServed);
-
   if (isCorrect) {
-    console.log("Current total served:", totalServed)
-    // if (totalServed == 0) {
-    //   console.log("First order complete! Awarding badge...");
-    //   awardBadgeRequest("First Order"); 
-    // }
-    console.log("TESTING: Firing badge request regardless of score...");
-   awardBadgeRequest("First Order");
-    // 1. Calculate new values locally
-    const newTotal = totalServed + 1;
-    const newStreak = streak + 1;
+    trackEvent("correctOrdersServed");
     
-    // 2. Calculate points
+    // --- BADGE LOGIC START ---
+    // This will now use the REAL credentials from the Topia URL when pushed
+    console.log("Awarding badge for correct order...");
+    awardBadgeRequest("First Order"); 
+    // --- BADGE LOGIC END ---
+
+    const newTotal = totalServed + 1;
+    setTotalServed(newTotal);
+
+    const newCumulative = cumulativeServed + 1;
+    setCumulativeServed(newCumulative);
+    sessionStorage.setItem("ordersServed", newCumulative.toString());
+    servedRef.current = newCumulative; 
+
+    const newStreak = streak + 1;
+    setStreak(newStreak);
+    sessionStorage.setItem('streak', newStreak.toString());
+
+    if (STREAK_MILESTONES.includes(newStreak)) {
+      trackEvent("streakMilestonesReached");
+      awardBadgeRequest("Speed Chef"); // Award another badge for streaks!
+    }
+
     const speedBonus = getSpeedBonus(timeRemaining * 1000, activeOrder?.timeLimit || 10000);
     const points = (BASE_POINTS * getStreakMultiplier(streak)) + speedBonus;
     const updatedScore = score + points;
-
-    // 3. Trigger awards directly
-    if (newStreak === 5) {
-      awardBadgeRequest("Speed Chef");
-    }
-    if (newTotal === 10) {
-      awardBadgeRequest("Kitchen Veteran");
-    }
-
-    // 4. Update all states
-    setTotalServed(newTotal);
-    setStreak(newStreak);
     setScore(updatedScore);
     
-    // Also update your stats object if you use it for the UI
-    setStats(prev => ({
-      ...prev,
-      totalCorrect: newTotal,
-      currentStreak: newStreak
-    }));
-
-    // 5. Success UI & Feedback
     clearTray();
-    triggerFeedback(newStreak >= 5 ? `🔥 ${newStreak} Streak!` : "Perfect!", "success");
+    triggerFeedback(STREAK_MILESTONES.includes(newStreak) ? `🔥 ${newStreak} Streak!` : "Perfect!", "success");
 
     if (newTotal >= config.threshold) {
       clearTimeout(timerRef.current);
@@ -192,7 +207,7 @@ const handleServeOrder = () => {
       advance();
     }
   } else {
-    // Failure logic
+    trackEvent("wrongOrdersServed");
     handleOrderFailure();
   }
 };
@@ -200,10 +215,15 @@ const handleServeOrder = () => {
   const handleCloseShop = (): void => {
     clearTimeout(timerRef.current);
     clearInterval(timerIntervalRef.current);
+    const ordersServed = parseInt(sessionStorage.getItem('ordersServed') || '0');
+    const score = scoreRef.current;
+    sessionStorage.removeItem('ordersServed');
+    sessionStorage.removeItem('angryCount');
+    sessionStorage.removeItem('streak')
     navigate('/game-over', { 
       state: { 
-        score: scoreRef.current, 
-        ordersServed: servedRef.current 
+        score,
+        ordersServed// read before removeItem
       } 
     });
   };
@@ -300,6 +320,7 @@ return {
   clearTray,
   awardBadgeRequest,
   ordersServed: totalServed, // Adding alias
+  handleManualCloseShop
 };
 };
 
