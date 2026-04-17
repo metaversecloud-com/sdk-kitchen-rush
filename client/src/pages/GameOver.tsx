@@ -1,7 +1,10 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useContext  } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { backendAPI } from "@/utils";
+import { backendAPI, setGameState } from "@/utils";
 import Leaderboard from "../components/Leaderboard";
+import { PageContainer } from "@/components";
+import { GlobalDispatchContext, GlobalStateContext } from "@/context/GlobalContext";
+
 
 export default function GameOver() {
   const navigate = useNavigate();
@@ -9,44 +12,70 @@ export default function GameOver() {
   const score = state?.score ?? 0;
   const ordersServed = state?.ordersServed ?? 0;
 
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
- // const [submitted, setSubmitted] = useState(false);
+  const [scoreSubmitted, setScoreSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const submittedRef = useRef(false);
+  const dispatch = useContext(GlobalDispatchContext);
+  const { hasInteractiveParams } = useContext(GlobalStateContext);
+
+  useEffect(() => {
+    if (hasInteractiveParams) {
+      backendAPI
+        .get("/game-state")
+        .then((response) => setGameState(dispatch, response.data))
+        .catch((error) => console.error("Failed to load game state:", error))
+        .finally(() => setIsLoading(false));
+    } else {
+      setIsLoading(false);
+    }
+  }, [hasInteractiveParams]);
+
   // Submit score on mount
   useEffect(() => {
     if (submittedRef.current) return;
     submittedRef.current = true;
-    console.log("backendAPI defaults:", backendAPI.defaults);
+    // console.log("backendAPI defaults:", backendAPI.defaults);
     backendAPI
       .post("/leaderboard/update", { score })
-      .catch((err) => console.error("Failed to update leaderboard:", err));
+      .then(() => setScoreSubmitted(true))
+      .catch((err) => {
+        console.error("Failed to update leaderboard:", err);
+        setScoreSubmitted(true); // still show leaderboard even if update fails
+      });
   }, []);
 
+  
+
+  const handleLeaderboardPage = () => navigate('/leaderboard-page');
+
   return (
-    <div className="flex flex-col items-center justify-center h-screen text-center gap-6">
-      <h1 className="text-4xl font-bold">Game Over! 😢</h1>
+   <PageContainer isLoading={isLoading} headerText="Game Over">
+      <div className="flex flex-col items-center justify-center h-screen text-center gap-6">
+        <h1 className="text-4xl font-bold">Game Over! 😢</h1>
 
-      {/* Results */}
-      <div className="flex flex-col gap-3 bg-gray-100 rounded-xl p-6 w-64">
-        <div className="flex justify-between">
-          <span className="font-semibold">Points Earned</span>
-          <span>{score}</span>
+        {/* Results */}
+        <div className="flex flex-col gap-3 bg-gray-100 rounded-xl p-6 w-64">
+          <div className="flex justify-between">
+            <span className="font-semibold">Points Earned</span>
+            <span>{score}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="font-semibold">Orders Served</span>
+            <span>{ordersServed}</span>
+          </div>
         </div>
-        <div className="flex justify-between">
-          <span className="font-semibold">Orders Served</span>
-          <span>{ordersServed}</span>
-        </div>
+
+        {/* render leaderboard conditionally to prevent race conditions */}
+        {scoreSubmitted ? <Leaderboard /> : <p className="p2">Saving score...</p>}
+
+        <button
+          onClick={() => navigate("/")}
+          className="bg-blue-300 px-6 py-3 rounded-xl text-lg"
+        >
+          Play Again
+        </button>
       </div>
-
-      <Leaderboard />
-
-      <button
-        onClick={() => navigate("/")}
-        className="bg-blue-300 px-6 py-3 rounded-xl text-lg"
-      >
-        Play Again
-      </button>
-    </div>
+    </PageContainer>
   );
 }

@@ -5,19 +5,19 @@ import { AdminView, AdminIconButton, Loading } from "@/components";
 
 // context
 import { GlobalStateContext } from "@context/GlobalContext";
+import { useNavigate } from "react-router-dom";
+
 export const PageContainer = ({
   children,
   isLoading,
   headerText,
-  onAdminClick,
 }: {
   children: ReactNode;
   isLoading: boolean;
   headerText?: string;
-  onAdminClick?: () => void;
 }) => {
   const { error, isAdmin } = useContext(GlobalStateContext);
-  const [showSettings, setShowSettings] = useState(false);
+  const navigate = useNavigate();
 
   if (isLoading) return <Loading />;
 
@@ -25,12 +25,12 @@ export const PageContainer = ({
     <div className="p-4 mb-28">
       {isAdmin && (
         <AdminIconButton
-          setShowSettings={onAdminClick ? onAdminClick : () => setShowSettings(!showSettings)}
-          showSettings={showSettings}
+          setShowSettings={() => navigate('/leaderboard-page')}
+          showSettings={false}
         />
       )}
       {headerText && <div className="pb-6"><h2>{headerText}</h2></div>}
-      {showSettings ? <AdminView /> : children}
+      {children}
       {error && <p className="p3 pt-10 text-center text-error">{error}</p>}
     </div>
   );

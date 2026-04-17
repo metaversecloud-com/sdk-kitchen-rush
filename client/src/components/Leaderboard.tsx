@@ -26,7 +26,7 @@ const Leaderboard = () => {
   if (error) return <p className="p2">{error}</p>;
 
    return (
-    <PageContainer isLoading={false}>
+    <div>
       <h2 className="h2">🏆 Top 25</h2>
       {leaderboard.length === 0 ? (
         <p className="p2">No scores yet. Be the first!</p>
@@ -50,7 +50,7 @@ const Leaderboard = () => {
           </tbody>
         </table>
       )}
-    </PageContainer>
+    </div>
   );
 };
 

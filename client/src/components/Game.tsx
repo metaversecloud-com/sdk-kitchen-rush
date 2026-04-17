@@ -44,10 +44,6 @@ const Game = () => {
     }
   };
 
-  const handleLeaderboardPage = () => {
-    navigate('/leaderboard-page')
-  }
-
   const getBadgeIcon = (name: string) => {
   // Convert "First Order Up" to "first_order_up.png" or similar
   const fileName = name.toLowerCase().replace(/\s+/g, '_');
@@ -94,7 +90,7 @@ const {
   streak,
   feedback,
   handleServeOrder,
-  handleCloseShop,
+ handleManualCloseShop,
   advance,
   updateTray,
   clearTray,

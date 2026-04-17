@@ -15,7 +15,7 @@ import "../styles//Home.css";
 
 export const Home = () => {
   const dispatch = useContext(GlobalDispatchContext);
-  const { droppedAsset, hasInteractiveParams, isAdmin} = useContext(GlobalStateContext);
+  const { droppedAsset, hasInteractiveParams} = useContext(GlobalStateContext);
   const navigate = useNavigate();
   // console.log("PageContainer isAdmin:", isAdmin);
 
@@ -28,6 +28,7 @@ export const Home = () => {
   };
 
   const handleLeaderboardPage = () => navigate('/leaderboard-page');
+
   useEffect(() => {
     if (hasInteractiveParams) {
       backendAPI
@@ -41,8 +42,9 @@ export const Home = () => {
       setIsLoading(false); // no params, just unblock
     }
 }, [hasInteractiveParams]);
+
   return (
-    <PageContainer isLoading={isLoading} headerText="Kitchen Rush" onAdminClick={handleLeaderboardPage}>
+    <PageContainer isLoading={isLoading} headerText="Kitchen Rush">
       <div className="home-screen">
         <div className="home-card">
           <div className="home-top">
