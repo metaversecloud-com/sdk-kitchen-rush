@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext} from "react";
 import { useNavigate, useParams } from "react-router-dom"; // Added useParams
+import { GlobalStateContext } from "../context/GlobalContext";
 
 // Components
 import PageContainer from "./PageContainer";
@@ -22,7 +23,6 @@ import { Feedback } from '../types/Feedback'
 const Game = () => {
   const navigate = useNavigate();
   const { levelId } = useParams();
-  
   const currentLevel = Number(levelId) || 1;
   const config = levelConfig[currentLevel as keyof typeof levelConfig];
   const [activeBadge, setActiveBadge] = useState<{name: string, icon: string} | null>(null);
@@ -112,7 +112,6 @@ const {
     <PageContainer isLoading={false}>
       <div className="game-screen-wrapper">
         <div className="hud">
-          <div className="admin-button"onClick={handleLeaderboardPage}>⚙️</div>
           <div className="hud-item"><span className="hud-label">Level:</span> {config.title}</div>
           <div className="hud-item"><span className="hud-label">Score:</span> {score}</div>
           <div className="hud-item"><span className="hud-label">Streak:</span> {streak}</div>

@@ -13,6 +13,7 @@ const Leaderboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+
   useEffect(() => {
     backendAPI
       .get("/leaderboard")
@@ -24,12 +25,8 @@ const Leaderboard = () => {
   if (isLoading) return <p className="p2">Loading leaderboard...</p>;
   if (error) return <p className="p2">{error}</p>;
 
-  return (
-    <div className="items-center">
-      <div className="admin-button"> <PageContainer isLoading={false}>
-          <div> </div>
-      </PageContainer>
-           </div>
+   return (
+    <PageContainer isLoading={false}>
       <h2 className="h2">🏆 Top 25</h2>
       {leaderboard.length === 0 ? (
         <p className="p2">No scores yet. Be the first!</p>
@@ -53,7 +50,7 @@ const Leaderboard = () => {
           </tbody>
         </table>
       )}
-    </div>
+    </PageContainer>
   );
 };
 

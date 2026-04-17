@@ -15,6 +15,8 @@ export const handleGetLeaderboard = async (req: Request, res: Response) => {
     const leaderboard = parseLeaderboard(leaderboardData);
 
     return res.json({ success: true, data: { leaderboard } });
+    // need to make sure has latest information, don't want to load component, wait or loading component after succeeded
+    // or once handleupdateleaderboard has success true return leaderboard information
   } catch (error) {
     return errorHandler({
       error,
