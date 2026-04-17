@@ -70,7 +70,7 @@ export const levelConfig = {
       temp: ["hot", "iced"],
       milk: ["whole", "oat", "almond", "none"],
       flavor: ["vanilla", "caramel", "mocha", "none"],
-      toppings: ["whipped_cream", "cinnamon", "sprinkles", "java_chips", "caramel_drizzle", "choc_drizzle"]
+      toppings: ["whipped_cream", "cinnamon", "sprinkles"]
     },
   },
 } as const;

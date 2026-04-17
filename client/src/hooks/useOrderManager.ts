@@ -11,7 +11,8 @@ import { trackEvent } from "../utils/analyticsAPI";
 import { 
   MAX_ANGRY_CUSTOMERS,
   PENALTY,
-  BASE_POINTS
+  BASE_POINTS,
+  STREAK_MULTIPLIER_MID_THRESHOLD 
 } from '../data/gameConstants'
 
 const useOrderManager = (
@@ -39,8 +40,13 @@ const useOrderManager = (
     toppings: []
   });
 
-  const [streak, setStreak] = useState<number>(0);
-  const [totalServed, setTotalServed] = useState<number>(() => {
+  const [streak, setStreak] = useState<number>(() => {
+    return parseInt(sessionStorage.getItem('streak') || '0');
+  });
+  // totalServed = orders this level
+  const [totalServed, setTotalServed] = useState<number>(0);
+  //  cumulativeServed = total across whole game 
+  const [cumulativeServed, setCumulativeServed] = useState<number>(() => {
     return parseInt(sessionStorage.getItem('ordersServed') || '0');
   });
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
@@ -54,7 +60,7 @@ const useOrderManager = (
   const angryRef = useRef(angryCustomerCount);
 
   // constants to track milestones for analytics
-  const STREAK_MILESTONES = [3, 5, 10];
+  const STREAK_MILESTONES = [3, 6, 9, 12, 15, 20];
 
   // Sync refs so callbacks always have the fresh value
   useEffect(() => { scoreRef.current = score; }, [score]);
@@ -118,6 +124,7 @@ const useOrderManager = (
     sessionStorage.setItem("angryCount", newCount.toString());
     setScore(prev => Math.max(0, prev - PENALTY));
     setStreak(0);
+    sessionStorage.setItem('streak', '0');
     clearTray();
     triggerFeedback(message, "error");
 
@@ -147,15 +154,19 @@ const useOrderManager = (
       // Success
       const newTotal = totalServed + 1;
       setTotalServed(newTotal);
-      sessionStorage.setItem("ordersServed", newTotal.toString());
+
+      const newCumulative = cumulativeServed + 1;
+      setCumulativeServed(newCumulative);
+      sessionStorage.setItem("ordersServed", newCumulative.toString());
+      servedRef.current = newCumulative; // ref points to cumulative for game-over
 
       const newStreak = streak + 1;
        if (STREAK_MILESTONES.includes(newStreak)) {
         trackEvent("streakMilestonesReached");
       }
-     
+      sessionStorage.setItem('streak', newStreak.toString());
       setStreak(newStreak);
-      servedRef.current = newTotal;
+      //servedRef.current = newTotal;
       // setStreak(prev => prev + 1);
       
       const speedBonus = getSpeedBonus(timeRemaining * 1000, activeOrder?.timeLimit || 10000);
@@ -163,7 +174,7 @@ const useOrderManager = (
       setScore(prev => prev + points);
       
       clearTray();
-      triggerFeedback(streak + 1 >= 5 ? `🔥 ${streak + 1} Streak!` : "Perfect!", "success");
+      triggerFeedback(STREAK_MILESTONES.includes(newStreak) ? `🔥 ${newStreak} Streak!` : "Perfect!", "success");
 
       const config = levelConfig[currentLevel as keyof typeof levelConfig];
       if (newTotal >= config.threshold) {
@@ -183,12 +194,15 @@ const useOrderManager = (
   const handleCloseShop = (): void => {
     clearTimeout(timerRef.current);
     clearInterval(timerIntervalRef.current);
+    const ordersServed = parseInt(sessionStorage.getItem('ordersServed') || '0');
+    const score = scoreRef.current;
     sessionStorage.removeItem('ordersServed');
     sessionStorage.removeItem('angryCount');
+    sessionStorage.removeItem('streak')
     navigate('/game-over', { 
       state: { 
-        score: scoreRef.current, 
-        ordersServed: servedRef.current 
+        score,
+        ordersServed// read before removeItem
       } 
     });
   };
