@@ -12,7 +12,6 @@ import {
   MAX_ANGRY_CUSTOMERS,
   PENALTY,
   BASE_POINTS,
-  STREAK_MULTIPLIER_MID_THRESHOLD 
 } from '../data/gameConstants'
 
 const useOrderManager = (
@@ -120,6 +119,7 @@ const useOrderManager = (
 
   const handleOrderFailure = (message: string = "Oops, wrong order!"): void => {
     const newCount = angryCustomerCount + 1;
+    angryRef.current = newCount;
     setAngryCustomerCount(newCount);
     sessionStorage.setItem("angryCount", newCount.toString());
     setScore(prev => Math.max(0, prev - PENALTY));
