@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom"; // Added useParams
+import { useNavigate, useParams } from "react-router-dom";
 
 // Components
 import PageContainer from "./PageContainer";
@@ -18,7 +18,6 @@ import "../styles/Game.css";
 // types
 import { Feedback } from '../types/Feedback'
 
-
 const Game = () => {
   const navigate = useNavigate();
   const { levelId } = useParams();
@@ -27,7 +26,6 @@ const Game = () => {
   const config = levelConfig[currentLevel as keyof typeof levelConfig];
   const [activeBadge, setActiveBadge] = useState<{name: string, icon: string} | null>(null);
 
-  // 1. Define the completion logic first
   const handleLevelComplete = (scoreAtEndOfLevel: number, angryAtEndOfLevel: number) => {
     const nextLevel = currentLevel + 1;
     if (nextLevel <= 4) {
@@ -49,60 +47,55 @@ const Game = () => {
   }
 
   const getBadgeIcon = (name: string) => {
-  // Convert "First Order Up" to "first_order_up.png" or similar
-  const fileName = name.toLowerCase().replace(/\s+/g, '_');
-  try {
-    return require(`../assets/badges/${fileName}.png`);
-  } catch {
-    return require(`../assets/badges/default_badge.png`);
-  }
-};
+    const fileName = name.toLowerCase().replace(/\s+/g, '_');
+    try {
+      return require(`../assets/badges/${fileName}.png`);
+    } catch {
+      return require(`../assets/badges/default_badge.png`);
+    }
+  };
 
-// Update your handleServe/Sync logic to call this
-const showBadgePopup = (name: string) => {
-  setActiveBadge({ 
-    name, 
-    icon: getBadgeIcon(name) 
-  });
-  
-  // Hide it after 4 seconds
-  setTimeout(() => {
-    setActiveBadge(null);
-  }, 4000);
-};
+  const showBadgePopup = (name: string) => {
+    setActiveBadge({ 
+      name, 
+      icon: getBadgeIcon(name) 
+    });
+    
+    setTimeout(() => {
+      setActiveBadge(null);
+    }, 4000);
+  };
 
-  // 2. Single hook call - destructure everything here
-const manager = useOrderManager(
-  // This function only runs when the game ends, looking inside 'manager' for the latest values
-  () => navigate("/game-over", { 
-    state: { 
-      score: manager.score, 
-      ordersServed: manager.ordersServed 
-    } 
-  }),
-  handleLevelComplete,
-  showBadgePopup,
-  currentLevel
-);
+  const manager = useOrderManager(
+    () => navigate("/game-over", { 
+      state: { 
+        score: manager.score, 
+        ordersServed: manager.ordersServed 
+      } 
+    }),
+    handleLevelComplete,
+    showBadgePopup,
+    currentLevel
+  );
 
-// extract variables from manager so you can use them in your HTML
-const {
-  activeOrder,
-  angryCustomerCount,
-  score,
-  tray,
-  streak,
-  feedback,
-  handleServeOrder,
-  handleCloseShop,
-  advance,
-  updateTray,
-  clearTray,
-  ordersServed: totalServed, // name match
-  timeRemaining,
-} = manager;
+  const {
+    activeOrder,
+    angryCustomerCount,
+    score,
+    tray,
+    streak,
+    feedback,
+    handleServeOrder,
+    handleCloseShop,
+    advance,
+    updateTray,
+    clearTray,
+    ordersServed: totalServed,
+    timeRemaining,
+    trackEvent,
+    handleManualCloseShop
+  } = manager;
 
-  // Load orders when level changes
   useEffect(() => {
     clearTray();
     advance();
@@ -112,7 +105,7 @@ const {
     <PageContainer isLoading={false}>
       <div className="game-screen-wrapper">
         <div className="hud">
-          <div className="admin-button"onClick={handleLeaderboardPage}>⚙️</div>
+          <div className="admin-button" onClick={handleLeaderboardPage}>⚙️</div>
           <div className="hud-item"><span className="hud-label">Level:</span> {config.title}</div>
           <div className="hud-item"><span className="hud-label">Score:</span> {score}</div>
           <div className="hud-item"><span className="hud-label">Streak:</span> {streak}</div>
@@ -134,10 +127,10 @@ const {
           )}
         </div>
 
-          <div className="ingredients">
-            <Ingredients  onSelect={updateTray} tray={tray} level={currentLevel} />
-          </div>
-        {/* Use the destructured feedback directly */}
+        <div className="ingredients">
+          <Ingredients onSelect={updateTray} tray={tray} level={currentLevel} />
+        </div>
+
         {feedback && <FeedbackToast feedback={feedback} />}
 
         <div className="bottom-actions">
@@ -149,14 +142,13 @@ const {
           </button>
         </div>
 
-          {activeBadge && (
-            <BadgeToast 
-              badgeName={activeBadge.name} 
-              iconPath={activeBadge.icon} 
-              onClose={() => setActiveBadge(null)} 
-            />
-          )}
-
+        {activeBadge && (
+          <BadgeToast 
+            badgeName={activeBadge.name} 
+            iconPath={activeBadge.icon} 
+            onClose={() => setActiveBadge(null)} 
+          />
+        )}
       </div>
     </PageContainer>
   );
