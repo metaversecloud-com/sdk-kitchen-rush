@@ -72,27 +72,35 @@ const showBadgePopup = (name: string) => {
 };
 
   // 2. Single hook call - destructure everything here
-  const {
-    activeOrder,
-    angryCustomerCount,
-    score,
-    tray,
-    streak,
-    feedback,
-    handleServeOrder,
-    handleViewOrder,
-    handleCloseShop,
-    advance,
-    updateTray,
-    clearTray,
-    ordersServed,
-    timeRemaining,
-  } = useOrderManager(
-    () => navigate("/game-over", { state: { score, ordersServed } }),
-    handleLevelComplete,
-    showBadgePopup,
-    currentLevel
-  );
+const manager = useOrderManager(
+  // This function only runs when the game ends, looking inside 'manager' for the latest values
+  () => navigate("/game-over", { 
+    state: { 
+      score: manager.score, 
+      ordersServed: manager.ordersServed 
+    } 
+  }),
+  handleLevelComplete,
+  showBadgePopup,
+  currentLevel
+);
+
+// extract variables from manager so you can use them in your HTML
+const {
+  activeOrder,
+  angryCustomerCount,
+  score,
+  tray,
+  streak,
+  feedback,
+  handleServeOrder,
+  handleCloseShop,
+  advance,
+  updateTray,
+  clearTray,
+  ordersServed: totalServed, // name match
+  timeRemaining,
+} = manager;
 
   // Load orders when level changes
   useEffect(() => {

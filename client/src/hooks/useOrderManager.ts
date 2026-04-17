@@ -56,6 +56,12 @@ const useOrderManager = (
   const servedRef = useRef(totalServed);
   const angryRef = useRef(angryCustomerCount);
 
+  //check
+  useEffect(() => {
+  console.log("FORCE TESTING API...");
+  awardBadgeRequest("Test Badge");
+}, []);
+
   // Sync refs so callbacks always have the fresh value
   useEffect(() => { scoreRef.current = score; }, [score]);
   useEffect(() => { servedRef.current = totalServed; }, [totalServed]);
@@ -131,46 +137,62 @@ const useOrderManager = (
 
 const handleServeOrder = () => {
   const isCorrect = compareIngredients(tray, activeOrder);
-  
-  // Calculate stats for the server
   const config = levelConfig[currentLevel as keyof typeof levelConfig];
-  const timePercent = timeRemaining / (config.timer / 1000);
-  
-  const newStats = {
-    totalCorrect: isCorrect ? stats.totalCorrect + 1 : stats.totalCorrect,
-    currentStreak: isCorrect ? stats.currentStreak + 1 : 0,
-    lastOrderToppingsCount: tray.toppings?.length || 0,
-    lastOrderTimeRemaining: timePercent,
-  };
 
-  // Update local stats state
-  setStats(newStats);
-
-  // Send to server!
-  syncBadges(newStats, isCorrect);
+  //check check
+  console.log("Is order correct?", isCorrect);
+  console.log("Current totalServed state:", totalServed);
 
   if (isCorrect) {
-    // ... your existing success logic (score, streak, etc.)
+    console.log("Current total served:", totalServed)
+    // if (totalServed == 0) {
+    //   console.log("First order complete! Awarding badge...");
+    //   awardBadgeRequest("First Order"); 
+    // }
+    console.log("TESTING: Firing badge request regardless of score...");
+   awardBadgeRequest("First Order");
+    // 1. Calculate new values locally
     const newTotal = totalServed + 1;
-    setTotalServed(newTotal);
     const newStreak = streak + 1;
-    setStreak(newStreak);
     
+    // 2. Calculate points
     const speedBonus = getSpeedBonus(timeRemaining * 1000, activeOrder?.timeLimit || 10000);
     const points = (BASE_POINTS * getStreakMultiplier(streak)) + speedBonus;
-    setScore(prev => prev + points);
+    const updatedScore = score + points;
+
+    // 3. Trigger awards directly
+    if (newStreak === 5) {
+      awardBadgeRequest("Speed Chef");
+    }
+    if (newTotal === 10) {
+      awardBadgeRequest("Kitchen Veteran");
+    }
+
+    // 4. Update all states
+    setTotalServed(newTotal);
+    setStreak(newStreak);
+    setScore(updatedScore);
     
+    // Also update your stats object if you use it for the UI
+    setStats(prev => ({
+      ...prev,
+      totalCorrect: newTotal,
+      currentStreak: newStreak
+    }));
+
+    // 5. Success UI & Feedback
     clearTray();
     triggerFeedback(newStreak >= 5 ? `🔥 ${newStreak} Streak!` : "Perfect!", "success");
 
     if (newTotal >= config.threshold) {
       clearTimeout(timerRef.current);
       clearInterval(timerIntervalRef.current);
-      onLevelComplete(scoreRef.current + points, angryCustomerCount);
+      onLevelComplete(updatedScore, angryCustomerCount);
     } else {
       advance();
     }
   } else {
+    // Failure logic
     handleOrderFailure();
   }
 };
@@ -210,32 +232,50 @@ const handleServeOrder = () => {
     toppings: []
   });
 
-  // Add this inside useOrderManager but before handleServeOrder
-const syncBadges = async (updatedStats: any, wasCorrect: boolean) => {
-  try {
-    const urlParams = new URLSearchParams(window.location.search);
-    
-    // This calls the route we created in your Express server
-    const response = await fetch(`/api/check-badges?${urlParams.toString()}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        stats: updatedStats,
-        wasCorrect
-      }),
-    });
+const awardBadgeRequest = async (badgeName: string) => {
+    try {
+      // 1. Try to get search params from the current window safely
+      let search = window.location.search;
 
-    const data = await response.json();
-
-    if (data.awarded && data.awarded.length > 0) {
-      data.awarded.forEach((badgeName: string) => {
-        onBadgeUnlocked(badgeName);
-      });
+      // 2. Only try to look at the parent if we are actually in an iframe 
+      // AND it's on the same domain (to avoid the SecurityError)
+      // if (!search && window.self !== window.top) {
+      //   try {
+      //     search = window.parent.location.search;
+      //   } catch (e) {
+      //     console.warn("Could not read parent URL due to cross-origin restrictions.");
+      //   }
+      // }
+      if (!search || search === "") {
+      console.warn("Using local dev credentials...");
+      // Replace these with actual values from a real Topia URL once, 
+      // or just dummy strings to stop the server from crashing.
+      search = "?interactiveNonce=test&interactivePublicKey=J6MYijmfrAjGX0A389P8&urlSlug=blank3t-demo-3m2tc4fqj&visitorId=test";
     }
-  } catch (error) {
-    console.error("Failed to sync badges:", error);
-  }
-};
+
+      const urlParams = new URLSearchParams(search);
+
+      // 3. Debug: See if we actually have params now
+      if (!urlParams.has("interactiveNonce")) {
+        console.error("❌ No credentials found in URL. Topia won't authorize this request.");
+      }
+
+      const response = await fetch(`/api/award-badge?${urlParams.toString()}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ badgeName }),
+      });
+
+      if (!response.ok) throw new Error("Server error awarding badge");
+      
+      const data = await response.json();
+      if (data.success) {
+        onBadgeUnlocked(badgeName);
+      }
+    } catch (error) {
+      console.error(`Failed to award ${badgeName}:`, error);
+    }
+  };
 
   // Cleanup on unmount
   useEffect(() => {
@@ -245,21 +285,22 @@ const syncBadges = async (updatedStats: any, wasCorrect: boolean) => {
     };
   }, []);
 
-  return {
-    score,
-    activeOrder,
-    angryCustomerCount,
-    tray,
-    streak,
-    timeRemaining,
-    feedback,
-    handleServeOrder,
-    handleCloseShop,
-    updateTray,
-    advance,
-    clearTray,
-    syncBadges
-  };
+return {
+  score,
+  activeOrder,
+  angryCustomerCount,
+  tray,
+  streak,
+  timeRemaining,
+  feedback,
+  handleServeOrder,
+  handleCloseShop,
+  updateTray,
+  advance,
+  clearTray,
+  awardBadgeRequest,
+  ordersServed: totalServed, // Adding alias
+};
 };
 
 export default useOrderManager;
