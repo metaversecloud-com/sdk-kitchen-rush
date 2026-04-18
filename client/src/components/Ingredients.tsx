@@ -106,14 +106,9 @@ const Ingredients = ({ tray, onSelect, level }: IngredientsProps) => {
 
   return (
     <div className="ingredients-layout">
-      <div className="ingredients-column">
-        {leftCategories.map(renderCategory)}
-      </div>
-
-      <div className="ingredients-column">
-        {rightCategories.map(renderCategory)}
-      </div>
+      {["size", "temp", "milk", "flavor", "toppings"].map(renderCategory)}
     </div>
+
   );
 };
 

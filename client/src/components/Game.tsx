@@ -24,6 +24,7 @@ const Game = () => {
   const navigate = useNavigate();
   const { levelId } = useParams();
   const currentLevel = Number(levelId) || 1;
+ // const currentLevel = 4;
   const config = levelConfig[currentLevel as keyof typeof levelConfig];
   const [activeBadge, setActiveBadge] = useState<{name: string, icon: string} | null>(null);
 
@@ -128,7 +129,10 @@ const {
             </div>
           )}
         </div>
-
+        
+          <button className="serve-button" onClick={handleServeOrder}>
+            SERVE ORDER
+          </button>
           <div className="ingredients">
             <Ingredients  onSelect={updateTray} tray={tray} level={currentLevel} />
           </div>
@@ -136,9 +140,6 @@ const {
         {feedback && <FeedbackToast feedback={feedback} />}
 
         <div className="bottom-actions">
-          <button className="serve-button" onClick={handleServeOrder}>
-            SERVE ORDER
-          </button>
           <button className="close-button-outline" onClick={handleManualCloseShop}>
             Close Shop
           </button>

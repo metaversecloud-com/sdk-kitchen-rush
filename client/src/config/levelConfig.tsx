@@ -4,7 +4,7 @@ export const levelConfig = {
   1: {
     title: "Warm-Up",
     threshold: 5, // Levels up after 5 successful orders
-    timer: 12000, // 12 seconds
+    timer: 15000, // 12 seconds
     description: "Pick the size, temperature, and milk for each drink! Get into the rhythm of the kitchen.",
     instructions: [
       "2–3 ingredients per order",
@@ -22,7 +22,7 @@ export const levelConfig = {
   2: {
     title: "Lunch Rush",
     threshold: 6, // Levels up after 12 total successful orders
-    timer: 10000, // 10 seconds
+    timer: 12000, // 10 seconds
     description: "The midday crowd is here! Now customers want flavor shots too.",
     instructions: [
       "3–4 ingredients per order",
@@ -40,7 +40,7 @@ export const levelConfig = {
   3: {
     title: "Dinner Rush",
     threshold: 7, // Levels up after 20 total successful orders
-    timer: 8000, // 8 seconds
+    timer: 10000, // 8 seconds
     description: "Getting fancy! Customers are looking for treats. Add toppings to your drink orders.",
     instructions: [
       "4–5 ingredients per order",
@@ -58,7 +58,7 @@ export const levelConfig = {
   4: {
     title: "Chef's Challenge",
     threshold: 999, // Essentially endless or until they fail
-    timer: 5000, // 4 seconds
+    timer: 8000, // 4 seconds
     description: "You're a pro! Maximum complexity and maximum speed. Can you handle the rush?",
     instructions: [
       "5+ ingredients per order",

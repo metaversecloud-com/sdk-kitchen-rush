@@ -39,7 +39,7 @@
 .recipe-row {
   display: flex;
   align-items: center;
-  gap: 6px; /* Space between icon and text */
+  gap:  2px 0;; /* Space between icon and text */
 }
 
 .recipe-bullet-icon {
@@ -50,8 +50,9 @@
 }
 
 .recipe-text {
-  font-size: 0.65rem;
+  font-size: 0.95rem;
   font-weight: 700;
+  padding: 2px;
   color: #1e293b;
   text-transform: capitalize;
 }

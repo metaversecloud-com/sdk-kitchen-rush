@@ -11,6 +11,10 @@
   overflow-x: hidden;
   background: white;
   border-radius: 12px;
+  -webkit-border-radius: 12px;
+  -moz-border-radius: 12px;
+  -ms-border-radius: 12px;
+  -o-border-radius: 12px;
 }
 
 /* --- HUD BAR (Slim & Compact) --- */
@@ -33,6 +37,7 @@
   flex-direction: column;
   align-items: center;
   font-weight: 800;
+  font-size: 0.75rem;
   color: #1e293b;
   font-size: 0.65rem;
   gap: 0px;
@@ -40,7 +45,7 @@
 
 .hud-label {
   color: #94a3b8;
-  font-size: 0.45rem;
+  font-size: 0.55rem;
   text-transform: uppercase;
 }
 
@@ -73,9 +78,9 @@
   flex-direction: column;
   align-items: center;
   padding: 8px;
-  min-height: 140px; /* Adjust to fit 2 rows of icons comfortably */
+  min-height: 80px; /* Adjust to fit 2 rows of icons comfortably */
   background: #ffffff;
-  border: 3px solid #3b82f6;
+  border: 0.5px solid #e2e8f0;
   border-radius: 16px;
 }
 
@@ -133,7 +138,7 @@
 }
 
 .order-card {
-  width: 100% !important;
+  width: 150% !important;
   max-width: 105px;
   padding: 6px !important;
   border: 1px solid #e2e8f0 !important;
@@ -206,7 +211,6 @@
 
 /* THE FIX: The text label under the icon */
 .option-text {
-  font-size: 0.5rem !important;
   margin-top: 4px;
   display: block;
   text-align: center;
@@ -268,7 +272,7 @@
   padding: 8px;
   margin-top: 10px;
   margin-bottom: 10px;
-  border: 3px solid #4a90e2;
+  border: 0.5px solid #e2e8f0;
   border-radius: 16px;
   width: 100%;
   max-width: 300px;
