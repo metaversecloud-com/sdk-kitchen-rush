@@ -41,7 +41,6 @@ const LevelIntermission = () => {
             {/* Optional: Show the player their current standing */}
             <p className="stats-preview">
               Current Score: <strong>{inheritedScore}</strong> | 
-              Current Streak: <strong>{inheritedStreak}</strong> | 
               Angry Faces: <strong>{inheritedAngry}/5</strong>
             </p>
           </div>
