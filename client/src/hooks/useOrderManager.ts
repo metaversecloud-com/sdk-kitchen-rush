@@ -280,6 +280,8 @@ const awardBadgeRequest = async (badgeName: string) => {
         console.error("❌ No credentials found in URL. Topia won't authorize this request.");
       }
 
+      console.log("Full API URL:", `/api/award-badge?${urlParams.toString()}`);
+
       const response = await fetch(`/api/award-badge?${urlParams.toString()}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -320,7 +322,8 @@ return {
   clearTray,
   awardBadgeRequest,
   ordersServed: totalServed, // Adding alias
-  handleManualCloseShop
+  handleManualCloseShop,
+  trackEvent
 };
 };
 

@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useContext} from "react";
-import { useNavigate, useParams } from "react-router-dom"; // Added useParams
+
+import React, { useEffect, useState, useContext } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { GlobalStateContext } from "../context/GlobalContext";
 
 // Components
@@ -19,7 +20,6 @@ import "../styles/Game.css";
 // types
 import { Feedback } from '../types/Feedback'
 
-
 const Game = () => {
   const navigate = useNavigate();
   const { levelId } = useParams();
@@ -28,7 +28,7 @@ const Game = () => {
   const config = levelConfig[currentLevel as keyof typeof levelConfig];
   const [activeBadge, setActiveBadge] = useState<{name: string, icon: string} | null>(null);
 
-  // 1. Define the completion logic first
+    // 1. Define the completion logic first
   const handleLevelComplete = (scoreAtEndOfLevel: number, angryAtEndOfLevel: number) => {
     const nextLevel = currentLevel + 1;
     if (nextLevel <= 4) {
@@ -45,42 +45,40 @@ const Game = () => {
     }
   };
 
+  const handleLeaderboardPage = () => navigate('/leaderboard-page');
+
   const getBadgeIcon = (name: string) => {
-  // Convert "First Order Up" to "first_order_up.png" or similar
-  const fileName = name.toLowerCase().replace(/\s+/g, '_');
-  try {
-    return require(`../assets/badges/${fileName}.png`);
-  } catch {
-    return require(`../assets/badges/default_badge.png`);
-  }
-};
+    const fileName = name.toLowerCase().replace(/\s+/g, '_');
+    try {
+      return require(`../assets/badges/${fileName}.png`);
+    } catch {
+      return require(`../assets/badges/default_badge.png`);
+    }
+  };
 
-// Update your handleServe/Sync logic to call this
-const showBadgePopup = (name: string) => {
-  setActiveBadge({ 
-    name, 
-    icon: getBadgeIcon(name) 
-  });
-  
-  // Hide it after 4 seconds
-  setTimeout(() => {
-    setActiveBadge(null);
-  }, 4000);
-};
+  const showBadgePopup = (name: string) => {
+    setActiveBadge({ 
+      name, 
+      icon: getBadgeIcon(name) 
+    });
+    
+    setTimeout(() => {
+      setActiveBadge(null);
+    }, 4000);
+  };
 
-  // 2. Single hook call - destructure everything here
-const manager = useOrderManager(
-  // This function only runs when the game ends, looking inside 'manager' for the latest values
-  () => navigate("/game-over", { 
-    state: { 
-      score: manager.score, 
-      ordersServed: manager.ordersServed 
-    } 
-  }),
-  handleLevelComplete,
-  showBadgePopup,
-  currentLevel
-);
+  const manager = useOrderManager(
+    () => navigate("/game-over", { 
+      state: { 
+        score: manager.score, 
+        ordersServed: manager.ordersServed 
+      } 
+    }),
+    handleLevelComplete,
+    showBadgePopup,
+    currentLevel
+  );
+
 
 // extract variables from manager so you can use them in your HTML
 const {
@@ -96,10 +94,10 @@ const {
   updateTray,
   clearTray,
   ordersServed: totalServed, // name match
+   trackEvent,
   timeRemaining,
 } = manager;
 
-  // Load orders when level changes
   useEffect(() => {
     clearTray();
     advance();
@@ -109,6 +107,8 @@ const {
     <PageContainer isLoading={false}>
       <div className="game-screen-wrapper">
         <div className="hud">
+
+          <div className="admin-button" onClick={handleLeaderboardPage}>⚙️</div> 
           <div className="hud-item"><span className="hud-label">Level:</span> {config.title}</div>
           <div className="hud-item"><span className="hud-label">Score:</span> {score}</div>
           <div className="hud-item"><span className="hud-label">Streak:</span> {streak}</div>
@@ -129,8 +129,7 @@ const {
             </div>
           )}
         </div>
-        
-          <button className="serve-button" onClick={handleServeOrder}>
+        <button className="serve-button" onClick={handleServeOrder}>
             SERVE ORDER
           </button>
           <div className="ingredients">
@@ -145,14 +144,13 @@ const {
           </button>
         </div>
 
-          {activeBadge && (
-            <BadgeToast 
-              badgeName={activeBadge.name} 
-              iconPath={activeBadge.icon} 
-              onClose={() => setActiveBadge(null)} 
-            />
-          )}
-
+        {activeBadge && (
+          <BadgeToast 
+            badgeName={activeBadge.name} 
+            iconPath={activeBadge.icon} 
+            onClose={() => setActiveBadge(null)} 
+          />
+        )}
       </div>
     </PageContainer>
   );
