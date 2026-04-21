@@ -1,63 +1,61 @@
 .ingredients-layout {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   width: 100%;
 }
 
 .ingredients-column {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-width: 0;
+  display: contents;
 }
 
 .ingredient-row {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 3px;
 }
 
 .category-label {
-  font-size: 0.5rem;
-  text-transform: lowercase;
-  color: #64748b;
-  font-weight: bold;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: #94a3b8;
+  font-weight: 700;
   margin: 0;
+  letter-spacing: 0.05em;
 }
 
 .options-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3px;
 }
 
 .option-btn {
   border: none;
-  background: transparent;
+  border-radius: 6px;
+  background: #f8fafc;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 4px;
-  min-width: 52px;
+  gap: 2px;
+  padding: 4px 2px;
 }
 
 .ingredient-icon {
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   object-fit: contain;
 }
 
 .option-text {
-  font-size: 0.5rem;
+  font-size: 0.65rem;
   color: #64748b;
   text-align: center;
   line-height: 1.1;
 }
 
 .option-btn.selected {
-  background: rgba(74, 144, 226, 0.12);
-  border-radius: 8px;
+  background: #dbeafe;
+  border-radius: 6px;
 }
