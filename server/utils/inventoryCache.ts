@@ -3,23 +3,29 @@ import { Ecosystem } from "./topiaInit.js";
 import { standardizeError } from "./standardizeError.js";
 import { InventoryItemInterface } from "@rtsdk/topia";
 
+interface InventoryItemMetadata {
+  sortOrder?: number;
+  [key: string]: unknown;
+}
+
 interface CachedInventory {
   items: InventoryItemInterface[];
   timestamp: number;
 }
 
-// Cache duration: 6 hours in milliseconds
 const CACHE_DURATION_MS = 6 * 60 * 60 * 1000;
 
-// In-memory cache
 let inventoryCache: CachedInventory | null = null;
 
-/**
- * Get ecosystem inventory items with caching
- * - Fetches from cache if available and not expired
- * - Refreshes cache if expired or missing
- * - Can force refresh by passing forceRefresh: true
- */
+const getMetadata = (item: InventoryItemInterface): InventoryItemMetadata => {
+  return (item.metadata ?? {}) as InventoryItemMetadata;
+};
+
+const getSortOrder = (item: InventoryItemInterface): number => {
+  const sortOrder = getMetadata(item).sortOrder;
+  return typeof sortOrder === "number" ? sortOrder : 0;
+};
+
 export const getCachedInventoryItems = async ({
   credentials,
   forceRefresh = false,
@@ -30,39 +36,31 @@ export const getCachedInventoryItems = async ({
   try {
     const now = Date.now();
 
-    // Check if cache is valid and not expired
     const isCacheValid = inventoryCache !== null && !forceRefresh && now - inventoryCache.timestamp < CACHE_DURATION_MS;
 
     if (isCacheValid) {
       return inventoryCache!.items;
     }
 
-    // Fetch fresh inventory items
     console.log("Fetching fresh inventory items from ecosystem");
     const ecosystem = Ecosystem.create({ credentials });
     await ecosystem.fetchInventoryItems();
 
-    // Update cache
     inventoryCache = {
       items: (ecosystem.inventoryItems as InventoryItemInterface[])
         .map((item) => ({
           ...item,
           metadata: {
-            ...(item.metadata || {}),
-            sortOrder: typeof item.metadata?.sortOrder === "number" ? item.metadata.sortOrder : 0,
+            ...getMetadata(item),
+            sortOrder: getSortOrder(item),
           },
         }))
-        .sort((a, b) => {
-          const aOrder = a.metadata?.sortOrder ?? 0;
-          const bOrder = b.metadata?.sortOrder ?? 0;
-          return aOrder - bOrder;
-        }),
+        .sort((a, b) => getSortOrder(a) - getSortOrder(b)),
       timestamp: now,
     };
 
     return inventoryCache.items;
   } catch (error) {
-    // If fetch fails but we have stale cache, return it as fallback
     if (inventoryCache !== null) {
       console.warn("Failed to fetch fresh inventory, using stale cache", error);
       return inventoryCache.items;
