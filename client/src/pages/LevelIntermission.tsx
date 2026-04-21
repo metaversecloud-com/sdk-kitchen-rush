@@ -12,6 +12,7 @@ const LevelIntermission = () => {
   // 1. CATCH the data from the previous level
   const inheritedScore = location.state?.inheritedScore || 0;
   const inheritedAngry = location.state?.inheritedAngry || 0;
+  const inheritedStreak = location.state?.inheritedAngry || 0;
 
   const config = levelConfig[Number(levelId) as keyof typeof levelConfig];
 
@@ -22,7 +23,8 @@ const LevelIntermission = () => {
     navigate(`/game/${levelId}`, {
       state: {
         inheritedScore: inheritedScore,
-        inheritedAngry: inheritedAngry
+        inheritedAngry: inheritedAngry,
+        inheritedStreak: inheritedStreak,
       }
     });
   };
@@ -39,6 +41,7 @@ const LevelIntermission = () => {
             {/* Optional: Show the player their current standing */}
             <p className="stats-preview">
               Current Score: <strong>{inheritedScore}</strong> | 
+              Current Streak: <strong>{inheritedStreak}</strong> | 
               Angry Faces: <strong>{inheritedAngry}/5</strong>
             </p>
           </div>
