@@ -4,6 +4,9 @@ import { useNavigate } from "react-router-dom";
 // components
 import { PageContainer } from "@/components";
 
+//utils
+import { backendAPI, setGameState } from "../utils";
+
 // context
 import { GlobalDispatchContext, GlobalStateContext } from "@/context/GlobalContext";
 
@@ -12,27 +15,40 @@ import "../styles//Home.css";
 
 export const Home = () => {
   const dispatch = useContext(GlobalDispatchContext);
-  const { droppedAsset, hasInteractiveParams } = useContext(GlobalStateContext);
+  const { droppedAsset, hasInteractiveParams} = useContext(GlobalStateContext);
   const navigate = useNavigate();
+  // console.log("PageContainer isAdmin:", isAdmin);
 
   const imgSrc = droppedAsset?.topLayerURL || droppedAsset?.bottomLayerURL;
 
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    setIsLoading(false);
-  }, []);
-
   const handleStart = () => {
     navigate("/level-start/1");
   };
+
+  const handleLeaderboardPage = () => navigate('/leaderboard-page');
+
+  useEffect(() => {
+    if (hasInteractiveParams) {
+      backendAPI
+        .get("/game-state")
+        .then((response) => {
+          setGameState(dispatch, response.data);
+        })
+        .catch((error) => console.error("Failed to load game state:", error))
+        .finally(() => setIsLoading(false)); // only stop loading after fetch
+    } else {
+      setIsLoading(false); // no params, just unblock
+    }
+}, [hasInteractiveParams]);
 
   return (
     <PageContainer isLoading={isLoading} headerText="Kitchen Rush">
       <div className="home-screen">
         <div className="home-card">
           <div className="home-top">
-            <div className="home-badge">☕ Coffee Game</div>
+            <div className="home-badge">☕ Coffee Game</div>          
             <h1 className="home-title">Kitchen Rush</h1>
             <p className="home-subtitle">
               Make drinks fast, keep customers happy, and build your streak.

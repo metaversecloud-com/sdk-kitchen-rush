@@ -1,5 +1,11 @@
+<<<<<<< HEAD
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+=======
+import React, { useEffect, useState, useContext} from "react";
+import { useNavigate, useParams } from "react-router-dom"; // Added useParams
+import { GlobalStateContext } from "../context/GlobalContext";
+>>>>>>> f57d2cfa1ff62a37be8707efb8971edb6111cf48
 
 // Components
 import PageContainer from "./PageContainer";
@@ -21,7 +27,6 @@ import { Feedback } from '../types/Feedback'
 const Game = () => {
   const navigate = useNavigate();
   const { levelId } = useParams();
-  
   const currentLevel = Number(levelId) || 1;
   const config = levelConfig[currentLevel as keyof typeof levelConfig];
   const [activeBadge, setActiveBadge] = useState<{name: string, icon: string} | null>(null);
@@ -41,10 +46,6 @@ const Game = () => {
       });
     }
   };
-
-  const handleLeaderboardPage = () => {
-    navigate('/leaderboard-page')
-  }
 
   const getBadgeIcon = (name: string) => {
     const fileName = name.toLowerCase().replace(/\s+/g, '_');
@@ -78,6 +79,7 @@ const Game = () => {
     currentLevel
   );
 
+<<<<<<< HEAD
   const {
     activeOrder,
     angryCustomerCount,
@@ -95,6 +97,24 @@ const Game = () => {
     trackEvent,
     handleManualCloseShop
   } = manager;
+=======
+// extract variables from manager so you can use them in your HTML
+const {
+  activeOrder,
+  angryCustomerCount,
+  score,
+  tray,
+  streak,
+  feedback,
+  handleServeOrder,
+ handleManualCloseShop,
+  advance,
+  updateTray,
+  clearTray,
+  ordersServed: totalServed, // name match
+  timeRemaining,
+} = manager;
+>>>>>>> f57d2cfa1ff62a37be8707efb8971edb6111cf48
 
   useEffect(() => {
     clearTray();
@@ -105,7 +125,10 @@ const Game = () => {
     <PageContainer isLoading={false}>
       <div className="game-screen-wrapper">
         <div className="hud">
+<<<<<<< HEAD
           <div className="admin-button" onClick={handleLeaderboardPage}>⚙️</div>
+=======
+>>>>>>> f57d2cfa1ff62a37be8707efb8971edb6111cf48
           <div className="hud-item"><span className="hud-label">Level:</span> {config.title}</div>
           <div className="hud-item"><span className="hud-label">Score:</span> {score}</div>
           <div className="hud-item"><span className="hud-label">Streak:</span> {streak}</div>
