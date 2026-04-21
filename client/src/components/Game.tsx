@@ -45,7 +45,7 @@ const Game = () => {
     }
   };
 
-  const handleLeaderboardPage = () => navigate('/leaderboard-page');
+  const handleLeaderboardPage = () => navigate('/leaderboard');
 
   const getBadgeIcon = (name: string) => {
     const fileName = name.toLowerCase().replace(/\s+/g, '_');

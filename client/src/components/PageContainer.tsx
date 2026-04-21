@@ -25,7 +25,7 @@ export const PageContainer = ({
     <div className="p-4 mb-28">
       {isAdmin && (
         <AdminIconButton
-          setShowSettings={() => navigate('/leaderboard-page')}
+          setShowSettings={() => navigate('/leaderboard')}
           showSettings={false}
         />
       )}

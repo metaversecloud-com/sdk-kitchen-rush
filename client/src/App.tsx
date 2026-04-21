@@ -95,7 +95,7 @@ const App = () => {
   <Route path="/game/:levelId" element={<Game />} /> 
   
   <Route path="/game-over" element={<GameOver />} />
-  <Route path="/leaderboard" element={<LeaderboardPage assetId={interactiveParams.assetId} />} />
+  <Route path="/leaderboard" element={<LeaderboardPage assetId={interactiveParams.assetId} />} /> 
   <Route path="*" element={<Error />} />
 </Routes>
   );
