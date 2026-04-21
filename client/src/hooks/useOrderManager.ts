@@ -44,13 +44,13 @@ const useOrderManager = (
   });
 
   const [streak, setStreak] = useState<number>(() => {
-    return parseInt(sessionStorage.getItem('streak') || '0');
+    return parseInt(sessionStorage.getItem('streak') || '0'|| state?.inheritedStreak || 0);
   });
   // totalServed = orders this level
   const [totalServed, setTotalServed] = useState<number>(0);
   //  cumulativeServed = total across whole game 
   const [cumulativeServed, setCumulativeServed] = useState<number>(() => {
-    return parseInt(sessionStorage.getItem('ordersServed') || '0' || state?.inheritedStreak || 0);
+    return parseInt(sessionStorage.getItem('ordersServed') || '0');
   });
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
