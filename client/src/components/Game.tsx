@@ -45,8 +45,6 @@ const Game = () => {
     }
   };
 
-  const handleLeaderboardPage = () => navigate('/leaderboard');
-
   const getBadgeIcon = (name: string) => {
     const fileName = name.toLowerCase().replace(/\s+/g, '_');
     try {
@@ -107,8 +105,6 @@ const {
     <PageContainer isLoading={false}>
       <div className="game-screen-wrapper">
         <div className="hud">
-
-          <div className="admin-button" onClick={handleLeaderboardPage}>⚙️</div> 
           <div className="hud-item"><span className="hud-label">Level:</span> {config.title}</div>
           <div className="hud-item"><span className="hud-label">Score:</span> {score}</div>
           <div className="hud-item"><span className="hud-label">Streak:</span> {streak}</div>
