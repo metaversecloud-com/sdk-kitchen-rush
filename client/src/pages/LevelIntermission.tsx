@@ -12,7 +12,7 @@ const LevelIntermission = () => {
   // 1. CATCH the data from the previous level
   const inheritedScore = location.state?.inheritedScore || 0;
   const inheritedAngry = location.state?.inheritedAngry || 0;
-  const inheritedStreak = location.state?.inheritedAngry || 0;
+  const inheritedStreak = location.state?.inheritedStreak || 0;
 
   const config = levelConfig[Number(levelId) as keyof typeof levelConfig];
 
