@@ -19,6 +19,7 @@ import sprinklesImg from "../assets/ingredients/sprinkles.png";
 import whippedImg from "../assets/ingredients/whipped.png";
 
 const Tray = ({ tray }: TrayProps) => {
+  // map ingredient values to corresponding icons
   const iconMap: Record<string, string> = {
     small: smallImg,
     medium: mediumImg,
@@ -34,18 +35,19 @@ const Tray = ({ tray }: TrayProps) => {
     cinnamon: cinnamonImg,
     sprinkles: sprinklesImg,
     whipped: whippedImg,
-    whipped_cream: whippedImg, // Matches the data ID
+    whipped_cream: whippedImg, // matches backend data format
     none: noMilkImg,
     "no-milk": noMilkImg,
     "no-flavor": noMilkImg,
   };
 
-  // Helper to get icon regardless of CAPS
+  // helper function to safely get icon (handles undefined + case differences)
   const getIcon = (val: string | undefined) => {
     if (!val) return null;
     return iconMap[val.toLowerCase()] || null;
   };
 
+  // check if tray is empty (no selections yet)
   const isEmpty = !tray.size && !tray.temp && !tray.milk && !tray.flavor;
 
   return (
@@ -53,13 +55,23 @@ const Tray = ({ tray }: TrayProps) => {
       <div className="order-header"><h3>Your Tray</h3></div>
         <div className="order-visual">
           {isEmpty ? (
+             // display placeholder if tray is empty
             <span className="empty-label">empty</span>
           ) : (
             <>
+              {/* display selected size */}
               {tray.size && <img src={getIcon(tray.size)} className="tray-icon" alt="" />}
+
+               {/* display selected temperature */}
               {tray.temp && <img src={getIcon(tray.temp)} className="tray-icon" alt="" />}
+
+              {/* display selected milk (if exists) */}
               {tray.milk && tray.milk !== "" && <img src={getIcon(tray.milk)} className="tray-icon" alt="" />}
+
+               {/* display selected flavor (if exists) */}
               {tray.flavor && tray.flavor !== "" && <img src={getIcon(tray.flavor)} className="tray-icon" alt="" />}
+
+               {/* display all selected toppings */}
               {tray.toppings?.map((t, i) => (
                 <img key={i} src={getIcon(t)} className="tray-icon" alt="" />
               ))}

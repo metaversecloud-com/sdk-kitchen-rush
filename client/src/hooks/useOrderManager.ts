@@ -14,6 +14,7 @@ import {
   BASE_POINTS,
 } from '../data/gameConstants'
 
+// custom hook to manage all order/game logic
 const useOrderManager = (
   onGameOver: () => void,
   onLevelComplete: (finalScore: number, finalAngryCount: number) => void,
@@ -23,18 +24,27 @@ const useOrderManager = (
   const navigate = useNavigate();
   const { state } = useLocation();
 
-  // STATE
+  // ---- STATE ----
+
+  // player score (carry over from previous level if exists)
   const [score, setScore] = useState<number>(state?.inheritedScore || 0);
+
+  // track number of failed orders (persisted in sessionStorage)
   const [angryCustomerCount, setAngryCustomerCount] = useState<number>(() => {
     return parseInt(sessionStorage.getItem('angryCount') || '0') || state?.inheritedAngry || 0;
   });
+
+   // current active order
   const [activeOrder, setActiveOrder] = useState<Order | null>(null);
+
+  // queue of upcoming orders (not heavily used here yet)
   const [sourceQueue, setSourceQueue] = useState<Order[]>([]);
 
   // Define which streaks trigger the special feedback and badges
   const STREAK_MILESTONES = [5, 10, 25];
   
-  // FIX: Initialize with empty strings so Ingredients.tsx doesn't crash on undefined
+  // tray represents user-selected ingredients
+  // initialize with empty strings to prevent undefined errors
   const [tray, setTray] = useState<Partial<Order>>({
     size: "",
     temp: "",
@@ -43,18 +53,25 @@ const useOrderManager = (
     toppings: []
   });
 
+  // current streak (persisted)
   const [streak, setStreak] = useState<number>(() => {
     return parseInt(sessionStorage.getItem('streak') || '0'|| state?.inheritedStreak || 0);
   });
+  
   // totalServed = orders this level
   const [totalServed, setTotalServed] = useState<number>(0);
-  //  cumulativeServed = total across whole game 
+  //  cumulativeServed = total orders across whole game 
   const [cumulativeServed, setCumulativeServed] = useState<number>(() => {
     return parseInt(sessionStorage.getItem('ordersServed') || '0');
   });
+
+   // time remaining for current order
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
+
+  // feedback message (success/error)
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   
+  // additional stats tracking (optional analytics)
   const [stats, setStats] = useState({
   totalCorrect: 0,
   currentStreak: 0,
@@ -62,45 +79,60 @@ const useOrderManager = (
   lastOrderTimeRemaining: 0, // Store as a decimal (e.g., 0.1 for 10%)
 });
 
-  // REFS for timers and stale state prevention
+  // ---- REFS ----
+
+  // refs to avoid stale state in async callbacks
   const timerRef = useRef<number | undefined>(undefined);
   const timerIntervalRef = useRef<number | undefined>(undefined);
   const scoreRef = useRef(score);
   const servedRef = useRef(totalServed);
   const angryRef = useRef(angryCustomerCount);
 
-  //check
+   // test badge API on mount (debugging)
   useEffect(() => {
   console.log("FORCE TESTING API...");
   awardBadgeRequest("Test Badge");
 }, []);
 
-  // Sync refs so callbacks always have the fresh value
+   // keep refs synced with latest state
   useEffect(() => { scoreRef.current = score; }, [score]);
   useEffect(() => { servedRef.current = totalServed; }, [totalServed]);
   useEffect(() => { angryRef.current = angryCustomerCount; }, [angryCustomerCount]);
   
+  // ---- FEEDBACK ----
+
+  // show temporary feedback message
   const triggerFeedback = (message: string, type: FeedbackType): void => {
     setFeedback({ message, type });
     setTimeout(() => setFeedback(null), 2000);
   };
 
+  // --- TIMER ----
+
+  // start countdown timer for an order
   const startOrderTimer = (durationMs: number) => {
     clearTimeout(timerRef.current);
     clearInterval(timerIntervalRef.current);
     
+    // convert ms to seconds for display
     setTimeRemaining(durationMs / 1000);
 
+    // decrease time every second
     timerIntervalRef.current = window.setInterval(() => {
       setTimeRemaining(prev => Math.max(0, prev - 1));
     }, 1000);
 
+    // trigger timeout when time runs out
     timerRef.current = window.setTimeout(() => {
       handleTimeout();
     }, durationMs);
   };
 
+  // --- ORDER GENERATION ---
+
   const generateRandomOrder = (level: number): Order => {
+
+    // generate a random order based on level config
     const config = levelConfig[level as keyof typeof levelConfig];
     const order: any = {
       id: Math.floor(1000 + Math.random() * 9000).toString(),
@@ -110,9 +142,12 @@ const useOrderManager = (
       timeLimit: config.timer,
     };
 
+    // optional flavor
     if (config.ingredients.flavor?.length > 0) {
       order.flavor = config.ingredients.flavor[Math.floor(Math.random() * config.ingredients.flavor.length)];
     }
+
+    // optional toppings (1–2 random toppings)
     if (config.ingredients.toppings?.length > 0) {
       const numToppings = Math.floor(Math.random() * 2) + 1;
       const shuffled = [...config.ingredients.toppings].sort(() => 0.5 - Math.random());
@@ -121,7 +156,9 @@ const useOrderManager = (
     return order as Order;
   };
 
+  // move to next order
   const advance = (): void => {
+     // track game start event
     if (totalServed === 0 && angryCustomerCount === 0) {
       trackEvent("gamesStarted");
     }
@@ -131,17 +168,26 @@ const useOrderManager = (
     startOrderTimer(config.timer);
   };
 
+  // ---- FAILURE HANDLING ----
+
+  // handle incorrect order or failure
   const handleOrderFailure = (message: string = "Oops, wrong order!"): void => {
+    // increment angry customer count
     const newCount = angryCustomerCount + 1;
     angryRef.current = newCount;
     setAngryCustomerCount(newCount);
     sessionStorage.setItem("angryCount", newCount.toString());
+
+    // apply score penalty
     setScore(prev => Math.max(0, prev - PENALTY));
+
+    // reset streak
     setStreak(0);
     sessionStorage.setItem('streak', '0');
     clearTray();
     triggerFeedback(message, "error");
 
+    // check if game over
     if (newCount >= MAX_ANGRY_CUSTOMERS) {
       trackEvent("gamesCompleted");
       handleCloseShop();
@@ -150,6 +196,7 @@ const useOrderManager = (
     }
   };
 
+  // handle timer running out
   const handleTimeout = (): void => {
     trackEvent("ordersTimedout");
     handleOrderFailure("Customer got tired of waiting!");
@@ -161,76 +208,98 @@ const useOrderManager = (
     handleCloseShop();
   };
 
-const handleServeOrder = () => {
-  const isCorrect = compareIngredients(tray, activeOrder);
-  const config = levelConfig[currentLevel as keyof typeof levelConfig];
+  // ---- SERVE ORDER ----
+  const handleServeOrder = () => {
+    // check if tray matches order
+    const isCorrect = compareIngredients(tray, activeOrder);
+    const config = levelConfig[currentLevel as keyof typeof levelConfig];
 
-  if (isCorrect) {
-    trackEvent("correctOrdersServed");
-    
-    // --- BADGE LOGIC START ---
-    // This will now use the REAL credentials from the Topia URL when pushed
-    console.log("Awarding badge for correct order...");
-    awardBadgeRequest("First Order"); 
-    // --- BADGE LOGIC END ---
+    if (isCorrect) {
+      trackEvent("correctOrdersServed");
+      
+      // --- BADGE LOGIC START ---
+      // This will now use the REAL credentials from the Topia URL when pushed
+      console.log("Awarding badge for correct order...");
+      awardBadgeRequest("First Order"); 
+      // --- BADGE LOGIC END ---
 
-    const newTotal = totalServed + 1;
-    setTotalServed(newTotal);
+       // update counts
+      const newTotal = totalServed + 1;
+      setTotalServed(newTotal);
 
-    const newCumulative = cumulativeServed + 1;
-    setCumulativeServed(newCumulative);
-    sessionStorage.setItem("ordersServed", newCumulative.toString());
-    servedRef.current = newCumulative; 
+      const newCumulative = cumulativeServed + 1;
+      setCumulativeServed(newCumulative);
+      sessionStorage.setItem("ordersServed", newCumulative.toString());
+      servedRef.current = newCumulative; 
 
-    const newStreak = streak + 1;
-    setStreak(newStreak);
-    sessionStorage.setItem('streak', newStreak.toString());
+       // update streak
+      const newStreak = streak + 1;
+      setStreak(newStreak);
+      sessionStorage.setItem('streak', newStreak.toString());
 
-    if (STREAK_MILESTONES.includes(newStreak)) {
-      trackEvent("streakMilestonesReached");
-      awardBadgeRequest("Speed Chef"); // Award another badge for streaks!
-    }
+      // check for streak milestone badge
+      if (STREAK_MILESTONES.includes(newStreak)) {
+        trackEvent("streakMilestonesReached");
+        awardBadgeRequest("Speed Chef"); // Award another badge for streaks!
+      }
 
-    const speedBonus = getSpeedBonus(timeRemaining * 1000, activeOrder?.timeLimit || 10000);
-    const points = (BASE_POINTS * getStreakMultiplier(streak)) + speedBonus;
-    const updatedScore = score + points;
-    setScore(updatedScore);
-    
-    clearTray();
-    triggerFeedback(STREAK_MILESTONES.includes(newStreak) ? `🔥 ${newStreak} Streak!` : "Perfect!", "success");
+      // calculate score (base + streak + speed bonus)
+      const speedBonus = getSpeedBonus(timeRemaining * 1000, activeOrder?.timeLimit || 10000);
+      const points = (BASE_POINTS * getStreakMultiplier(streak)) + speedBonus;
+      const updatedScore = score + points;
+      setScore(updatedScore);
+      
+      clearTray();
 
-    if (newTotal >= config.threshold) {
-      clearTimeout(timerRef.current);
-      clearInterval(timerIntervalRef.current);
-      sessionStorage.removeItem('streak');
-      onLevelComplete(updatedScore, angryCustomerCount);
+      // display feedback message
+      triggerFeedback(STREAK_MILESTONES.includes(newStreak) ? `🔥 ${newStreak} Streak!` : "Perfect!", "success");
+
+      // check level completion
+      if (newTotal >= config.threshold) {
+        clearTimeout(timerRef.current);
+        clearInterval(timerIntervalRef.current);
+        sessionStorage.removeItem('streak');
+        onLevelComplete(updatedScore, angryCustomerCount);
+      } else {
+        advance();
+      }
     } else {
-      advance();
+      trackEvent("wrongOrdersServed");
+      handleOrderFailure();
     }
-  } else {
-    trackEvent("wrongOrdersServed");
-    handleOrderFailure();
-  }
-};
+  };
 
+  // ---- CLOSE SHOP ----
+  // handle closing the shop (game over or manual exit)
   const handleCloseShop = (): void => {
+    // stop any active timers
     clearTimeout(timerRef.current);
     clearInterval(timerIntervalRef.current);
+
+    // get total orders served from sessionStorage
     const ordersServed = parseInt(sessionStorage.getItem('ordersServed') || '0');
+    // use ref to get latest score (avoids stale state issues)
     const score = scoreRef.current;
+
+    // clear stored game data
     sessionStorage.removeItem('ordersServed');
     sessionStorage.removeItem('angryCount');
     sessionStorage.removeItem('streak')
+
+    // navigate to game over screen with final results
     navigate('/game-over', { 
       state: { 
         score,
-        ordersServed// read before removeItem
+        ordersServed // pass value before it was removed
       } 
     });
   };
 
+  // --- TRAY ---
   const updateTray = (category: keyof Order, value: string): void => {
+    // update tray when user selects ingredient
     setTray(prev => {
+      // toppings allow multiple selections (max 3)
       if (category === "toppings") {
         const currentToppings = prev.toppings || [];
         if (currentToppings.includes(value)) return prev;
@@ -239,12 +308,13 @@ const handleServeOrder = () => {
         }
         return prev;
       }
-      // If they already picked this category, don't let them change (lock-in mechanic)
+      // lock-in mechanic: cannot change once selected
       if (prev[category] && prev[category] !== "") return prev; 
       return { ...prev, [category]: value };
     });
   };
 
+   // reset tray after order is served
   const clearTray = (): void => setTray({
     size: "",
     temp: "",
@@ -300,7 +370,8 @@ const awardBadgeRequest = async (badgeName: string) => {
     }
   };
 
-  // Cleanup on unmount
+  // --- CLEANUP ----
+  // clear timers on component unmount
   useEffect(() => {
     return () => {
       clearTimeout(timerRef.current);
@@ -308,24 +379,26 @@ const awardBadgeRequest = async (badgeName: string) => {
     };
   }, []);
 
-return {
-  score,
-  activeOrder,
-  angryCustomerCount,
-  tray,
-  streak,
-  timeRemaining,
-  feedback,
-  handleServeOrder,
-  handleCloseShop,
-  updateTray,
-  advance,
-  clearTray,
-  awardBadgeRequest,
-  ordersServed: totalServed, // Adding alias
-  handleManualCloseShop,
-  trackEvent
-};
+  // ---- RETURN ----
+
+  return {
+    score,
+    activeOrder,
+    angryCustomerCount,
+    tray,
+    streak,
+    timeRemaining,
+    feedback,
+    handleServeOrder,
+    handleCloseShop,
+    updateTray,
+    advance,
+    clearTray,
+    awardBadgeRequest,
+    ordersServed: totalServed, // Adding alias
+    handleManualCloseShop,
+    trackEvent
+  };
 };
 
 export default useOrderManager;
