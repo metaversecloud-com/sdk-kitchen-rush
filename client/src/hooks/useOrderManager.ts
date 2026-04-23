@@ -202,6 +202,7 @@ const handleServeOrder = () => {
     if (newTotal >= config.threshold) {
       clearTimeout(timerRef.current);
       clearInterval(timerIntervalRef.current);
+      sessionStorage.removeItem('streak');
       onLevelComplete(updatedScore, angryCustomerCount);
     } else {
       advance();

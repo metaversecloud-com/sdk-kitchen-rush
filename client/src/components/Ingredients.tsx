@@ -27,8 +27,10 @@ import whippedImg from "../assets/ingredients/whipped.png";
 
 interface IngredientsProps {
   tray: any;
-  // Change 'string' to 'keyof Order' here:
+  // function to update selected ingredient in tray
   onSelect: (category: keyof Order, value: string) => void; 
+
+  // current game level
   level: number;
 }
 
@@ -55,28 +57,33 @@ const ingredientIcons: Record<string, string> = {
 };
 
 const Ingredients = ({ tray, onSelect, level }: IngredientsProps) => {
+  // get ingredient config based on current level
   const config = levelConfig[level as keyof typeof levelConfig];
 
+  // if config or tray does not exist, render nothing
   if (!config || !tray) return null;
 
-  const leftCategories = ["size", "temp", "milk"];
-  const rightCategories = ["flavor", "toppings"];
-
   const renderCategory = (category: string) => {
+    // get all ingredient options for current category
     const options = config.ingredients[category as keyof typeof config.ingredients];
 
+    // if no options exist for category, do not render it
     if (!options || (options as string[]).length === 0) return null;
 
     return (
       <div key={category} className="ingredient-row">
+         {/* category title */}
         <label className="category-label">{category}</label>
+         {/* display every ingredient option as a button */}
         <div className="options-grid">
           {(options as string[]).map((option: string) => {
+            // check if current option is selected
             const isSelected =
               category === "toppings"
                 ? tray[category]?.includes(option)
                 : tray[category] === option;
 
+            // normalize option so it matches icon keys
             const normalizedOption = option.toLowerCase();
 
             return (
@@ -86,6 +93,7 @@ const Ingredients = ({ tray, onSelect, level }: IngredientsProps) => {
                 className={`option-btn ${isSelected ? "selected" : ""}`}
                 onClick={() => onSelect(category as keyof Order, option)}
               >
+                 {/* display ingredient icon if one exists */}
                 {ingredientIcons[normalizedOption] ? (
                   <img
                     src={ingredientIcons[normalizedOption]}
@@ -93,8 +101,10 @@ const Ingredients = ({ tray, onSelect, level }: IngredientsProps) => {
                     className="ingredient-icon"
                   />
                 ) : (
+                  // fallback empty icon if image is missing
                   <div className="placeholder-icon" />
                 )}
+                 {/* display ingredient name */}
                 <span className="option-text">{option.replace("_", " ")}</span>
               </button>
             );

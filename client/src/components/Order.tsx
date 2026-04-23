@@ -18,6 +18,7 @@ import cinnamonImg from "../assets/ingredients/cinnamon.png";
 import sprinklesImg from "../assets/ingredients/sprinkles.png";
 import whippedImg from "../assets/ingredients/whipped.png";
 
+// match ingredient names to their icon images
 const ingredientIcons: Record<string, string> = {
   almond: almondImg,
   caramel: caramelImg,
@@ -37,7 +38,9 @@ const ingredientIcons: Record<string, string> = {
 };
 
 const Order = ({ order, isActive, timeRemaining, currentLevel }: any) => { 
+  // convert time limit from milliseconds to seconds
   const totalTime = order.timeLimit / 1000; 
+  // calculate how much time is left as a percentage
   const timePercent = timeRemaining ? (timeRemaining / totalTime) * 100 : 0;
 
   const RecipeRow = ({ value, minLevel = 1 }: { value: string | undefined, minLevel?: number }) => {
@@ -47,11 +50,13 @@ const Order = ({ order, isActive, timeRemaining, currentLevel }: any) => {
     let displayValue = value;
     let iconKey = value?.toLowerCase() || "none";
 
+     // rename whipped_cream so it displays better in UI
     if (displayValue === "whipped_cream") {
       iconKey = "whipped"; 
       displayValue = "Whipped";
     }
 
+    // if no value exists, display none with no-milk icon
     if (!displayValue || displayValue === "" || displayValue === "No" || displayValue === "none") {
       displayValue = "None";
       iconKey = "none";
@@ -59,7 +64,9 @@ const Order = ({ order, isActive, timeRemaining, currentLevel }: any) => {
 
     return (
       <div className="recipe-row">
+         {/* display ingredient icon */}
         <img src={ingredientIcons[iconKey]} alt="" className="recipe-bullet-icon" />
+         {/* display ingredient text */}
         <span className="recipe-text">{displayValue}</span>
       </div>
     );
