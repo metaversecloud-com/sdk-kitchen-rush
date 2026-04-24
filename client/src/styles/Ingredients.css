@@ -1,3 +1,4 @@
+/* OVERALL LAYOUT */
 .ingredients-layout {
   display: flex;
   flex-direction: column;
@@ -15,6 +16,7 @@
   gap: 3px;
 }
 
+/* LABELS */
 .category-label {
   font-size: 0.7rem;
   text-transform: uppercase;
@@ -24,6 +26,7 @@
   letter-spacing: 0.05em;
 }
 
+/* OPTIONS */
 .options-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -42,6 +45,7 @@
   padding: 4px 2px;
 }
 
+/* ICONS */
 .ingredient-icon {
   width: 36px;
   height: 36px;
