@@ -1,11 +1,14 @@
 import PageContainer from "../components/PageContainer";
+import { GlobalStateContext } from "@context/GlobalContext";
 import Leaderboard from "../components/Leaderboard"
 import ResetLeaderboardButton from "../components/ResetLeaderboardButton"
 import {useNavigate} from "react-router-dom"
+import { useContext } from "react";
 import "../styles/LeaderboardPage.css";
 
 export const LeaderboardPage = ({ assetId }: { assetId: string }) => {
     const navigate=useNavigate();
+    const { isAdmin } = useContext(GlobalStateContext);
     
     // go back to previous page
     const handleGoBack= () => {
@@ -21,7 +24,7 @@ export const LeaderboardPage = ({ assetId }: { assetId: string }) => {
             {/* display leaderboard */}
               <div className="leaderboard"> <Leaderboard /> </div>
               {/* reset leaderboard button connected to the asset */}
-              <button className="reset-button"> <ResetLeaderboardButton assetId={assetId}/> </button>
+              {isAdmin && (<button className="reset-button"> <ResetLeaderboardButton assetId={assetId}/> </button>)}
           </div>
         </div>
     </PageContainer>
