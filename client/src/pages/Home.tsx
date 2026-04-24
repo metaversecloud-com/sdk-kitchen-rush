@@ -12,6 +12,7 @@ import { GlobalDispatchContext, GlobalStateContext } from "@/context/GlobalConte
 
 // styles
 import "../styles//Home.css";
+import Leaderboard from "@/components/Leaderboard";
 
 export const Home = () => {
   const dispatch = useContext(GlobalDispatchContext);
@@ -27,7 +28,7 @@ export const Home = () => {
     navigate("/level-start/1");
   };
 
-  const handleLeaderboardPage = () => navigate('/leaderboard-page');
+  const handleLeaderboardPage = () => navigate('/leaderboard');
 
   useEffect(() => {
     if (hasInteractiveParams) {
@@ -117,6 +118,9 @@ export const Home = () => {
           <div className="home-actions">
             <button onClick={handleStart} className="start-button">
               Start Game
+            </button>
+            <button className="leaderboard-button" onClick={handleLeaderboardPage}>
+                See Leaderboard
             </button>
             <p className="home-footer-text">Ready to serve? Let’s go.</p>
           </div>

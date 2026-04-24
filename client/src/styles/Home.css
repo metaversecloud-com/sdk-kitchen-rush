@@ -159,3 +159,17 @@
   font-size: 0.72rem;
   color: #64748b;
 }
+
+.leaderboard-button {
+  background: transparent;
+  color: #4a90e2;
+  border: none;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-top: 5px;
+  width: 100%;              /* makes it span the container */
+  text-align: center;       /* centers the text */
+  margin-top: 10px;
+  margin-bottom: 10px;
+}

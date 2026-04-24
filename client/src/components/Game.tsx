@@ -104,6 +104,9 @@ const {
   return (
     <PageContainer isLoading={false}>
       <div className="game-screen-wrapper">
+        <button className="close-button-outline" onClick={handleManualCloseShop}>
+            Close Shop
+          </button>
         <div className="hud">
           <div className="hud-item"><span className="hud-label">Level:</span> {config.title}</div>
           <div className="hud-item"><span className="hud-label">Score:</span> {score}</div>
@@ -125,20 +128,18 @@ const {
             </div>
           )}
         </div>
-        <button className="serve-button" onClick={handleServeOrder}>
-            SERVE ORDER
-          </button>
+       
           <div className="ingredients">
             <Ingredients  onSelect={updateTray} tray={tray} level={currentLevel} />
           </div>
         {/* Use the destructured feedback directly */}
         {feedback && <FeedbackToast feedback={feedback} />}
 
-        <div className="bottom-actions">
-          <button className="close-button-outline" onClick={handleManualCloseShop}>
-            Close Shop
+        {/* <div className="bottom-actions"> */}
+           <button className="serve-button" onClick={handleServeOrder}>
+            SERVE ORDER
           </button>
-        </div>
+        {/* </div> */}
 
         {activeBadge && (
           <BadgeToast 
