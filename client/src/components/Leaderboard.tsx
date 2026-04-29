@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { backendAPI } from "@/utils";
 import PageContainer from "./PageContainer";
+import ResetLeaderboardButton from './ResetLeaderboardButton';
 
 type LeaderboardEntry = {
   profileId: string;
@@ -8,20 +9,26 @@ type LeaderboardEntry = {
   score: number;
 };
 
-const Leaderboard = () => {
+const Leaderboard = ({ assetId }: { assetId: string }) => {
   // store leaderboard entries from backend
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   // track loading state while data is being fetched
   const [isLoading, setIsLoading] = useState(true);
   // store error message if request fails
   const [error, setError] = useState<string | null>(null);
+  // admin configuration
+  const [isAdmin, setIsAdmin] = useState(false);
+
 
 
   useEffect(() => {
     backendAPI
     // get leaderboard data from backend when component loads
       .get("/leaderboard")
-      .then((res) => setLeaderboard(res.data.data.leaderboard))
+      .then((res) => {
+          setLeaderboard(res.data.data.leaderboard)
+          setIsAdmin(res.data.data.isAdmin);
+      })
       .catch(() => setError("Failed to load leaderboard."))
       .finally(() => setIsLoading(false));
   }, []);
@@ -60,6 +67,7 @@ const Leaderboard = () => {
           </tbody>
         </table>
       )}
+      <div className="leaderboard-button"> {isAdmin && <ResetLeaderboardButton assetId={assetId} />}</div>
     </div>
   );
 };

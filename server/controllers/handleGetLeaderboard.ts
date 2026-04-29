@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { errorHandler, getCredentials, getDroppedAsset } from "@utils/index.js";
+import { errorHandler, getCredentials, getDroppedAsset, getVisitor } from "@utils/index.js";
 import { parseLeaderboard } from "@utils/leaderboardUtils.js";
 
 // controller to fetch leaderboard data
@@ -10,7 +10,12 @@ export const handleGetLeaderboard = async (req: Request, res: Response) => {
     const credentials = getCredentials(req.query);
 
     // get dropped asset associated with this experience
-    const droppedAsset = await getDroppedAsset(credentials);
+    const [droppedAsset, { visitor }] = await Promise.all([
+        getDroppedAsset(credentials),
+        getVisitor(credentials, true),
+      ]);
+
+    const { isAdmin } = visitor;
 
     // fetch latest data object from backend
     await droppedAsset.fetchDataObject();
@@ -22,7 +27,7 @@ export const handleGetLeaderboard = async (req: Request, res: Response) => {
     const leaderboard = parseLeaderboard(leaderboardData);
 
     // return leaderboard data to client
-    return res.json({ success: true, data: { leaderboard } });
+    return res.json({ success: true, data: { leaderboard, isAdmin} });
   } catch (error) {
       // handle and log error using centralized error handler
     return errorHandler({

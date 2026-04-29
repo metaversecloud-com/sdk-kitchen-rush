@@ -8,7 +8,6 @@ import "../styles/LeaderboardPage.css";
 
 export const LeaderboardPage = ({ assetId }: { assetId: string }) => {
     const navigate=useNavigate();
-    const { isAdmin } = useContext(GlobalStateContext);
     
     // go back to previous page
     const handleGoBack= () => {
@@ -22,9 +21,7 @@ export const LeaderboardPage = ({ assetId }: { assetId: string }) => {
             {/* button to go back */}
             <button className="back-button" onClick={handleGoBack}> Go back </button>
             {/* display leaderboard */}
-              <div className="leaderboard"> <Leaderboard /> </div>
-              {/* reset leaderboard button connected to the asset */}
-              {isAdmin && (<button className="reset-button"> <ResetLeaderboardButton assetId={assetId}/> </button>)}
+              <div className="leaderboard"> <Leaderboard assetId={assetId}/> </div>
           </div>
         </div>
     </PageContainer>
