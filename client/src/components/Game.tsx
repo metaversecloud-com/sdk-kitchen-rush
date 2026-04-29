@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState, useContext } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { GlobalStateContext } from "../context/GlobalContext";
 
 // Components
@@ -14,6 +14,7 @@ import BadgeToast from './BadgeToast';
 // Hooks & Config
 import useOrderManager from "../hooks/useOrderManager";
 import { levelConfig } from "../config/levelConfig";
+import {useAppNavigate} from '../hooks/useAppNavigate';
 
 import "../styles/Game.css";
 
@@ -21,7 +22,7 @@ import "../styles/Game.css";
 import { Feedback } from '../types/Feedback'
 
 const Game = () => {
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
   const { levelId } = useParams();
   const currentLevel = Number(levelId) || 1;
  // const currentLevel = 4;

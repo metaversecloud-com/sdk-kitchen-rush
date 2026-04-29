@@ -1,13 +1,14 @@
 import { useEffect, useState, useRef, useContext  } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { backendAPI, setGameState } from "@/utils";
 import Leaderboard from "../components/Leaderboard";
 import { PageContainer } from "@/components";
 import { GlobalDispatchContext, GlobalStateContext } from "@/context/GlobalContext";
+import {useAppNavigate} from '../hooks/useAppNavigate';
 
 
 export default function GameOver() {
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
   const { state } = useLocation();
   const score = state?.score ?? 0;
   const ordersServed = state?.ordersServed ?? 0;
@@ -44,10 +45,6 @@ export default function GameOver() {
         setScoreSubmitted(true); // still show leaderboard even if update fails
       });
   }, []);
-
-  
-
-  const handleLeaderboardPage = () => navigate('/leaderboard-page');
 
   return (
    <PageContainer isLoading={isLoading} headerText="Game Over">

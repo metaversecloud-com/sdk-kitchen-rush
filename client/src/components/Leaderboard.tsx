@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { backendAPI } from "@/utils";
 import PageContainer from "./PageContainer";
 import ResetLeaderboardButton from './ResetLeaderboardButton';
+import "../styles/LeaderboardPage.css";
 
 type LeaderboardEntry = {
   profileId: string;
@@ -67,6 +68,7 @@ const Leaderboard = ({ assetId }: { assetId: string }) => {
           </tbody>
         </table>
       )}
+      {/* reset button */}
       <div className="leaderboard-button"> {isAdmin && <ResetLeaderboardButton assetId={assetId} />}</div>
     </div>
   );

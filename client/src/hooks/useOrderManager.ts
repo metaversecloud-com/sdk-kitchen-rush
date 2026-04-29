@@ -4,9 +4,10 @@ import { compareIngredients } from "../utils/compareIngredients"
 import { getSpeedBonus } from "../utils/speedMultiplier"
 import { getStreakMultiplier } from "../utils/streakMultiplier"
 import { useState, useEffect, useRef } from "react"
-import { useNavigate, useLocation } from "react-router-dom"
+import { useLocation } from "react-router-dom"
 import { levelConfig } from "../config/levelConfig";
 import { trackEvent } from "../utils/analyticsAPI";
+import {useAppNavigate} from './useAppNavigate';
 
 import { 
   MAX_ANGRY_CUSTOMERS,
@@ -21,7 +22,7 @@ const useOrderManager = (
   onBadgeUnlocked: (name: string) => void,
   currentLevel: number 
 ) => {
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
   const { state } = useLocation();
 
   // ---- STATE ----

@@ -1,5 +1,4 @@
 import { useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 // components
 import { PageContainer } from "@/components";
@@ -12,12 +11,15 @@ import { GlobalDispatchContext, GlobalStateContext } from "@/context/GlobalConte
 
 // styles
 import "../styles//Home.css";
-import Leaderboard from "@/components/Leaderboard";
+
+//hooks
+import {useAppNavigate} from '../hooks/useAppNavigate';
+
 
 export const Home = () => {
   const dispatch = useContext(GlobalDispatchContext);
   const { droppedAsset, hasInteractiveParams} = useContext(GlobalStateContext);
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
   // console.log("PageContainer isAdmin:", isAdmin);
 
   const imgSrc = droppedAsset?.topLayerURL || droppedAsset?.bottomLayerURL;

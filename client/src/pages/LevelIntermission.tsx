@@ -1,11 +1,12 @@
 import React from "react";
-import { useNavigate, useParams, useLocation } from "react-router-dom"; // Added useLocation
+import { useParams, useLocation } from "react-router-dom"; // Added useLocation
 import { levelConfig } from "../config/levelConfig";
 import { PageContainer } from "../components";
 import "../styles/LevelIntermission.css";
+import {useAppNavigate} from '../hooks/useAppNavigate';
 
 const LevelIntermission = () => {
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
   const location = useLocation(); // Initialize location to grab the state
   const { levelId } = useParams();
   

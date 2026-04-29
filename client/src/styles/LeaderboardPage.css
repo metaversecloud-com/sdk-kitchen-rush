@@ -31,6 +31,7 @@
   cursor: pointer;
 }
 
-.leaderboard leaderboard.button {
-  justify-content: center;
+.leaderboard-button .button {
+  text-decoration: underline;
+  color: black;
 }

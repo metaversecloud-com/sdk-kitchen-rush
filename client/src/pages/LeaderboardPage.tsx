@@ -2,12 +2,12 @@ import PageContainer from "../components/PageContainer";
 import { GlobalStateContext } from "@context/GlobalContext";
 import Leaderboard from "../components/Leaderboard"
 import ResetLeaderboardButton from "../components/ResetLeaderboardButton"
-import {useNavigate} from "react-router-dom"
 import { useContext } from "react";
 import "../styles/LeaderboardPage.css";
+import {useAppNavigate} from '../hooks/useAppNavigate';
 
 export const LeaderboardPage = ({ assetId }: { assetId: string }) => {
-    const navigate=useNavigate();
+    const navigate=useAppNavigate();
     
     // go back to previous page
     const handleGoBack= () => {

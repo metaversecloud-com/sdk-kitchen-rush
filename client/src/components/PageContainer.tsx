@@ -5,7 +5,9 @@ import { AdminView, AdminIconButton, Loading } from "@/components";
 
 // context
 import { GlobalStateContext } from "@context/GlobalContext";
-import { useNavigate } from "react-router-dom";
+
+// hooks
+import {useAppNavigate} from "../hooks/useAppNavigate"
 
 export const PageContainer = ({
   children,
@@ -17,7 +19,7 @@ export const PageContainer = ({
   headerText?: string;
 }) => {
   const { error, isAdmin } = useContext(GlobalStateContext);
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
 
   if (isLoading) return <Loading />;
 
