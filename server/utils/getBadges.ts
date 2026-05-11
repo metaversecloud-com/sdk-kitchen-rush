@@ -10,17 +10,12 @@ export type BadgeRecord = {
   };
 };
 
-/**
- * Get all active badges from ecosystem inventory
- * Uses cached inventory items for performance
- */
-export const getBadges = async (credentials: Credentials): Promise<BadgeRecord> => {
-  const inventoryItems = await getCachedInventoryItems({ credentials });
+export const getBadges = async (credentials: Credentials, forceRefresh = false): Promise<BadgeRecord> => {
+  const inventoryItems = await getCachedInventoryItems({ credentials, forceRefresh });
 
   const badges: BadgeRecord = {};
-
   for (const item of inventoryItems) {
-    const { id, name, image_path, description, type, status } = item;
+    const { id, name, image_path, description, type, status } = item as any;
     if (name && type === "BADGE" && status === "ACTIVE") {
       badges[name] = {
         id,
@@ -30,6 +25,5 @@ export const getBadges = async (credentials: Credentials): Promise<BadgeRecord> 
       };
     }
   }
-
   return badges;
 };

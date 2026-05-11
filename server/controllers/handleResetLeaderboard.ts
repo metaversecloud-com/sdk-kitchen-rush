@@ -1,43 +1,29 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 import { errorHandler, getCredentials, getDroppedAsset } from "@utils/index.js";
-import { initializeDroppedAssetDataObject } from "../utils/droppedAssets/initializeDroppedAssetDataObject";
 
-export const handleResetLeaderboard = async (req: Request, res: Response, next: NextFunction) => {
-    interface LeaderboardData {
-        leaderboard: Record<string, string>;
-    }
-
+export const handleResetLeaderboard = async (req: Request, res: Response) => {
   try {
-    const credentials  = getCredentials(req.query);
+    const credentials = getCredentials(req.query);
 
     const droppedAsset = await getDroppedAsset(credentials);
-
-    
-    // Ensure data object exists with correct shape
-    const data = (await droppedAsset.fetchDataObject()) as LeaderboardData;
-
-    const leaderboard = data?.leaderboard;
-    // check before resetting
-    if (!leaderboard || Object.keys(leaderboard).length === 0) {
-      return res.status(200).json({ message: "Leaderboard already empty" });
+    const leaderboard = (droppedAsset.dataObject?.leaderboard ?? {}) as Record<string, string>;
+    if (Object.keys(leaderboard).length === 0) {
+      return res.json({ success: true, alreadyEmpty: true });
     }
-    
-    if (!data || !data.leaderboard) {
-      await droppedAsset.setDataObject(
-        {
-        leaderboard: []
-        }, {}
+
+    await droppedAsset.updateDataObject(
+      { leaderboard: {} },
+      { lock: { lockId: `leaderboard-reset-${droppedAsset.id}`, releaseLock: true } },
     );
-    } else {
-      await droppedAsset.updateDataObject(
-        {
-        leaderboard: []
-        }, {}
-    );
-    }
-    
+
     return res.json({ success: true });
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    return errorHandler({
+      error,
+      functionName: "handleResetLeaderboard",
+      message: "Error resetting leaderboard",
+      req,
+      res,
+    });
   }
 };

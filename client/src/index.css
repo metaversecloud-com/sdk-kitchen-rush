@@ -1,3 +1,83 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/*
+ * Cascade layer order (lowest -> highest priority):
+ *   1. tailwind   - utility classes
+ *   2. sdk        - Topia SDK component styles (.btn, .card, .p2, etc.)
+ *   3. unlayered  - per-page .css files imported by components (always win)
+ *
+ * Anything not in a layer beats anything in a layer; later-declared layers
+ * beat earlier ones. So a `.home-card` class beats SDK, SDK beats Tailwind.
+ */
+@layer tailwind, sdk;
+
+@import url("https://sdk-style.s3.amazonaws.com/styles-3.0.2.css") layer(sdk);
+
+@layer tailwind {
+  @tailwind base;
+  @tailwind components;
+  @tailwind utilities;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.home-image {
+  width: 100%;
+  height: 220px;
+  border-radius: 14px;
+  display: block;
+}
+
+.chip-primary {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #2563eb;
+  background: #eaf3ff;
+  padding: 6px 10px;
+  border-radius: 999px;
+}
+
+.info-card {
+  background: #eaf3ff;
+  border-color: #b8cfff;
+}
+
+.warning-card {
+  background: #fffaf5;
+  border-color: #fde7cf;
+}
+
+.info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.76rem;
+  color: #334155;
+  line-height: 1.3;
+}
+
+.info-icon {
+  font-size: 0.9rem;
+  line-height: 1;
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%);
+  color: white;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #60a5fa 100%);
+}

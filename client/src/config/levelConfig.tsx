@@ -6,17 +6,13 @@ export const levelConfig = {
     threshold: 5, // Levels up after 5 successful orders
     timer: 15000, // 12 seconds
     description: "Pick the size, temperature, and milk for each drink! Get into the rhythm of the kitchen.",
-    instructions: [
-      "2–3 ingredients per order",
-      "Timer: 12 seconds per customer",
-      "Focus on Size, Temp, and Milk"
-    ],
+    instructions: ["2–3 ingredients per order", "Timer: 12 seconds per customer", "Focus on Size, Temp, and Milk"],
     ingredients: {
       size: ["small", "medium", "large"],
       temp: ["hot", "iced"],
       milk: ["whole", "oat", "almond", "none"],
       flavor: [],
-      toppings: []
+      toppings: [],
     },
   },
   2: {
@@ -25,16 +21,16 @@ export const levelConfig = {
     timer: 12000, // 10 seconds
     description: "The midday crowd is here! Now customers want flavor shots too.",
     instructions: [
-      "3–4 ingredients per order",
+      "3-4 ingredients per order",
       "Timer: 10 seconds per customer",
-      "New Ingredients: Vanilla, Caramel, and Mocha flavors!"
+      "New Ingredients: Vanilla, Caramel, and Mocha flavors!",
     ],
     ingredients: {
       size: ["small", "medium", "large"],
       temp: ["hot", "iced"],
       milk: ["whole", "oat", "almond", "none"],
       flavor: ["vanilla", "caramel", "mocha", "none"],
-      toppings: [] 
+      toppings: [],
     },
   },
   3: {
@@ -45,14 +41,14 @@ export const levelConfig = {
     instructions: [
       "4–5 ingredients per order",
       "Timer: 8 seconds per customer",
-      "New Ingredients: Whipped Cream, Cinnamon, and Sprinkles!"
+      "New Ingredients: Whipped Cream, Cinnamon, and Sprinkles!",
     ],
     ingredients: {
       size: ["small", "medium", "large"],
       temp: ["hot", "iced"],
       milk: ["whole", "oat", "almond", "none"],
       flavor: ["vanilla", "caramel", "mocha", "none"],
-      toppings: ["whipped_cream", "cinnamon", "sprinkles"]
+      toppings: ["whipped_cream", "cinnamon", "sprinkles"],
     },
   },
   4: {
@@ -63,14 +59,14 @@ export const levelConfig = {
     instructions: [
       "5+ ingredients per order",
       "Timer: 7 seconds per customer",
-      "Ultimate Challenge: Java Chips and Drizzles unlocked!"
+      "Ultimate Challenge: Java Chips and Drizzles unlocked!",
     ],
     ingredients: {
       size: ["small", "medium", "large"],
       temp: ["hot", "iced"],
       milk: ["whole", "oat", "almond", "none"],
       flavor: ["vanilla", "caramel", "mocha", "none"],
-      toppings: ["whipped_cream", "cinnamon", "sprinkles"]
+      toppings: ["whipped_cream", "cinnamon", "sprinkles"],
     },
   },
 } as const;

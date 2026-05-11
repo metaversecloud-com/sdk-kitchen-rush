@@ -1,46 +1,20 @@
-.game-screen-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  max-width: 320px;
-  margin: 0 auto;
-  position: relative;
-  padding: 10px;
-  gap: 8px;
-  overflow-x: hidden;
-  background: white;
-  border-radius: 12px;
-  -webkit-border-radius: 12px;
-  -moz-border-radius: 12px;
-  -ms-border-radius: 12px;
-  -o-border-radius: 12px;
-}
-
 /* --- HUD BAR (Slim & Compact) --- */
 .hud {
   display: flex;
   justify-content: space-around;
   align-items: center;
-  background: #ffffff;
   padding: 4px 12px;
-  border-radius: 30px;
-  width: 95%;
-  max-width: 300px;
+  margin-bottom: 6px;
+  border-radius: 20px;
   border: 1px solid #e2e8f0;
-  margin: 0 auto 5px auto;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .hud-item {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  font-weight: 800;
-  font-size: 0.75rem;
-  color: #1e293b;
-  font-size: 0.65rem;
-  gap: 0px;
+  font-weight: 700;
+  font-size: 0.85rem;
 }
 
 .hud-label {
@@ -49,241 +23,81 @@
   text-transform: uppercase;
 }
 
-.admin-button {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  font-weight: 800;
-  color: #1e293b;
-  font-size: 0.65rem;
-  gap: 0px;
-  cursor: pointer;
-}
-
-/* --- SIDE-BY-SIDE PLAY AREA --- */
-.order-tray-row {
-  display: flex;
-  flex-direction: row; 
-  align-items: stretch; /* Makes tray and card same height if needed */
-  justify-content: center;
-  gap: 8px;
+/* Recipe */
+.timer-container {
   width: 100%;
-  position: relative;
-  padding: 0 5px;
+  height: 5px;
+  background: #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 2px;
 }
 
-/* THE TRAY (Main Focus) */
-.tray-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 8px;
-  min-height: 80px; /* Adjust to fit 2 rows of icons comfortably */
-  background: #ffffff;
-  border: 0.5px solid #e2e8f0;
-  border-radius: 16px;
+.timer-bar {
+  height: 100%;
+  transition: width 1s linear;
+  padding: 2px;
 }
 
-/* Move label to the very top */
-.tray-container .order-header {
-  order: -1; 
-  margin-bottom: 12px;
-  width: 100%;
-  text-align: center;
+.recipe-bullet-icon {
+  width: 28px !important;
 }
 
-.tray-container h3 {
-  font-size: 0.6rem;
-  text-transform: uppercase;
-  color: #94a3b8;
-  letter-spacing: 0.05em;
-  margin: 0;
+.recipe-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: capitalize;
 }
 
-/* Tray Icons (Small matching size) */
+/* Tray Icons */
 .tray-icon {
-  width: 24px !important;  /* Shrunk down so 3 fit across easily */
-  height: 24px !important;
-  object-fit: contain;
-  display: block;
+  width: 30px !important; /* Shrunk down so 3 fit across easily */
 }
 
-/* Ensure the tray container doesn't force images to fill space */
-.tray-container img {
-  width: 24px !important;
-  height: 24px !important;
+/* Ingredients */
+.ingredients {
+  border-radius: 10px;
+  background: #f0f2f5;
+  border: 1px solid #d0dae9;
+  gap: 2px;
+  padding: 4px 10px;
 }
 
-/* --- ORDER TICKET ICON SIZING --- */
-/* These should stay smaller (around 20px) to stay 'in frame' */
-.order-card .ingredient-icon {
-  width: 20px !important;
-  height: 20px !important;
-  object-fit: contain;
+.ingredient-icon {
+  height: 36px;
 }
 
-.empty-label {
-  font-size: 0.65rem;
-  color: #cbd5e0;
-  text-transform: uppercase;
-  font-weight: 700;
-  margin-top: 20px; /* Space it down from the header */
-}
-
-/* --- THE ORDER CARD (The Sidekick) --- */
-.order-container {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-}
-
-.order-card {
-  width: 150% !important;
-  max-width: 105px;
-  padding: 6px !important;
-  border: 1px solid #e2e8f0 !important;
-  border-radius: 6px !important;
-  background: #fffcf0 !important;
-  transform: rotate(1deg);
+.option-btn {
+  border: 2px solid #fff;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
 }
 
-/* Recipe Newlines Logic */
-.order-details {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 1px;
+.option-btn.selected {
+  border: 2px solid #60a5fa;
+  border-radius: 6px;
 }
 
-.order-card .option, .order-card .item {
-  display: block; /* Forces newline */
-  font-size: 0.7rem !important;
-  line-height: 1.1;
-  font-weight: 700;
-  text-align: left;
-}
-
-/* --- INGREDIENT BUTTONS (Big Icons, Tiny Text) --- */
-.ingredients-grid {
-  position: relative;
-  z-index: 5; /* Brings the buttons to the front */
-  pointer-events: auto; /* Ensures clicks register */
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: 100%;
-}
-
-.ingredient-btn {
-  cursor: pointer !important;
-  pointer-events: all !important;
-  z-index: 10;
-}
-
-.category-title {
-  font-size: 0.5rem !important;
-  font-weight: 800;
-  color: #94a3b8;
-  text-transform: uppercase;
-  margin: 8px 0 2px 0;
-  display: block;
-}
-
-.options-row {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  width: 100%;
-}
-
-.options-row:has(> :nth-child(3)) {
-  grid-template-columns: repeat(3, 1fr);
-}
-
-/* The Icon inside the button */
-.ingredient-btn img {
-  width: 32px !important; 
-  height: 32px !important;
-  object-fit: contain;
-}
-
-/* THE FIX: The text label under the icon */
+/* The text label under the icon */
 .option-text {
   margin-top: 4px;
   display: block;
   text-align: center;
   color: #64748b;
   /* Add this to ensure they don't touch */
-  padding: 0 2px; 
-}
-
-.ingredient-btn.active {
-  background-color: #3b82f6;
-  border-color: #2563eb;
-  color: white;
-}
-
-/* --- BOTTOM ACTIONS --- */
-.serve-button {
-  background: #4a90e2;
-  color: white;
-  padding: 14px 0;
-  border-radius: 12px;
-  border: none;
-  font-weight: bold;
-  font-size: 1rem;
-  width: 100%;
-  cursor: pointer;
-}
-
-.close-button-outline {
-  background: transparent;
-  color: #4a90e2;
-  border: none;
-  text-decoration: underline;
-  cursor: pointer;
-  font-size: 0.9rem;
-  margin-top: 5px;
-  width: 100%;              /* makes it span the container */
-  text-align: center;       /* centers the text */
-  margin-top: 10px;
-  margin-bottom: 10px;
-}
-
-.order-visual {
-  display: grid !important; /* Switch from flex to grid */
-  grid-template-columns: repeat(3, 1fr); /* Exactly 3 columns */
-  gap: 8px; /* Space between icons */
-  justify-items: center;
-  align-items: center;
-  width: 100%;
-  padding: 4px;
-}
-
-.order-card {
-  margin-left: 10px;
-  z-index: 1; /* Keep ticket behind tray if they ever touch */
-}
-
-.ingredients {
-  background: white;
-  padding: 8px;
-  margin-top: 10px;
-  margin-bottom: 10px;
-  border: 0.5px solid #e2e8f0;
-  border-radius: 16px;
-  width: 100%;
-  max-width: 300px;
-  box-sizing: border-box;
+  padding: 0 2px;
 }
 
 /*badge stuff*/
 .badge-toast-container {
   position: fixed;
-  top: 20px;
-  right: 20px;
+  top: 0;
   background: rgba(45, 27, 20, 0.95); /* Dark chocolate/coffee wood color */
   border: 3px solid #f39c12; /* Gold border */
   border-radius: 12px;
@@ -297,8 +111,14 @@
 }
 
 @keyframes slideInRight {
-  from { transform: translateX(120%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  from {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 .badge-toast-content {
@@ -342,4 +162,46 @@
   font-size: 1.1rem;
   font-weight: 800;
   text-shadow: 1px 1px 2px black;
+}
+
+/* --- FEEDBACK TOAST --- */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 12px;
+  z-index: 1000;
+  animation: feedbackFade 2s ease forwards;
+}
+
+.toast--success {
+  background: #4caf50;
+}
+
+.toast--error {
+  background: #f44336;
+}
+
+.toast--timeout {
+  background: #ff9800;
+}
+
+.toast--milestone {
+  background: #9c27b0;
+}
+
+@keyframes feedbackFade {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }

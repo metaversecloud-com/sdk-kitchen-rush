@@ -1,5 +1,4 @@
 import { DroppedAssetInterface } from "@rtsdk/topia";
-import { VisitorDataObject } from "@shared/types/VisitorData";
 
 export const SET_HAS_INTERACTIVE_PARAMS = "SET_HAS_INTERACTIVE_PARAMS";
 export const SET_GAME_STATE = "SET_GAME_STATE";
@@ -19,12 +18,21 @@ export type InteractiveParams = {
   visitorId: string;
 };
 
+export type BadgeRecord = {
+  [name: string]: { id: string; name: string; icon: string; description?: string };
+};
+
+export type VisitorInventory = {
+  badges: BadgeRecord;
+};
+
 export interface InitialState {
-  isAdmin?: boolean;
-  error?: string;
-  hasInteractiveParams?: boolean;
-  visitorData?: VisitorDataObject;
+  hasInteractiveParams: boolean;
+  isAdmin: boolean;
   droppedAsset?: DroppedAssetInterface;
+  badges: BadgeRecord;
+  visitorInventory: VisitorInventory;
+  error: string;
 }
 
 export type ActionType = {

@@ -1,39 +1,33 @@
-import { backendAPI } from "@/utils/backendAPI";
-import { useContext } from "react";
+import { useContext, useState } from "react";
+
+import { backendAPI, setErrorMessage } from "@/utils";
 import { GlobalDispatchContext } from "@/context/GlobalContext";
-import { setErrorMessage } from "@/utils/setErrorMessage";
-import { ResetLeaderboard } from "../types/ResetLeaderboard"
+import { ErrorType } from "@/context/types";
 
-export const ResetLeaderboardButton = ({ assetId }: ResetLeaderboard) => {
+export const ResetLeaderboardButton = ({ onReset }: { onReset?: () => void }) => {
   const dispatch = useContext(GlobalDispatchContext);
+  const [isResetting, setIsResetting] = useState(false);
 
-  // function to reset leaderboard
   const handleReset = async () => {
-    // display window from browser instead of in-game
-    const confirmed = window.confirm("Are you sure you want to reset the leaderboard?");
-    if (!confirmed) return; // if not confirmed stop
-    
+    if (!window.confirm("Are you sure you want to reset the leaderboard?")) return;
+    setIsResetting(true);
     try {
-      // get response from backend of leaderboard api
-      const res = await backendAPI.post("/leaderboard/reset", { assetId });
-
-      // if leaderboard empty, display "empty leaderboard"
-      if (res.data.message === "Leaderboard already empty") {
-        alert("Leaderboard is already empty.");
-        return;
+      const res = await backendAPI.post("/leaderboard/reset");
+      if (res.data?.alreadyEmpty) {
+        window.alert("Leaderboard is already empty.");
+      } else {
+        window.alert("Leaderboard reset!");
+        onReset?.();
       }
-      
-      // if leaderboard empty notify user
-      alert("Leaderboard reset!");
     } catch (err) {
-      setErrorMessage(dispatch, err as any);
+      setErrorMessage(dispatch, err as ErrorType);
+    } finally {
+      setIsResetting(false);
     }
-
   };
 
   return (
-    // display button
-    <button className="button" onClick={handleReset}>
+    <button className="btn btn-danger" onClick={handleReset} disabled={isResetting}>
       Reset Leaderboard
     </button>
   );

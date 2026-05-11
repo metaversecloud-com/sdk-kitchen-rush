@@ -1,22 +1,15 @@
 import { Request, Response } from "express";
-import { errorHandler, getCredentials, getDroppedAsset } from "@utils/index.js";
-import { parseLeaderboard } from "@utils/leaderboardUtils.js";
+import { errorHandler, getCredentials, getDroppedAsset, parseLeaderboard } from "@utils/index.js";
 
 export const handleGetLeaderboard = async (req: Request, res: Response) => {
-  console.log("handleGetLeaderboard called", req.body, req.query);
   try {
     const credentials = getCredentials(req.query);
 
     const droppedAsset = await getDroppedAsset(credentials);
-    await droppedAsset.fetchDataObject();
-
-    const leaderboardData = droppedAsset.dataObject?.leaderboard ?? {};
-
+    const leaderboardData = (droppedAsset.dataObject?.leaderboard ?? {}) as Record<string, string>;
     const leaderboard = parseLeaderboard(leaderboardData);
 
-    return res.json({ success: true, data: { leaderboard } });
-    // need to make sure has latest information, don't want to load component, wait or loading component after succeeded
-    // or once handleupdateleaderboard has success true return leaderboard information
+    return res.json({ success: true, leaderboard });
   } catch (error) {
     return errorHandler({
       error,

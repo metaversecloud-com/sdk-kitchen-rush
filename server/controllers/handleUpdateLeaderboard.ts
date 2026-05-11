@@ -1,20 +1,17 @@
 import { Request, Response } from "express";
-import { errorHandler, getCredentials, getDroppedAsset } from "@utils/index.js";
-import { updateLeaderboard } from "@utils/leaderboardUtils.js";
+import { errorHandler, getCredentials, getDroppedAsset, updateLeaderboard } from "@utils/index.js";
 
 export const handleUpdateLeaderboard = async (req: Request, res: Response) => {
-  // console.log("handleUpdateLeaderboard called", req.body, req.query);
   try {
     const credentials = getCredentials(req.query);
-    const { score } = req.body;
+    const { score } = req.body as { score?: number };
 
-    if (typeof score !== "number") {
-      return res.status(400).json({ success: false, error: "score must be a number" });
+    if (typeof score !== "number" || !Number.isFinite(score)) {
+      return res.status(400).json({ success: false, error: "score must be a finite number" });
     }
 
     const droppedAsset = await getDroppedAsset(credentials);
-    const error = await updateLeaderboard({ credentials, droppedAsset, score });
-    if (error) throw error;
+    await updateLeaderboard({ credentials, droppedAsset, score });
 
     return res.json({ success: true });
   } catch (error) {

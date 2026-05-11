@@ -1,10 +1,59 @@
-const topiaMock = require("../mocks/@rtsdk/topia").__mock;
+process.env.INTERACTIVE_KEY = "test-key";
+process.env.INTERACTIVE_SECRET = "test-secret";
 
 import express from "express";
 import request from "supertest";
-import axios from "axios";
 
 import router from "../routes.js";
+
+const baseCreds = {
+  assetId: "asset-123",
+  displayName: "Alice",
+  identityId: "identity-1",
+  interactivePublicKey: "test-key",
+  interactiveNonce: "nonce-xyz",
+  profileId: "profile-1",
+  sceneDropId: "scene-1",
+  uniqueName: "keyAsset",
+  username: "alice",
+  urlSlug: "test-world",
+  visitorId: 1,
+};
+
+const buildDroppedAssetMock = (leaderboard: Record<string, string> = {}) => ({
+  id: "dropped-asset-123",
+  dataObject: { leaderboard },
+  fetchDataObject: jest.fn().mockResolvedValue({ leaderboard }),
+  setDataObject: jest.fn().mockResolvedValue(undefined),
+  updateDataObject: jest.fn().mockResolvedValue(undefined),
+});
+
+const buildVisitorMock = (overrides: Record<string, unknown> = {}) => ({
+  isAdmin: false,
+  inventoryItems: [],
+  fetchInventoryItems: jest.fn().mockResolvedValue(undefined),
+  grantInventoryItem: jest.fn().mockResolvedValue(undefined),
+  updatePublicKeyAnalytics: jest.fn().mockResolvedValue(undefined),
+  fireToast: jest.fn().mockResolvedValue(undefined),
+  ...overrides,
+});
+
+jest.mock("@utils/index.js", () => ({
+  errorHandler: jest.fn().mockImplementation(({ res, message }: any) => {
+    if (res) return res.status(500).json({ success: false, error: message });
+    return { error: message };
+  }),
+  getCredentials: jest.fn(),
+  getDroppedAsset: jest.fn(),
+  getVisitor: jest.fn(),
+  getBadges: jest.fn().mockResolvedValue({}),
+  awardBadge: jest.fn(),
+  parseLeaderboard: jest.fn(),
+  updateLeaderboard: jest.fn().mockResolvedValue(undefined),
+  Visitor: { get: jest.fn(), create: jest.fn() },
+}));
+
+const mockUtils = jest.mocked(require("@utils/index.js"));
 
 function makeApp() {
   const app = express();
@@ -13,129 +62,176 @@ function makeApp() {
   return app;
 }
 
-const baseCreds = {
-  assetId: "asset-123",
-  interactivePublicKey: process.env.INTERACTIVE_KEY,
-  interactiveNonce: "nonce-xyz",
-  visitorId: 1,
-  urlSlug: "my-world",
-};
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockUtils.getCredentials.mockReturnValue(baseCreds);
+});
 
-// Mock axios for external API calls
-jest.mock("axios");
-const mockedAxios = jest.mocked(axios);
-
-// Mock the utils
-jest.mock("@utils/index.js", () => ({
-  errorHandler: jest.fn(),
-  getCredentials: jest.fn(),
-  getDroppedAsset: jest.fn(),
-  Visitor: {
-    get: jest.fn(),
-  },
-  World: {
-    create: jest.fn(),
-  },
-}));
-
-const mockUtils = jest.mocked(require("@utils/index.js"));
-
-describe("routes", () => {
-  beforeEach(() => {
-    topiaMock.reset();
-    jest.clearAllMocks();
-  });
-
-  test("GET /system/health returns status OK and env keys", async () => {
-    const app = makeApp();
-    let res = await request(app).get("/api/system/health");
-
+describe("system", () => {
+  test("GET /system/health returns OK", async () => {
+    const res = await request(makeApp()).get("/api/system/health");
     expect(res.status).toBe(200);
-    expect(res.body).toHaveProperty("status", "OK");
-    expect(res.body).toHaveProperty("envs");
+    expect(res.body.status).toBe("OK");
     expect(res.body.envs).toHaveProperty("NODE_ENV");
+    expect(res.body.envs).not.toHaveProperty("INTERACTIVE_KEY");
   });
+});
 
-  test("GET /game-state returns game state with dropped asset and admin status", async () => {
-    const mockDroppedAsset = {
-      id: "dropped-asset-123",
-      position: { x: 100, y: 200 },
-      name: "Test Asset"
-    };
+describe("game-state", () => {
+  test("GET /game-state returns isAdmin, badges, and visitorInventory", async () => {
+    const visitor = buildVisitorMock({ isAdmin: true });
+    mockUtils.getVisitor.mockResolvedValue({ visitor, visitorInventory: { badges: { "First Order": {} } } });
+    mockUtils.getBadges.mockResolvedValue({ "First Order": { id: "x", name: "First Order", icon: "" } });
 
-    const mockVisitor = {
-      isAdmin: true,
-      id: 1
-    };
-
-    const mockWorld = {
-      triggerParticle: jest.fn().mockResolvedValue({}),
-      fireToast: jest.fn().mockResolvedValue({})
-    };
-
-    // Setup mocks
-    mockUtils.getCredentials.mockReturnValue(baseCreds);
-    mockUtils.getDroppedAsset.mockResolvedValue(mockDroppedAsset);
-    mockUtils.Visitor.get.mockResolvedValue(mockVisitor);
-    mockUtils.World.create.mockReturnValue(mockWorld);
-    mockedAxios.post.mockResolvedValue({ data: { success: true } });
-
-    const app = makeApp();
-    const res = await request(app)
-      .get("/api/game-state")
-      .query(baseCreds);
+    const res = await request(makeApp()).get("/api/game-state").query(baseCreds);
 
     expect(res.status).toBe(200);
-    expect(res.body).toHaveProperty("success", true);
-    expect(res.body).toHaveProperty("droppedAsset", mockDroppedAsset);
-    expect(res.body).toHaveProperty("isAdmin", true);
+    expect(res.body.success).toBe(true);
+    expect(res.body.isAdmin).toBe(true);
+    expect(res.body.badges).toEqual({ "First Order": { id: "x", name: "First Order", icon: "" } });
+    expect(res.body.visitorInventory).toEqual({ badges: { "First Order": {} } });
+  });
 
-    // Verify mocks were called correctly
-    expect(mockUtils.getCredentials).toHaveBeenCalledWith(expect.objectContaining({
-      assetId: "asset-123",
-      interactiveNonce: "nonce-xyz",
-      urlSlug: "my-world",
-      visitorId: "1" // Query params come as strings
-    }));
-    expect(mockUtils.getDroppedAsset).toHaveBeenCalledWith(baseCreds);
-    expect(mockUtils.Visitor.get).toHaveBeenCalledWith(baseCreds.visitorId, baseCreds.urlSlug, { credentials: baseCreds });
-    expect(mockUtils.World.create).toHaveBeenCalledWith(baseCreds.urlSlug, { credentials: baseCreds });
-    expect(mockWorld.triggerParticle).toHaveBeenCalledWith({
-      name: "Sparkle",
-      duration: 3,
-      position: mockDroppedAsset.position
-    });
-    expect(mockWorld.fireToast).toHaveBeenCalledWith({
-      title: "You've leveled up!",
-      text: "Congratulations! You've reached a new level."
+  test("GET /game-state forwards errors to errorHandler", async () => {
+    mockUtils.getVisitor.mockRejectedValue(new Error("boom"));
+
+    const res = await request(makeApp()).get("/api/game-state").query(baseCreds);
+
+    expect(res.status).toBe(500);
+    expect(mockUtils.errorHandler).toHaveBeenCalledWith(
+      expect.objectContaining({ functionName: "handleGetGameState" }),
+    );
+  });
+});
+
+describe("leaderboard", () => {
+  test("GET /leaderboard returns parsed leaderboard", async () => {
+    const droppedAsset = buildDroppedAssetMock({ "p-1": "Alice|100" });
+    mockUtils.getDroppedAsset.mockResolvedValue(droppedAsset);
+    mockUtils.parseLeaderboard.mockReturnValue([
+      { profileId: "p-1", displayName: "Alice", score: 100 },
+    ]);
+
+    const res = await request(makeApp()).get("/api/leaderboard").query(baseCreds);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.leaderboard).toEqual([{ profileId: "p-1", displayName: "Alice", score: 100 }]);
+  });
+
+  test("POST /leaderboard/update calls updateLeaderboard with a numeric score", async () => {
+    const droppedAsset = buildDroppedAssetMock();
+    mockUtils.getDroppedAsset.mockResolvedValue(droppedAsset);
+
+    const res = await request(makeApp())
+      .post("/api/leaderboard/update")
+      .query(baseCreds)
+      .send({ score: 42 });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(mockUtils.updateLeaderboard).toHaveBeenCalledWith({
+      credentials: baseCreds,
+      droppedAsset,
+      score: 42,
     });
   });
 
-  test("GET /game-state handles errors when getDroppedAsset fails", async () => {
-    const mockError = new Error("Asset not found");
+  test("POST /leaderboard/update rejects non-numeric scores", async () => {
+    const res = await request(makeApp())
+      .post("/api/leaderboard/update")
+      .query(baseCreds)
+      .send({ score: "high" });
 
-    mockUtils.getCredentials.mockReturnValue(baseCreds);
-    mockUtils.getDroppedAsset.mockResolvedValue(mockError);
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(mockUtils.updateLeaderboard).not.toHaveBeenCalled();
+  });
 
-    // Mock errorHandler to actually call res.status().json() to end the response
-    mockUtils.errorHandler.mockImplementation(({ res }: any) => {
-      if (res) {
-        return res.status(500).json({ error: "Internal server error" });
-      }
-      return { status: 500, message: "error" };
+  test("POST /leaderboard/reset clears the leaderboard", async () => {
+    const droppedAsset = buildDroppedAssetMock({ "p-1": "Alice|100" });
+    mockUtils.getDroppedAsset.mockResolvedValue(droppedAsset);
+
+    const res = await request(makeApp()).post("/api/leaderboard/reset").query(baseCreds);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(droppedAsset.updateDataObject).toHaveBeenCalledWith(
+      { leaderboard: {} },
+      expect.objectContaining({ lock: expect.any(Object) }),
+    );
+  });
+
+  test("POST /leaderboard/reset is a no-op when already empty", async () => {
+    const droppedAsset = buildDroppedAssetMock({});
+    mockUtils.getDroppedAsset.mockResolvedValue(droppedAsset);
+
+    const res = await request(makeApp()).post("/api/leaderboard/reset").query(baseCreds);
+
+    expect(res.status).toBe(200);
+    expect(res.body.alreadyEmpty).toBe(true);
+    expect(droppedAsset.updateDataObject).not.toHaveBeenCalled();
+  });
+});
+
+describe("award-badge", () => {
+  test("POST /award-badge delegates to awardBadge", async () => {
+    mockUtils.awardBadge.mockResolvedValue({
+      success: true,
+      granted: true,
+      badgeName: "First Order",
+      icon: "https://example.com/badge.png",
     });
 
-    const app = makeApp();
-    await request(app)
-      .get("/api/game-state")
-      .query(baseCreds);
+    const res = await request(makeApp())
+      .post("/api/award-badge")
+      .query(baseCreds)
+      .send({ badgeName: "First Order" });
 
-    expect(mockUtils.errorHandler).toHaveBeenCalledWith({
-      error: mockError,
-      functionName: "getDroppedAssetDetails",
-      message: "Error getting dropped asset instance and data object",
-      req: expect.any(Object),
-      res: expect.any(Object)
+    expect(res.status).toBe(200);
+    expect(res.body.granted).toBe(true);
+    expect(mockUtils.awardBadge).toHaveBeenCalledWith({
+      credentials: baseCreds,
+      badgeName: "First Order",
     });
-  }, 30000);
+  });
+
+  test("POST /award-badge rejects when badgeName is missing", async () => {
+    const res = await request(makeApp()).post("/api/award-badge").query(baseCreds).send({});
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(mockUtils.awardBadge).not.toHaveBeenCalled();
+  });
+});
+
+describe("analytics", () => {
+  test("POST /analytics/increment increments via Visitor.create", async () => {
+    const visitor = buildVisitorMock();
+    mockUtils.Visitor.create.mockReturnValue(visitor);
+
+    const res = await request(makeApp())
+      .post("/api/analytics/increment")
+      .query(baseCreds)
+      .send({ analyticName: "gamesStarted" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(visitor.updatePublicKeyAnalytics).toHaveBeenCalledWith([
+      {
+        analyticName: "gamesStarted",
+        profileId: baseCreds.profileId,
+        uniqueKey: baseCreds.profileId,
+        urlSlug: baseCreds.urlSlug,
+      },
+    ]);
+  });
+
+  test("POST /analytics/increment rejects when analyticName is missing", async () => {
+    const res = await request(makeApp()).post("/api/analytics/increment").query(baseCreds).send({});
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(mockUtils.Visitor.create).not.toHaveBeenCalled();
+  });
 });

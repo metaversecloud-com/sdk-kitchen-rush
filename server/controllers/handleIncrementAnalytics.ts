@@ -1,33 +1,16 @@
 import { Request, Response } from "express";
-import { errorHandler, getCredentials } from "@utils/index.js";
-import { Visitor } from "@utils/topiaInit.js";
+import { Visitor, errorHandler, getCredentials } from "@utils/index.js";
 
 export const handleIncrementAnalytics = async (req: Request, res: Response) => {
   try {
     const credentials = getCredentials(req.query);
     const { urlSlug, visitorId, profileId } = credentials;
-    const { analyticName } = req.body as { analyticName: string };
+    const { analyticName } = req.body as { analyticName?: string };
 
     if (!analyticName) return res.status(400).json({ success: false, error: "Missing analyticName" });
 
-    const visitor = await Visitor.get(visitorId, urlSlug, { credentials });
-
-    await visitor
-      .updatePublicKeyAnalytics([
-        {
-          analyticName,
-          uniqueKey: profileId,
-          profileId,
-          urlSlug,
-        },
-      ])
-      .catch((error: any) =>
-        errorHandler({
-          error,
-          functionName: "handleIncrementAnalytics",
-          message: "Error updating public key analytics",
-        })
-      );
+    const visitor = Visitor.create(visitorId, urlSlug, { credentials });
+    await visitor.updatePublicKeyAnalytics([{ analyticName, profileId, uniqueKey: profileId, urlSlug }]);
 
     return res.json({ success: true });
   } catch (error) {

@@ -1,11 +1,7 @@
-import { ReactNode, useContext, useState } from "react";
+import { ReactNode, useContext } from "react";
 
-// components
-import { AdminView, AdminIconButton, Loading } from "@/components";
-
-// context
-import { GlobalStateContext } from "@context/GlobalContext";
-import { useNavigate } from "react-router-dom";
+import { Loading } from "./Loading";
+import { GlobalStateContext } from "@/context/GlobalContext";
 
 export const PageContainer = ({
   children,
@@ -16,20 +12,13 @@ export const PageContainer = ({
   isLoading: boolean;
   headerText?: string;
 }) => {
-  const { error, isAdmin } = useContext(GlobalStateContext);
-  const navigate = useNavigate();
+  const { error } = useContext(GlobalStateContext);
 
   if (isLoading) return <Loading />;
 
   return (
-    <div className="p-4 mb-28">
-      {isAdmin && (
-        <AdminIconButton
-          setShowSettings={() => navigate('/leaderboard')}
-          showSettings={false}
-        />
-      )}
-      {headerText && <div className="pb-6"><h2>{headerText}</h2></div>}
+    <div className="p-2 mb-28">
+      {headerText && <h2 className="pb-3">{headerText}</h2>}
       {children}
       {error && <p className="p3 pt-10 text-center text-error">{error}</p>}
     </div>

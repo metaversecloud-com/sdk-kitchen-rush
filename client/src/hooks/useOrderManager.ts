@@ -1,403 +1,248 @@
-import { Order } from "../types/Order"
-import { Feedback, FeedbackType } from "../types/Feedback"
-import { compareIngredients } from "../utils/compareIngredients"
-import { getSpeedBonus } from "../utils/speedMultiplier"
-import { getStreakMultiplier } from "../utils/streakMultiplier"
-import { useState, useEffect, useRef } from "react"
-import { useNavigate, useLocation } from "react-router-dom"
-import { levelConfig } from "../config/levelConfig";
-import { trackEvent } from "../utils/analyticsAPI";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import { 
-  MAX_ANGRY_CUSTOMERS,
-  PENALTY,
-  BASE_POINTS,
-} from '../data/gameConstants'
+import { levelConfig } from "@/config/levelConfig";
+import { BASE_POINTS, MAX_ANGRY_CUSTOMERS, PENALTY } from "@/data/gameConstants";
+import { Feedback, FeedbackType } from "@/types/Feedback";
+import { Order, Tray, emptyTray } from "@/types/Order";
+import { awardBadge, compareIngredients, getSpeedBonus, getStreakMultiplier, trackEvent } from "@/utils";
 
-// custom hook to manage all order/game logic
-const useOrderManager = (
-  onGameOver: () => void,
-  onLevelComplete: (finalScore: number, finalAngryCount: number) => void,
-  onBadgeUnlocked: (name: string) => void,
-  currentLevel: number 
-) => {
-  const navigate = useNavigate();
-  const { state } = useLocation();
+export type ActiveBadge = { name: string; icon: string };
 
-  // ---- STATE ----
+export type LevelStart = {
+  score: number;
+  angry: number;
+  streak: number;
+  ordersServed: number;
+};
 
-  // player score (carry over from previous level if exists)
-  const [score, setScore] = useState<number>(state?.inheritedScore || 0);
+const BADGES = {
+  FIRST_ORDER: "First Order",
+  STREAK: "Speed Chef",
+  MASTER: "Master Barista",
+} as const;
 
-  // track number of failed orders (persisted in sessionStorage)
-  const [angryCustomerCount, setAngryCustomerCount] = useState<number>(() => {
-    return parseInt(sessionStorage.getItem('angryCount') || '0') || state?.inheritedAngry || 0;
-  });
+const STREAK_MILESTONES = [5, 10, 25];
+const FEEDBACK_DURATION_MS = 2000;
+const BADGE_POPUP_DURATION_MS = 4000;
+const FINAL_LEVEL = 4;
 
-   // current active order
+const generateRandomOrder = (level: number): Order => {
+  const config = levelConfig[level as keyof typeof levelConfig];
+  const pick = <T,>(arr: readonly T[]): T => arr[Math.floor(Math.random() * arr.length)];
+
+  const order: Order = {
+    id: Math.floor(1000 + Math.random() * 9000).toString(),
+    size: pick(config.ingredients.size),
+    temp: pick(config.ingredients.temp),
+    milk: pick(config.ingredients.milk),
+    timeLimit: config.timer,
+  };
+  if (config.ingredients.flavor.length > 0) order.flavor = pick(config.ingredients.flavor);
+  if (config.ingredients.toppings.length > 0) {
+    const shuffled = [...config.ingredients.toppings].sort(() => Math.random() - 0.5);
+    order.toppings = shuffled.slice(0, Math.floor(Math.random() * 2) + 1);
+  }
+  return order;
+};
+
+interface UseOrderManagerOptions {
+  level: number;
+  initial: LevelStart;
+  onLevelComplete: (next: LevelStart) => void;
+  onGameOver: (final: { score: number; ordersServed: number }) => void;
+}
+
+const useOrderManager = ({ level, initial, onLevelComplete, onGameOver }: UseOrderManagerOptions) => {
+  const [score, setScore] = useState<number>(initial.score);
+  const [streak, setStreak] = useState<number>(initial.streak);
+  const [angryCount, setAngryCount] = useState<number>(initial.angry);
+  const [ordersServedGame, setOrdersServedGame] = useState<number>(initial.ordersServed);
+  const [ordersServedLevel, setOrdersServedLevel] = useState<number>(0);
+
   const [activeOrder, setActiveOrder] = useState<Order | null>(null);
-
-  // queue of upcoming orders (not heavily used here yet)
-  const [sourceQueue, setSourceQueue] = useState<Order[]>([]);
-
-  // Define which streaks trigger the special feedback and badges
-  const STREAK_MILESTONES = [5, 10, 25];
-  
-  // tray represents user-selected ingredients
-  // initialize with empty strings to prevent undefined errors
-  const [tray, setTray] = useState<Partial<Order>>({
-    size: "",
-    temp: "",
-    milk: "",
-    flavor: "none",
-    toppings: []
-  });
-
-  // current streak (persisted)
-  const [streak, setStreak] = useState<number>(() => {
-    return parseInt(sessionStorage.getItem('streak') || '0'|| state?.inheritedStreak || 0);
-  });
-  
-  // totalServed = orders this level
-  const [totalServed, setTotalServed] = useState<number>(0);
-  //  cumulativeServed = total orders across whole game 
-  const [cumulativeServed, setCumulativeServed] = useState<number>(() => {
-    return parseInt(sessionStorage.getItem('ordersServed') || '0');
-  });
-
-   // time remaining for current order
+  const [tray, setTray] = useState<Tray>(emptyTray());
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
-
-  // feedback message (success/error)
   const [feedback, setFeedback] = useState<Feedback | null>(null);
-  
-  // additional stats tracking (optional analytics)
-  const [stats, setStats] = useState({
-  totalCorrect: 0,
-  currentStreak: 0,
-  lastOrderToppingsCount: 0,
-  lastOrderTimeRemaining: 0, // Store as a decimal (e.g., 0.1 for 10%)
-});
+  const [activeBadge, setActiveBadge] = useState<ActiveBadge | null>(null);
 
-  // ---- REFS ----
+  const timeoutRef = useRef<number | undefined>(undefined);
+  const intervalRef = useRef<number | undefined>(undefined);
+  const feedbackTimeoutRef = useRef<number | undefined>(undefined);
+  const badgeTimeoutRef = useRef<number | undefined>(undefined);
 
-  // refs to avoid stale state in async callbacks
-  const timerRef = useRef<number | undefined>(undefined);
-  const timerIntervalRef = useRef<number | undefined>(undefined);
-  const scoreRef = useRef(score);
-  const servedRef = useRef(totalServed);
-  const angryRef = useRef(angryCustomerCount);
-
-   // test badge API on mount (debugging)
+  // Latest values for use inside timer callbacks (avoids stale closures
+  // when the game ends via timeout rather than a button click).
+  const stateRef = useRef({ score, ordersServedGame });
   useEffect(() => {
-  console.log("FORCE TESTING API...");
-  awardBadgeRequest("Test Badge");
-}, []);
+    stateRef.current = { score, ordersServedGame };
+  }, [score, ordersServedGame]);
 
-   // keep refs synced with latest state
-  useEffect(() => { scoreRef.current = score; }, [score]);
-  useEffect(() => { servedRef.current = totalServed; }, [totalServed]);
-  useEffect(() => { angryRef.current = angryCustomerCount; }, [angryCustomerCount]);
-  
-  // ---- FEEDBACK ----
+  const clearTimers = useCallback(() => {
+    if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
+    if (intervalRef.current) window.clearInterval(intervalRef.current);
+  }, []);
 
-  // show temporary feedback message
-  const triggerFeedback = (message: string, type: FeedbackType): void => {
+  const triggerFeedback = useCallback((message: string, type: FeedbackType) => {
+    if (feedbackTimeoutRef.current) window.clearTimeout(feedbackTimeoutRef.current);
     setFeedback({ message, type });
-    setTimeout(() => setFeedback(null), 2000);
+    feedbackTimeoutRef.current = window.setTimeout(() => setFeedback(null), FEEDBACK_DURATION_MS);
+  }, []);
+
+  const showBadgePopup = useCallback((badge: ActiveBadge) => {
+    if (badgeTimeoutRef.current) window.clearTimeout(badgeTimeoutRef.current);
+    setActiveBadge(badge);
+    badgeTimeoutRef.current = window.setTimeout(() => setActiveBadge(null), BADGE_POPUP_DURATION_MS);
+  }, []);
+
+  const dismissBadge = useCallback(() => {
+    if (badgeTimeoutRef.current) window.clearTimeout(badgeTimeoutRef.current);
+    setActiveBadge(null);
+  }, []);
+
+  const tryAwardBadge = useCallback(
+    async (badgeName: string) => {
+      const result = await awardBadge(badgeName);
+      if (result?.granted) showBadgePopup({ name: badgeName, icon: result.icon || "" });
+    },
+    [showBadgePopup],
+  );
+
+  // Refs break the circular call graph (advance → handleOrderFailure on
+  // timeout, handleOrderFailure → advance after a non-fatal miss).
+  const advanceRef = useRef<() => void>(() => {});
+  const handleOrderFailureRef = useRef<(message: string) => void>(() => {});
+
+  const endGame = () => {
+    clearTimers();
+    onGameOver({ score: stateRef.current.score, ordersServed: stateRef.current.ordersServedGame });
   };
 
-  // --- TIMER ----
-
-  // start countdown timer for an order
-  const startOrderTimer = (durationMs: number) => {
-    clearTimeout(timerRef.current);
-    clearInterval(timerIntervalRef.current);
-    
-    // convert ms to seconds for display
-    setTimeRemaining(durationMs / 1000);
-
-    // decrease time every second
-    timerIntervalRef.current = window.setInterval(() => {
-      setTimeRemaining(prev => Math.max(0, prev - 1));
-    }, 1000);
-
-    // trigger timeout when time runs out
-    timerRef.current = window.setTimeout(() => {
-      handleTimeout();
-    }, durationMs);
-  };
-
-  // --- ORDER GENERATION ---
-
-  const generateRandomOrder = (level: number): Order => {
-
-    // generate a random order based on level config
-    const config = levelConfig[level as keyof typeof levelConfig];
-    const order: any = {
-      id: Math.floor(1000 + Math.random() * 9000).toString(),
-      size: config.ingredients.size[Math.floor(Math.random() * config.ingredients.size.length)],
-      temp: config.ingredients.temp[Math.floor(Math.random() * config.ingredients.temp.length)],
-      milk: config.ingredients.milk[Math.floor(Math.random() * config.ingredients.milk.length)],
-      timeLimit: config.timer,
-    };
-
-    // optional flavor
-    if (config.ingredients.flavor?.length > 0) {
-      order.flavor = config.ingredients.flavor[Math.floor(Math.random() * config.ingredients.flavor.length)];
-    }
-
-    // optional toppings (1–2 random toppings)
-    if (config.ingredients.toppings?.length > 0) {
-      const numToppings = Math.floor(Math.random() * 2) + 1;
-      const shuffled = [...config.ingredients.toppings].sort(() => 0.5 - Math.random());
-      order.toppings = shuffled.slice(0, numToppings);
-    }
-    return order as Order;
-  };
-
-  // move to next order
-  const advance = (): void => {
-     // track game start event
-    if (totalServed === 0 && angryCustomerCount === 0) {
-      trackEvent("gamesStarted");
-    }
-    const nextOrder = generateRandomOrder(currentLevel);
-    setActiveOrder(nextOrder);
-    const config = levelConfig[currentLevel as keyof typeof levelConfig];
-    startOrderTimer(config.timer);
-  };
-
-  // ---- FAILURE HANDLING ----
-
-  // handle incorrect order or failure
-  const handleOrderFailure = (message: string = "Oops, wrong order!"): void => {
-    // increment angry customer count
-    const newCount = angryCustomerCount + 1;
-    angryRef.current = newCount;
-    setAngryCustomerCount(newCount);
-    sessionStorage.setItem("angryCount", newCount.toString());
-
-    // apply score penalty
-    setScore(prev => Math.max(0, prev - PENALTY));
-
-    // reset streak
+  const handleOrderFailure = (message: string) => {
+    setScore((prev) => Math.max(0, prev - PENALTY));
     setStreak(0);
-    sessionStorage.setItem('streak', '0');
-    clearTray();
+    setTray(emptyTray());
     triggerFeedback(message, "error");
+    setAngryCount((prev) => {
+      const next = prev + 1;
+      if (next >= MAX_ANGRY_CUSTOMERS) {
+        trackEvent("gamesCompleted");
+        endGame();
+      } else {
+        advanceRef.current();
+      }
+      return next;
+    });
+  };
 
-    // check if game over
-    if (newCount >= MAX_ANGRY_CUSTOMERS) {
-      trackEvent("gamesCompleted");
-      handleCloseShop();
+  const advance = () => {
+    if (ordersServedGame === 0 && angryCount === 0) trackEvent("gamesStarted");
+    const order = generateRandomOrder(level);
+    setActiveOrder(order);
+    clearTimers();
+    setTimeRemaining(Math.ceil(order.timeLimit / 1000));
+    intervalRef.current = window.setInterval(() => {
+      setTimeRemaining((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    timeoutRef.current = window.setTimeout(() => {
+      trackEvent("ordersTimedout");
+      handleOrderFailureRef.current("Customer got tired of waiting!");
+    }, order.timeLimit);
+  };
+
+  advanceRef.current = advance;
+  handleOrderFailureRef.current = handleOrderFailure;
+
+  const handleServeOrder = () => {
+    if (!activeOrder) return;
+
+    if (!compareIngredients(tray, activeOrder)) {
+      trackEvent("wrongOrdersServed");
+      handleOrderFailure("Oops, wrong order!");
+      return;
+    }
+
+    trackEvent("correctOrdersServed");
+
+    const speedBonus = getSpeedBonus(timeRemaining * 1000, activeOrder.timeLimit);
+    const points = BASE_POINTS * getStreakMultiplier(streak) + speedBonus;
+    const newScore = score + points;
+    const newStreak = streak + 1;
+    const newOrdersServedLevel = ordersServedLevel + 1;
+    const newOrdersServedGame = ordersServedGame + 1;
+    const config = levelConfig[level as keyof typeof levelConfig];
+    const justHitMilestone = STREAK_MILESTONES.includes(newStreak);
+
+    setScore(newScore);
+    setStreak(newStreak);
+    setOrdersServedLevel(newOrdersServedLevel);
+    setOrdersServedGame(newOrdersServedGame);
+    setTray(emptyTray());
+    triggerFeedback(
+      justHitMilestone ? `🔥 ${newStreak} Streak!` : "Perfect!",
+      justHitMilestone ? "milestone" : "success",
+    );
+
+    if (newOrdersServedGame === 1) void tryAwardBadge(BADGES.FIRST_ORDER);
+    if (justHitMilestone) {
+      trackEvent("streakMilestonesReached");
+      void tryAwardBadge(BADGES.STREAK);
+    }
+
+    if (newOrdersServedLevel >= config.threshold) {
+      clearTimers();
+      if (level >= FINAL_LEVEL) void tryAwardBadge(BADGES.MASTER);
+      onLevelComplete({
+        score: newScore,
+        angry: angryCount,
+        streak: newStreak,
+        ordersServed: newOrdersServedGame,
+      });
     } else {
       advance();
     }
   };
 
-  // handle timer running out
-  const handleTimeout = (): void => {
-    trackEvent("ordersTimedout");
-    handleOrderFailure("Customer got tired of waiting!");
-  };
-
-  // handler to manually close shop
-  const handleManualCloseShop = (): void => {
+  const handleManualCloseShop = () => {
     trackEvent("gamesEndedEarly");
-    handleCloseShop();
+    endGame();
   };
 
-  // ---- SERVE ORDER ----
-  const handleServeOrder = () => {
-    // check if tray matches order
-    const isCorrect = compareIngredients(tray, activeOrder);
-    const config = levelConfig[currentLevel as keyof typeof levelConfig];
-
-    if (isCorrect) {
-      trackEvent("correctOrdersServed");
-      
-      // --- BADGE LOGIC START ---
-      // This will now use the REAL credentials from the Topia URL when pushed
-      console.log("Awarding badge for correct order...");
-      awardBadgeRequest("First Order"); 
-      // --- BADGE LOGIC END ---
-
-       // update counts
-      const newTotal = totalServed + 1;
-      setTotalServed(newTotal);
-
-      const newCumulative = cumulativeServed + 1;
-      setCumulativeServed(newCumulative);
-      sessionStorage.setItem("ordersServed", newCumulative.toString());
-      servedRef.current = newCumulative; 
-
-       // update streak
-      const newStreak = streak + 1;
-      setStreak(newStreak);
-      sessionStorage.setItem('streak', newStreak.toString());
-
-      // check for streak milestone badge
-      if (STREAK_MILESTONES.includes(newStreak)) {
-        trackEvent("streakMilestonesReached");
-        awardBadgeRequest("Speed Chef"); // Award another badge for streaks!
-      }
-
-      // calculate score (base + streak + speed bonus)
-      const speedBonus = getSpeedBonus(timeRemaining * 1000, activeOrder?.timeLimit || 10000);
-      const points = (BASE_POINTS * getStreakMultiplier(streak)) + speedBonus;
-      const updatedScore = score + points;
-      setScore(updatedScore);
-      
-      clearTray();
-
-      // display feedback message
-      triggerFeedback(STREAK_MILESTONES.includes(newStreak) ? `🔥 ${newStreak} Streak!` : "Perfect!", "success");
-
-      // check level completion
-      if (newTotal >= config.threshold) {
-        clearTimeout(timerRef.current);
-        clearInterval(timerIntervalRef.current);
-        sessionStorage.removeItem('streak');
-        onLevelComplete(updatedScore, angryCustomerCount);
-      } else {
-        advance();
-      }
-    } else {
-      trackEvent("wrongOrdersServed");
-      handleOrderFailure();
-    }
-  };
-
-  // ---- CLOSE SHOP ----
-  // handle closing the shop (game over or manual exit)
-  const handleCloseShop = (): void => {
-    // stop any active timers
-    clearTimeout(timerRef.current);
-    clearInterval(timerIntervalRef.current);
-
-    // get total orders served from sessionStorage
-    const ordersServed = parseInt(sessionStorage.getItem('ordersServed') || '0');
-    // use ref to get latest score (avoids stale state issues)
-    const score = scoreRef.current;
-
-    // clear stored game data
-    sessionStorage.removeItem('ordersServed');
-    sessionStorage.removeItem('angryCount');
-    sessionStorage.removeItem('streak')
-
-    // navigate to game over screen with final results
-    navigate('/game-over', { 
-      state: { 
-        score,
-        ordersServed // pass value before it was removed
-      } 
-    });
-  };
-
-  // --- TRAY ---
-  const updateTray = (category: keyof Order, value: string): void => {
-    // update tray when user selects ingredient
-    setTray(prev => {
-      // toppings allow multiple selections (max 3)
+  const updateTray = useCallback((category: keyof Order, value: string) => {
+    setTray((prev) => {
       if (category === "toppings") {
-        const currentToppings = prev.toppings || [];
-        if (currentToppings.includes(value)) return prev;
-        if (currentToppings.length < 3) {
-          return { ...prev, toppings: [...currentToppings, value] };
-        }
-        return prev;
+        const current = prev.toppings || [];
+        if (current.includes(value) || current.length >= 3) return prev;
+        return { ...prev, toppings: [...current, value] };
       }
-      // lock-in mechanic: cannot change once selected
-      if (prev[category] && prev[category] !== "") return prev; 
+      const existing = prev[category];
+      if (typeof existing === "string" && existing !== "") return prev;
       return { ...prev, [category]: value };
     });
-  };
-
-   // reset tray after order is served
-  const clearTray = (): void => setTray({
-    size: "",
-    temp: "",
-    milk: "",
-    flavor: "",
-    toppings: []
-  });
-
-const awardBadgeRequest = async (badgeName: string) => {
-    try {
-      // 1. Try to get search params from the current window safely
-      let search = window.location.search;
-
-      // 2. Only try to look at the parent if we are actually in an iframe 
-      // AND it's on the same domain (to avoid the SecurityError)
-      // if (!search && window.self !== window.top) {
-      //   try {
-      //     search = window.parent.location.search;
-      //   } catch (e) {
-      //     console.warn("Could not read parent URL due to cross-origin restrictions.");
-      //   }
-      // }
-      if (!search || search === "") {
-      console.warn("Using local dev credentials...");
-      // Replace these with actual values from a real Topia URL once, 
-      // or just dummy strings to stop the server from crashing.
-      search = "?interactiveNonce=test&interactivePublicKey=J6MYijmfrAjGX0A389P8&urlSlug=blank3t-demo-3m2tc4fqj&visitorId=test";
-    }
-
-      const urlParams = new URLSearchParams(search);
-
-      // 3. Debug: See if we actually have params now
-      if (!urlParams.has("interactiveNonce")) {
-        console.error("❌ No credentials found in URL. Topia won't authorize this request.");
-      }
-
-      console.log("Full API URL:", `/api/award-badge?${urlParams.toString()}`);
-
-      const response = await fetch(`/api/award-badge?${urlParams.toString()}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ badgeName }),
-      });
-
-      if (!response.ok) throw new Error("Server error awarding badge");
-      
-      const data = await response.json();
-      if (data.success) {
-        onBadgeUnlocked(badgeName);
-      }
-    } catch (error) {
-      console.error(`Failed to award ${badgeName}:`, error);
-    }
-  };
-
-  // --- CLEANUP ----
-  // clear timers on component unmount
-  useEffect(() => {
-    return () => {
-      clearTimeout(timerRef.current);
-      clearInterval(timerIntervalRef.current);
-    };
   }, []);
 
-  // ---- RETURN ----
+  // Cleanup all timers on unmount.
+  useEffect(() => {
+    return () => {
+      clearTimers();
+      if (feedbackTimeoutRef.current) window.clearTimeout(feedbackTimeoutRef.current);
+      if (badgeTimeoutRef.current) window.clearTimeout(badgeTimeoutRef.current);
+    };
+  }, [clearTimers]);
 
   return {
-    score,
     activeOrder,
-    angryCustomerCount,
-    tray,
+    activeBadge,
+    angryCount,
+    feedback,
+    score,
     streak,
     timeRemaining,
-    feedback,
-    handleServeOrder,
-    handleCloseShop,
-    updateTray,
+    tray,
     advance,
-    clearTray,
-    awardBadgeRequest,
-    ordersServed: totalServed, // Adding alias
+    dismissBadge,
     handleManualCloseShop,
-    trackEvent
+    handleServeOrder,
+    updateTray,
   };
 };
 

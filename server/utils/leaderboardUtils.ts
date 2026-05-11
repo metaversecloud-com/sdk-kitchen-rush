@@ -1,4 +1,4 @@
-import { Credentials } from "../types/Credentials";
+import { Credentials, IDroppedAsset } from "../types/index.js";
 
 export type LeaderboardEntry = {
   profileId: string;
@@ -6,22 +6,19 @@ export type LeaderboardEntry = {
   score: number;
 };
 
-export const parseLeaderboard = (
-  leaderboardData: Record<string, string>
-): LeaderboardEntry[] => {
-  const entries: LeaderboardEntry[] = [];
+const MAX_LEADERBOARD_ENTRIES = 25;
 
+export const parseLeaderboard = (leaderboardData: Record<string, string> = {}): LeaderboardEntry[] => {
+  const entries: LeaderboardEntry[] = [];
   for (const profileId in leaderboardData) {
-    const data = leaderboardData[profileId];
-    const [displayName, scoreStr] = data.split("|");
+    const [displayName, scoreStr] = (leaderboardData[profileId] || "").split("|");
     entries.push({
       profileId,
-      displayName,
-      score: parseInt(scoreStr) || 0,
+      displayName: displayName || "Anonymous",
+      score: parseInt(scoreStr, 10) || 0,
     });
   }
-
-  return entries.sort((a, b) => b.score - a.score).slice(0, 25);
+  return entries.sort((a, b) => b.score - a.score).slice(0, MAX_LEADERBOARD_ENTRIES);
 };
 
 export const updateLeaderboard = async ({
@@ -30,32 +27,19 @@ export const updateLeaderboard = async ({
   score,
 }: {
   credentials: Credentials;
-  droppedAsset: any;
+  droppedAsset: IDroppedAsset;
   score: number;
-}): Promise<void | Error> => {
-   console.log("updateLeaderboard called with score:", score, "profileId:", credentials.profileId);
-  try {
-    const { displayName, profileId, urlSlug } = credentials;
+}): Promise<void> => {
+  const { displayName, profileId } = credentials;
 
-    // Check existing score first
-    const existingEntry = droppedAsset.dataObject?.leaderboard?.[profileId];
-    if (existingEntry) {
-      const [, existingScoreStr] = existingEntry.split("|");
-      const existingScore = parseInt(existingScoreStr) || 0;
-      if (existingScore >= score) return; // don't update if not better
-    }
-    
-    // original logic
-  //  await droppedAsset.updateDataObject(
-  //   { leaderboard: { [profileId]: `${displayName}|${score}` } },
-  //   { lock: { lockId: `leaderboard-${profileId}`, releaseLock: true } }
-  // );
-  // so leaderboard doesn't automatically replace previous player
-  await droppedAsset.updateDataObject(
-  { [`leaderboard.${profileId}`]: `${displayName}|${score}` },
-  { lock: { lockId: `leaderboard-${profileId}`, releaseLock: true } }
-);
-  } catch (error) {
-    return error as Error;
+  const existingEntry = (droppedAsset.dataObject?.leaderboard ?? {})[profileId];
+  if (existingEntry) {
+    const existingScore = parseInt(existingEntry.split("|")[1], 10) || 0;
+    if (existingScore >= score) return;
   }
+
+  await droppedAsset.updateDataObject(
+    { [`leaderboard.${profileId}`]: `${displayName}|${score}` },
+    { lock: { lockId: `leaderboard-${profileId}-${Date.now()}`, releaseLock: true } },
+  );
 };

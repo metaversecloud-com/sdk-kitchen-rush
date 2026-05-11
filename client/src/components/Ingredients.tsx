@@ -1,124 +1,92 @@
-import React from 'react';
-import { levelConfig } from "../config/levelConfig";
-import { Order } from "../types/Order";
-import "../styles/Ingredients.css";
+import { levelConfig } from "@/config/levelConfig";
+import { Order, Tray } from "@/types/Order";
 
-// SIZES
-import smallImg from "../assets/ingredients/small.png";
-import mediumImg from "../assets/ingredients/medium.png";
-import largeImg from "../assets/ingredients/large.png";
-// TEMP
-import hotImg from "../assets/ingredients/hot.png";
-import icedImg from "../assets/ingredients/iced.png";
-// MILK
-import almondImg from "../assets/ingredients/almond.png";
-import oatImg from "../assets/ingredients/oat.png";
-import wholeImg from "../assets/ingredients/whole.png";
-import noMilkImg from "../assets/ingredients/no-milk.png";
-// FLAVOR
-import vanillaImg from "../assets/ingredients/vanilla.png";
-import caramelImg from "../assets/ingredients/caramel.png";
-import mochaImg from "../assets/ingredients/mocha.png";
-import noFlavorImg from "../assets/ingredients/no-flavor.png";
-// TOPPINGS
-import cinnamonImg from "../assets/ingredients/cinnamon.png";
-import sprinklesImg from "../assets/ingredients/sprinkles.png";
-import whippedImg from "../assets/ingredients/whipped.png";
+import smallImg from "@/assets/ingredients/small.png";
+import mediumImg from "@/assets/ingredients/medium.png";
+import largeImg from "@/assets/ingredients/large.png";
+import hotImg from "@/assets/ingredients/hot.png";
+import icedImg from "@/assets/ingredients/iced.png";
+import almondImg from "@/assets/ingredients/almond.png";
+import oatImg from "@/assets/ingredients/oat.png";
+import wholeImg from "@/assets/ingredients/whole.png";
+import noMilkImg from "@/assets/ingredients/no-milk.png";
+import vanillaImg from "@/assets/ingredients/vanilla.png";
+import caramelImg from "@/assets/ingredients/caramel.png";
+import mochaImg from "@/assets/ingredients/mocha.png";
+import noFlavorImg from "@/assets/ingredients/no-flavor.png";
+import cinnamonImg from "@/assets/ingredients/cinnamon.png";
+import sprinklesImg from "@/assets/ingredients/sprinkles.png";
+import whippedImg from "@/assets/ingredients/whipped.png";
 
-interface IngredientsProps {
-  tray: any;
-  // function to update selected ingredient in tray
-  onSelect: (category: keyof Order, value: string) => void; 
-
-  // current game level
-  level: number;
-}
-
-// Icon Mapping
-const ingredientIcons: Record<string, string> = {
-  almond: almondImg,
-  caramel: caramelImg,
-  vanilla: vanillaImg,
-  mocha: mochaImg,
-  whole: wholeImg,
-  small: smallImg, 
-  medium: mediumImg,
-  large: largeImg,
-  hot: hotImg,
-  iced: icedImg, 
-  oat: oatImg,
-  none: noMilkImg,
+const ICONS: Record<string, string> = {
+  "small": smallImg,
+  "medium": mediumImg,
+  "large": largeImg,
+  "hot": hotImg,
+  "iced": icedImg,
+  "almond": almondImg,
+  "oat": oatImg,
+  "whole": wholeImg,
+  "vanilla": vanillaImg,
+  "caramel": caramelImg,
+  "mocha": mochaImg,
+  "cinnamon": cinnamonImg,
+  "sprinkles": sprinklesImg,
+  "whipped": whippedImg,
+  "whipped_cream": whippedImg,
+  "none": noMilkImg,
   "no-flavor": noFlavorImg,
   "no-milk": noMilkImg,
-  cinnamon: cinnamonImg,
-  sprinkles: sprinklesImg,
-  whipped: whippedImg,
-  whipped_cream: whippedImg, // Map both names to the same image
 };
 
-const Ingredients = ({ tray, onSelect, level }: IngredientsProps) => {
-  // get ingredient config based on current level
+const CATEGORY_ORDER: (keyof Order)[] = ["size", "temp", "milk", "flavor", "toppings"];
+
+interface IngredientsProps {
+  tray: Tray;
+  level: number;
+  onSelect: (category: keyof Order, value: string) => void;
+}
+
+export const Ingredients = ({ tray, level, onSelect }: IngredientsProps) => {
   const config = levelConfig[level as keyof typeof levelConfig];
-
-  // if config or tray does not exist, render nothing
-  if (!config || !tray) return null;
-
-  const renderCategory = (category: string) => {
-    // get all ingredient options for current category
-    const options = config.ingredients[category as keyof typeof config.ingredients];
-
-    // if no options exist for category, do not render it
-    if (!options || (options as string[]).length === 0) return null;
-
-    return (
-      <div key={category} className="ingredient-row">
-         {/* category title */}
-        <label className="category-label">{category}</label>
-         {/* display every ingredient option as a button */}
-        <div className="options-grid">
-          {(options as string[]).map((option: string) => {
-            // check if current option is selected
-            const isSelected =
-              category === "toppings"
-                ? tray[category]?.includes(option)
-                : tray[category] === option;
-
-            // normalize option so it matches icon keys
-            const normalizedOption = option.toLowerCase();
-
-            return (
-              <button
-                key={option}
-                type="button"
-                className={`option-btn ${isSelected ? "selected" : ""}`}
-                onClick={() => onSelect(category as keyof Order, option)}
-              >
-                 {/* display ingredient icon if one exists */}
-                {ingredientIcons[normalizedOption] ? (
-                  <img
-                    src={ingredientIcons[normalizedOption]}
-                    alt={option}
-                    className="ingredient-icon"
-                  />
-                ) : (
-                  // fallback empty icon if image is missing
-                  <div className="placeholder-icon" />
-                )}
-                 {/* display ingredient name */}
-                <span className="option-text">{option.replace("_", " ")}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
+  if (!config) return null;
 
   return (
-    <div className="ingredients-layout">
-      {["size", "temp", "milk", "flavor", "toppings"].map(renderCategory)}
-    </div>
+    <div className="ingredients">
+      {CATEGORY_ORDER.map((category) => {
+        const options = config.ingredients[category as keyof typeof config.ingredients] as readonly string[];
+        if (!options || options.length === 0) return null;
 
+        return (
+          <div key={category} className="mb-2">
+            <p className="p2 uppercase py-1">{category}</p>
+            <div className="grid grid-cols-4 gap-2">
+              {options.map((option) => {
+                const isSelected =
+                  category === "toppings" ? (tray.toppings || []).includes(option) : tray[category] === option;
+                const icon = ICONS[option.toLowerCase()];
+
+                return (
+                  <button
+                    key={option}
+                    type="button"
+                    className={`option-btn ${isSelected ? "selected" : ""}`}
+                    onClick={() => onSelect(category, option)}
+                  >
+                    {icon ? (
+                      <img src={icon} alt={option} className="ingredient-icon" />
+                    ) : (
+                      <div className="placeholder-icon" />
+                    )}
+                    <span className="option-text">{option.replace("_", " ")}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 };
 

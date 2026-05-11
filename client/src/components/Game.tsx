@@ -1,152 +1,85 @@
+import { useEffect } from "react";
 
-import React, { useEffect, useState, useContext } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { GlobalStateContext } from "../context/GlobalContext";
+import { BadgeToast } from "./BadgeToast";
+import { FeedbackToast } from "./FeedbackToast";
+import { Ingredients } from "./Ingredients";
+import { Order } from "./Order";
+import { PageContainer } from "./PageContainer";
+import { Tray } from "./Tray";
 
-// Components
-import PageContainer from "./PageContainer";
-import Order from "./Order";
-import Ingredients from "./Ingredients";
-import Tray from "./Tray";
-import FeedbackToast from "./FeedbackToast"
-import BadgeToast from './BadgeToast';
+import { levelConfig } from "@/config/levelConfig";
+import useOrderManager, { LevelStart } from "@/hooks/useOrderManager";
 
-// Hooks & Config
-import useOrderManager from "../hooks/useOrderManager";
-import { levelConfig } from "../config/levelConfig";
+import "@/styles/Game.css";
 
-import "../styles/Game.css";
+interface GameProps {
+  level: number;
+  initial: LevelStart;
+  onLevelComplete: (next: LevelStart) => void;
+  onGameOver: (final: { score: number; ordersServed: number }) => void;
+}
 
-// types
-import { Feedback } from '../types/Feedback'
+export const Game = ({ level, initial, onLevelComplete, onGameOver }: GameProps) => {
+  const config = levelConfig[level as keyof typeof levelConfig];
 
-const Game = () => {
-  const navigate = useNavigate();
-  const { levelId } = useParams();
-  const currentLevel = Number(levelId) || 1;
- // const currentLevel = 4;
-  const config = levelConfig[currentLevel as keyof typeof levelConfig];
-  const [activeBadge, setActiveBadge] = useState<{name: string, icon: string} | null>(null);
+  const {
+    activeBadge,
+    activeOrder,
+    angryCount,
+    feedback,
+    score,
+    streak,
+    timeRemaining,
+    tray,
+    advance,
+    dismissBadge,
+    handleManualCloseShop,
+    handleServeOrder,
+    updateTray,
+  } = useOrderManager({ level, initial, onLevelComplete, onGameOver });
 
-    // 1. Define the completion logic first
-  const handleLevelComplete = (scoreAtEndOfLevel: number, angryAtEndOfLevel: number) => {
-    const nextLevel = currentLevel + 1;
-    if (nextLevel <= 4) {
-      navigate(`/level-start/${nextLevel}`, { 
-        state: { 
-          inheritedScore: scoreAtEndOfLevel,
-          inheritedAngry: angryAtEndOfLevel 
-        } 
-      });
-    } else {
-      navigate("/game-over", { 
-        state: { score: scoreAtEndOfLevel } 
-      });
-    }
-  };
-
-  const getBadgeIcon = (name: string) => {
-    const fileName = name.toLowerCase().replace(/\s+/g, '_');
-    try {
-      return require(`../assets/badges/${fileName}.png`);
-    } catch {
-      return require(`../assets/badges/default_badge.png`);
-    }
-  };
-
-  const showBadgePopup = (name: string) => {
-    setActiveBadge({ 
-      name, 
-      icon: getBadgeIcon(name) 
-    });
-    
-    setTimeout(() => {
-      setActiveBadge(null);
-    }, 4000);
-  };
-
-  const manager = useOrderManager(
-    () => navigate("/game-over", { 
-      state: { 
-        score: manager.score, 
-        ordersServed: manager.ordersServed 
-      } 
-    }),
-    handleLevelComplete,
-    showBadgePopup,
-    currentLevel
-  );
-
-
-// extract variables from manager so you can use them in your HTML
-const {
-  activeOrder,
-  angryCustomerCount,
-  score,
-  tray,
-  streak,
-  feedback,
-  handleServeOrder,
- handleManualCloseShop,
-  advance,
-  updateTray,
-  clearTray,
-  ordersServed: totalServed, // name match
-   trackEvent,
-  timeRemaining,
-} = manager;
-
+  // Kick off the first order on mount.
   useEffect(() => {
-    clearTray();
     advance();
-  }, [currentLevel]);
+    // advance reads state via closure; we only want this on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <PageContainer isLoading={false}>
-      <div className="game-screen-wrapper">
+      <div className="grid gap-3">
         <div className="hud">
-          <div className="hud-item"><span className="hud-label">Level:</span> {config.title}</div>
-          <div className="hud-item"><span className="hud-label">Score:</span> {score}</div>
-          <div className="hud-item"><span className="hud-label">Streak:</span> {streak}</div>
+          <div className="hud-item">
+            <span className="hud-label">Level</span> {config.title}
+          </div>
+          <div className="hud-item">
+            <span className="hud-label">Score</span> {score}
+          </div>
+          <div className="hud-item">
+            <span className="hud-label">Streak</span> {streak}
+          </div>
           <div className="hud-item">⏱️ {timeRemaining}s</div>
-          <div className="hud-item">😡 {angryCustomerCount}/5</div>
+          <div className="hud-item">😡 {angryCount}/5</div>
         </div>
 
-        <div className="order-tray-row">
+        <div className="grid grid-cols-2 gap-2">
+          {activeOrder && <Order order={activeOrder} timeRemaining={timeRemaining} currentLevel={level} />}
           <Tray tray={tray} />
-          {activeOrder && (
-            <div className="order-container">
-              <Order 
-                order={activeOrder} 
-                isActive={true} 
-                timeRemaining={timeRemaining}
-                currentLevel={currentLevel} 
-              />
-            </div>
-          )}
         </div>
-        <button className="serve-button" onClick={handleServeOrder}>
-            SERVE ORDER
-          </button>
-          <div className="ingredients">
-            <Ingredients  onSelect={updateTray} tray={tray} level={currentLevel} />
-          </div>
-        {/* Use the destructured feedback directly */}
+
+        <Ingredients tray={tray} onSelect={updateTray} level={level} />
+
+        <button className="btn btn-primary" onClick={handleServeOrder}>
+          Serve Order
+        </button>
+
+        <button className="btn btn-text mt-2" onClick={handleManualCloseShop}>
+          Close Shop
+        </button>
+
         {feedback && <FeedbackToast feedback={feedback} />}
 
-        <div className="bottom-actions">
-          <button className="close-button-outline" onClick={handleManualCloseShop}>
-            Close Shop
-          </button>
-        </div>
-
-        {activeBadge && (
-          <BadgeToast 
-            badgeName={activeBadge.name} 
-            iconPath={activeBadge.icon} 
-            onClose={() => setActiveBadge(null)} 
-          />
-        )}
+        {activeBadge && <BadgeToast badgeName={activeBadge.name} iconPath={activeBadge.icon} onClose={dismissBadge} />}
       </div>
     </PageContainer>
   );
