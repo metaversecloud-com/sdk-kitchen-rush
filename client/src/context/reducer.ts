@@ -12,6 +12,7 @@ export const globalReducer = (state: InitialState, action: ActionType): InitialS
         droppedAsset: payload.droppedAsset ?? state.droppedAsset,
         badges: payload.badges ?? state.badges,
         visitorInventory: payload.visitorInventory ?? state.visitorInventory,
+        visitorStats: payload.visitorStats ?? state.visitorStats,
         error: "",
       };
     case SET_ERROR:

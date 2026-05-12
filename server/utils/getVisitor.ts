@@ -11,6 +11,11 @@ export type VisitorInventory = {
   badges: VisitorBadgeRecord;
 };
 
+export type VisitorStats = {
+  gamesPlayed: number;
+  lifetimeCorrectOrders: number;
+};
+
 const buildVisitorInventory = (items: any[] = []): VisitorInventory => {
   const badges: VisitorBadgeRecord = {};
   for (const visitorItem of items) {
@@ -23,10 +28,19 @@ const buildVisitorInventory = (items: any[] = []): VisitorInventory => {
   return { badges };
 };
 
+const buildVisitorStats = (dataObject: any): VisitorStats => ({
+  gamesPlayed: typeof dataObject?.gamesPlayed === "number" ? dataObject.gamesPlayed : 0,
+  lifetimeCorrectOrders: typeof dataObject?.lifetimeCorrectOrders === "number" ? dataObject.lifetimeCorrectOrders : 0,
+});
+
 export const getVisitor = async (
   credentials: Credentials,
   shouldGetVisitorDetails = false,
-): Promise<{ visitor: VisitorInterface; visitorInventory: VisitorInventory }> => {
+): Promise<{
+  visitor: VisitorInterface;
+  visitorInventory: VisitorInventory;
+  visitorStats: VisitorStats;
+}> => {
   try {
     const { urlSlug, visitorId } = credentials;
 
@@ -39,7 +53,14 @@ export const getVisitor = async (
     if (shouldGetVisitorDetails) await visitor.fetchInventoryItems();
     const visitorInventory = buildVisitorInventory(visitor.inventoryItems || []);
 
-    return { visitor, visitorInventory };
+    const dataObject = (await visitor.fetchDataObject()) as VisitorStats;
+    const visitorStats = buildVisitorStats(dataObject);
+
+    if (!dataObject.gamesPlayed) {
+      await visitor.setDataObject(visitorStats, {});
+    }
+
+    return { visitor, visitorInventory, visitorStats };
   } catch (error) {
     throw standardizeError(error);
   }

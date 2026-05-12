@@ -26,12 +26,18 @@ export type VisitorInventory = {
   badges: BadgeRecord;
 };
 
+export type VisitorStats = {
+  gamesPlayed: number;
+  lifetimeCorrectOrders: number;
+};
+
 export interface InitialState {
   hasInteractiveParams: boolean;
   isAdmin: boolean;
   droppedAsset?: DroppedAssetInterface;
   badges: BadgeRecord;
   visitorInventory: VisitorInventory;
+  visitorStats: VisitorStats;
   error: string;
 }
 

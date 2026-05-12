@@ -43,3 +43,8 @@ export const updateLeaderboard = async ({
     { lock: { lockId: `leaderboard-${profileId}-${Date.now()}`, releaseLock: true } },
   );
 };
+
+export const findRank = (leaderboard: LeaderboardEntry[], profileId: string): number | null => {
+  const index = leaderboard.findIndex((entry) => entry.profileId === profileId);
+  return index >= 0 ? index + 1 : null;
+};

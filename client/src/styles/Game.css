@@ -30,7 +30,7 @@
   background: #e2e8f0;
   border-radius: 10px;
   overflow: hidden;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
 .timer-bar {
@@ -40,11 +40,11 @@
 }
 
 .recipe-bullet-icon {
-  width: 28px !important;
+  width: 24px !important;
 }
 
 .recipe-text {
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: 600;
   text-transform: capitalize;
 }
@@ -75,8 +75,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 2px;
+  padding: 0 2px;
 }
 
 .option-btn.selected {
@@ -92,76 +91,6 @@
   color: #64748b;
   /* Add this to ensure they don't touch */
   padding: 0 2px;
-}
-
-/*badge stuff*/
-.badge-toast-container {
-  position: fixed;
-  top: 0;
-  background: rgba(45, 27, 20, 0.95); /* Dark chocolate/coffee wood color */
-  border: 3px solid #f39c12; /* Gold border */
-  border-radius: 12px;
-  padding: 15px 25px;
-  z-index: 9999;
-  box-shadow: 0 0 20px rgba(243, 156, 18, 0.4);
-  animation: slideInRight 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  display: flex;
-  align-items: center;
-  min-width: 280px;
-}
-
-@keyframes slideInRight {
-  from {
-    transform: translateX(120%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-.badge-toast-content {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.badge-icon-wrapper {
-  background: #fff;
-  border-radius: 50%;
-  padding: 5px;
-  width: 50px;
-  height: 50px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border: 2px solid #f1c40f;
-}
-
-.badge-popup-icon {
-  width: 40px;
-  height: 40px;
-  object-fit: contain;
-}
-
-.badge-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.badge-unlocked {
-  color: #f39c12;
-  font-size: 0.7rem;
-  font-weight: bold;
-  letter-spacing: 1px;
-}
-
-.badge-name {
-  color: white;
-  font-size: 1.1rem;
-  font-weight: 800;
-  text-shadow: 1px 1px 2px black;
 }
 
 /* --- FEEDBACK TOAST --- */

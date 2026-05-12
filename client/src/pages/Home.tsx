@@ -4,13 +4,14 @@ import coffeeShopImg from "@/assets/coffeeShop.png";
 import { BadgesTab, Game, GameOver, LevelIntermission, PageContainer, ScoresTab } from "@/components";
 import { GlobalDispatchContext, GlobalStateContext } from "@/context/GlobalContext";
 import { ErrorType } from "@/context/types";
-import { LevelStart } from "@/hooks/useOrderManager";
+import { GameOverPayload, LevelStart } from "@/hooks/useOrderManager";
 import { backendAPI, setErrorMessage, setGameState } from "@/utils";
 
 type Phase = "tabs" | "intermission" | "game" | "gameover";
 type PlayerTab = "game" | "scores" | "badges";
 
 const INITIAL_LEVEL_STATE: LevelStart = { score: 0, angry: 0, streak: 0, ordersServed: 0 };
+const EMPTY_FINAL: GameOverPayload = { score: 0, ordersServed: 0, correctOrders: 0, incorrectOrders: 0, angryCount: 0 };
 const FINAL_LEVEL = 4;
 
 export const Home = () => {
@@ -22,10 +23,7 @@ export const Home = () => {
   const [activeTab, setActiveTab] = useState<PlayerTab>("game");
   const [currentLevel, setCurrentLevel] = useState(1);
   const [levelStart, setLevelStart] = useState<LevelStart>(INITIAL_LEVEL_STATE);
-  const [finalStats, setFinalStats] = useState<{ score: number; ordersServed: number }>({
-    score: 0,
-    ordersServed: 0,
-  });
+  const [finalStats, setFinalStats] = useState<GameOverPayload>(EMPTY_FINAL);
 
   useEffect(() => {
     if (!hasInteractiveParams) {
@@ -51,8 +49,7 @@ export const Home = () => {
 
   const handleLevelComplete = (next: LevelStart) => {
     if (currentLevel >= FINAL_LEVEL) {
-      setFinalStats({ score: next.score, ordersServed: next.ordersServed });
-      setPhase("gameover");
+      // Final level falls through to game-end inside the hook; nothing to do here.
       return;
     }
     setLevelStart(next);
@@ -60,15 +57,18 @@ export const Home = () => {
     setPhase("intermission");
   };
 
-  const handleGameOver = (final: { score: number; ordersServed: number }) => {
-    setFinalStats(final);
+  // Transition to GameOver instantly with raw stats. GameOver itself owns the
+  // /game-end call so the player sees feedback immediately instead of a frozen
+  // game screen while the server tallies results.
+  const handleGameOver = (payload: GameOverPayload) => {
+    setFinalStats(payload);
     setPhase("gameover");
   };
 
   const playAgain = () => {
     setCurrentLevel(1);
     setLevelStart(INITIAL_LEVEL_STATE);
-    setFinalStats({ score: 0, ordersServed: 0 });
+    setFinalStats(EMPTY_FINAL);
     setActiveTab("game");
     setPhase("tabs");
   };
@@ -95,7 +95,7 @@ export const Home = () => {
   }
 
   if (phase === "gameover") {
-    return <GameOver score={finalStats.score} ordersServed={finalStats.ordersServed} onPlayAgain={playAgain} />;
+    return <GameOver stats={finalStats} onPlayAgain={playAgain} />;
   }
 
   return (

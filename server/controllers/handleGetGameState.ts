@@ -6,7 +6,7 @@ export const handleGetGameState = async (req: Request, res: Response) => {
     const credentials = getCredentials(req.query);
     const forceRefreshInventory = req.query.forceRefreshInventory === "true";
 
-    const [{ visitor, visitorInventory }, badges] = await Promise.all([
+    const [{ visitor, visitorInventory, visitorStats }, badges] = await Promise.all([
       getVisitor(credentials, true),
       getBadges(credentials, forceRefreshInventory),
     ]);
@@ -16,6 +16,7 @@ export const handleGetGameState = async (req: Request, res: Response) => {
       isAdmin: !!visitor.isAdmin,
       badges,
       visitorInventory,
+      visitorStats,
     });
   } catch (error) {
     return errorHandler({

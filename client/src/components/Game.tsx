@@ -1,14 +1,10 @@
-import { useEffect } from "react";
+import { useContext, useEffect, useMemo } from "react";
 
-import { BadgeToast } from "./BadgeToast";
-import { FeedbackToast } from "./FeedbackToast";
-import { Ingredients } from "./Ingredients";
-import { Order } from "./Order";
-import { PageContainer } from "./PageContainer";
-import { Tray } from "./Tray";
+import { FeedbackToast, Ingredients, Order, PageContainer, Tray } from "@/components";
 
 import { levelConfig } from "@/config/levelConfig";
-import useOrderManager, { LevelStart } from "@/hooks/useOrderManager";
+import { GlobalStateContext } from "@/context/GlobalContext";
+import useOrderManager, { GameOverPayload, LevelStart } from "@/hooks/useOrderManager";
 
 import "@/styles/Game.css";
 
@@ -16,14 +12,15 @@ interface GameProps {
   level: number;
   initial: LevelStart;
   onLevelComplete: (next: LevelStart) => void;
-  onGameOver: (final: { score: number; ordersServed: number }) => void;
+  onGameOver: (final: GameOverPayload) => void;
 }
 
 export const Game = ({ level, initial, onLevelComplete, onGameOver }: GameProps) => {
+  const { visitorInventory } = useContext(GlobalStateContext);
+  const ownedBadgeNames = useMemo(() => Object.keys(visitorInventory?.badges || {}), [visitorInventory]);
   const config = levelConfig[level as keyof typeof levelConfig];
 
   const {
-    activeBadge,
     activeOrder,
     angryCount,
     feedback,
@@ -32,16 +29,14 @@ export const Game = ({ level, initial, onLevelComplete, onGameOver }: GameProps)
     timeRemaining,
     tray,
     advance,
-    dismissBadge,
     handleManualCloseShop,
     handleServeOrder,
     updateTray,
-  } = useOrderManager({ level, initial, onLevelComplete, onGameOver });
+  } = useOrderManager({ level, initial, ownedBadgeNames, onLevelComplete, onGameOver });
 
-  // Kick off the first order on mount.
+  // Kick off the first order on mount; the hook owns the rest of the loop.
   useEffect(() => {
     advance();
-    // advance reads state via closure; we only want this on mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -61,25 +56,18 @@ export const Game = ({ level, initial, onLevelComplete, onGameOver }: GameProps)
           <div className="hud-item">⏱️ {timeRemaining}s</div>
           <div className="hud-item">😡 {angryCount}/5</div>
         </div>
-
         <div className="grid grid-cols-2 gap-2">
           {activeOrder && <Order order={activeOrder} timeRemaining={timeRemaining} currentLevel={level} />}
           <Tray tray={tray} />
         </div>
-
         <Ingredients tray={tray} onSelect={updateTray} level={level} />
-
         <button className="btn btn-primary" onClick={handleServeOrder}>
           Serve Order
         </button>
-
         <button className="btn btn-text mt-2" onClick={handleManualCloseShop}>
           Close Shop
         </button>
-
         {feedback && <FeedbackToast feedback={feedback} />}
-
-        {activeBadge && <BadgeToast badgeName={activeBadge.name} iconPath={activeBadge.icon} onClose={dismissBadge} />}
       </div>
     </PageContainer>
   );

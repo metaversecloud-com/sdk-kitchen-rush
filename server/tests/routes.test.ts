@@ -32,6 +32,8 @@ const buildVisitorMock = (overrides: Record<string, unknown> = {}) => ({
   isAdmin: false,
   inventoryItems: [],
   fetchInventoryItems: jest.fn().mockResolvedValue(undefined),
+  fetchDataObject: jest.fn().mockResolvedValue({ gamesPlayed: 0, lifetimeCorrectOrders: 0 }),
+  incrementDataObjectValue: jest.fn().mockResolvedValue(undefined),
   grantInventoryItem: jest.fn().mockResolvedValue(undefined),
   updatePublicKeyAnalytics: jest.fn().mockResolvedValue(undefined),
   fireToast: jest.fn().mockResolvedValue(undefined),
@@ -48,8 +50,11 @@ jest.mock("@utils/index.js", () => ({
   getVisitor: jest.fn(),
   getBadges: jest.fn().mockResolvedValue({}),
   awardBadge: jest.fn(),
-  parseLeaderboard: jest.fn(),
+  grantBadges: jest.fn().mockResolvedValue([]),
+  parseLeaderboard: jest.fn().mockReturnValue([]),
   updateLeaderboard: jest.fn().mockResolvedValue(undefined),
+  findRank: jest.fn().mockReturnValue(null),
+  getCachedInventoryItems: jest.fn().mockResolvedValue([]),
   Visitor: { get: jest.fn(), create: jest.fn() },
 }));
 
@@ -78,9 +83,13 @@ describe("system", () => {
 });
 
 describe("game-state", () => {
-  test("GET /game-state returns isAdmin, badges, and visitorInventory", async () => {
+  test("GET /game-state returns isAdmin, badges, visitorInventory, and visitorStats", async () => {
     const visitor = buildVisitorMock({ isAdmin: true });
-    mockUtils.getVisitor.mockResolvedValue({ visitor, visitorInventory: { badges: { "First Order": {} } } });
+    mockUtils.getVisitor.mockResolvedValue({
+      visitor,
+      visitorInventory: { badges: { "First Order": {} } },
+      visitorStats: { gamesPlayed: 7, lifetimeCorrectOrders: 42 },
+    });
     mockUtils.getBadges.mockResolvedValue({ "First Order": { id: "x", name: "First Order", icon: "" } });
 
     const res = await request(makeApp()).get("/api/game-state").query(baseCreds);
@@ -90,6 +99,7 @@ describe("game-state", () => {
     expect(res.body.isAdmin).toBe(true);
     expect(res.body.badges).toEqual({ "First Order": { id: "x", name: "First Order", icon: "" } });
     expect(res.body.visitorInventory).toEqual({ badges: { "First Order": {} } });
+    expect(res.body.visitorStats).toEqual({ gamesPlayed: 7, lifetimeCorrectOrders: 42 });
   });
 
   test("GET /game-state forwards errors to errorHandler", async () => {
@@ -108,44 +118,13 @@ describe("leaderboard", () => {
   test("GET /leaderboard returns parsed leaderboard", async () => {
     const droppedAsset = buildDroppedAssetMock({ "p-1": "Alice|100" });
     mockUtils.getDroppedAsset.mockResolvedValue(droppedAsset);
-    mockUtils.parseLeaderboard.mockReturnValue([
-      { profileId: "p-1", displayName: "Alice", score: 100 },
-    ]);
+    mockUtils.parseLeaderboard.mockReturnValue([{ profileId: "p-1", displayName: "Alice", score: 100 }]);
 
     const res = await request(makeApp()).get("/api/leaderboard").query(baseCreds);
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(res.body.leaderboard).toEqual([{ profileId: "p-1", displayName: "Alice", score: 100 }]);
-  });
-
-  test("POST /leaderboard/update calls updateLeaderboard with a numeric score", async () => {
-    const droppedAsset = buildDroppedAssetMock();
-    mockUtils.getDroppedAsset.mockResolvedValue(droppedAsset);
-
-    const res = await request(makeApp())
-      .post("/api/leaderboard/update")
-      .query(baseCreds)
-      .send({ score: 42 });
-
-    expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
-    expect(mockUtils.updateLeaderboard).toHaveBeenCalledWith({
-      credentials: baseCreds,
-      droppedAsset,
-      score: 42,
-    });
-  });
-
-  test("POST /leaderboard/update rejects non-numeric scores", async () => {
-    const res = await request(makeApp())
-      .post("/api/leaderboard/update")
-      .query(baseCreds)
-      .send({ score: "high" });
-
-    expect(res.status).toBe(400);
-    expect(res.body.success).toBe(false);
-    expect(mockUtils.updateLeaderboard).not.toHaveBeenCalled();
   });
 
   test("POST /leaderboard/reset clears the leaderboard", async () => {
@@ -183,17 +162,11 @@ describe("award-badge", () => {
       icon: "https://example.com/badge.png",
     });
 
-    const res = await request(makeApp())
-      .post("/api/award-badge")
-      .query(baseCreds)
-      .send({ badgeName: "First Order" });
+    const res = await request(makeApp()).post("/api/award-badge").query(baseCreds).send({ badgeName: "First Order" });
 
     expect(res.status).toBe(200);
     expect(res.body.granted).toBe(true);
-    expect(mockUtils.awardBadge).toHaveBeenCalledWith({
-      credentials: baseCreds,
-      badgeName: "First Order",
-    });
+    expect(mockUtils.awardBadge).toHaveBeenCalledWith({ credentials: baseCreds, badgeName: "First Order" });
   });
 
   test("POST /award-badge rejects when badgeName is missing", async () => {
@@ -202,6 +175,123 @@ describe("award-badge", () => {
     expect(res.status).toBe(400);
     expect(res.body.success).toBe(false);
     expect(mockUtils.awardBadge).not.toHaveBeenCalled();
+  });
+});
+
+describe("game-end", () => {
+  test("POST /game-end increments stats, updates leaderboard, and grants eligible badges", async () => {
+    const visitor = buildVisitorMock();
+    const droppedAsset = buildDroppedAssetMock();
+    mockUtils.getVisitor.mockResolvedValue({
+      visitor,
+      visitorInventory: { badges: {} },
+      visitorStats: { gamesPlayed: 0, lifetimeCorrectOrders: 23 },
+    });
+    mockUtils.getDroppedAsset.mockResolvedValue(droppedAsset);
+    mockUtils.parseLeaderboard.mockReturnValue([
+      { profileId: baseCreds.profileId, displayName: "Alice", score: 250 },
+    ]);
+    mockUtils.findRank.mockReturnValue(1);
+    mockUtils.grantBadges.mockResolvedValue([
+      { success: true, granted: true, badgeName: "Open for Business", icon: "open.png" },
+      { success: true, granted: true, badgeName: "Line Cook", icon: "line.png" },
+      { success: true, granted: true, badgeName: "Number 1", icon: "one.png" },
+      // Already-owned should be filtered out.
+      { success: true, granted: false, badgeName: "On the Board", icon: "board.png" },
+    ]);
+
+    const res = await request(makeApp())
+      .post("/api/game-end")
+      .query(baseCreds)
+      .send({ correctOrders: 10, incorrectOrders: 0, angryCount: 0, finalScore: 250 });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.rank).toBe(1);
+    expect(res.body.visitorStats).toEqual({ gamesPlayed: 1, lifetimeCorrectOrders: 33 });
+
+    // Stats updates fire with the right deltas.
+    expect(visitor.incrementDataObjectValue).toHaveBeenCalledWith(
+      "gamesPlayed",
+      1,
+      expect.objectContaining({ analytics: expect.any(Array) }),
+    );
+    expect(visitor.incrementDataObjectValue).toHaveBeenCalledWith(
+      "lifetimeCorrectOrders",
+      10,
+      expect.objectContaining({ analytics: expect.any(Array) }),
+    );
+    expect(mockUtils.updateLeaderboard).toHaveBeenCalledWith({ credentials: baseCreds, droppedAsset, score: 250 });
+
+    // Badges eligible for this game: Open for Business (first game), Sharp Chef
+    // (100% accuracy), No Substitutions (10 correct, 0 wrong), Clean Service
+    // (0 angry, finished), Line Cook (lifetime 33 ≥ 25), On the Board / Top 10 /
+    // Number 1 (rank=1).
+    const eligibleNames = mockUtils.grantBadges.mock.calls[0][0].badgeNames;
+    expect(eligibleNames).toEqual(
+      expect.arrayContaining([
+        "Open for Business",
+        "Sharp Chef",
+        "No Substitutions",
+        "Clean Service",
+        "Line Cook",
+        "On the Board",
+        "Top 10",
+        "Number 1",
+      ]),
+    );
+    expect(eligibleNames).not.toContain("Back in the Kitchen");
+    expect(eligibleNames).not.toContain("Sous Chef");
+
+    // Only newly-granted badges flow to the client.
+    expect(res.body.grantedBadges).toEqual([
+      { name: "Open for Business", icon: "open.png" },
+      { name: "Line Cook", icon: "line.png" },
+      { name: "Number 1", icon: "one.png" },
+    ]);
+  });
+
+  test("POST /game-end skips Sharp Chef when accuracy is below 80%", async () => {
+    const visitor = buildVisitorMock();
+    const droppedAsset = buildDroppedAssetMock();
+    mockUtils.getVisitor.mockResolvedValue({
+      visitor,
+      visitorInventory: { badges: {} },
+      visitorStats: { gamesPlayed: 5, lifetimeCorrectOrders: 50 },
+    });
+    mockUtils.getDroppedAsset.mockResolvedValue(droppedAsset);
+    mockUtils.findRank.mockReturnValue(null);
+
+    const res = await request(makeApp())
+      .post("/api/game-end")
+      .query(baseCreds)
+      .send({ correctOrders: 3, incorrectOrders: 2, angryCount: 5, finalScore: 30 });
+
+    expect(res.status).toBe(200);
+    const eligibleNames = mockUtils.grantBadges.mock.calls[0]?.[0]?.badgeNames ?? [];
+    expect(eligibleNames).not.toContain("Sharp Chef");
+    expect(eligibleNames).not.toContain("Clean Service"); // 5 angry, not zero
+    expect(eligibleNames).not.toContain("No Substitutions"); // wrong submissions
+    expect(eligibleNames).toContain("Back in the Kitchen"); // gamesPlayed becomes 6
+  });
+
+  test("POST /game-end skips leaderboard update when finalScore is 0", async () => {
+    const visitor = buildVisitorMock();
+    const droppedAsset = buildDroppedAssetMock();
+    mockUtils.getVisitor.mockResolvedValue({
+      visitor,
+      visitorInventory: { badges: {} },
+      visitorStats: { gamesPlayed: 0, lifetimeCorrectOrders: 0 },
+    });
+    mockUtils.getDroppedAsset.mockResolvedValue(droppedAsset);
+
+    const res = await request(makeApp())
+      .post("/api/game-end")
+      .query(baseCreds)
+      .send({ correctOrders: 0, incorrectOrders: 0, angryCount: 5, finalScore: 0 });
+
+    expect(res.status).toBe(200);
+    expect(mockUtils.updateLeaderboard).not.toHaveBeenCalled();
   });
 });
 

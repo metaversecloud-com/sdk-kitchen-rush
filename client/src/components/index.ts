@@ -1,5 +1,4 @@
 export * from "./BadgesTab";
-export * from "./BadgeToast";
 export * from "./FeedbackToast";
 export * from "./Game";
 export * from "./GameOver";

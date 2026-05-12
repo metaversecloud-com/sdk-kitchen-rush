@@ -1,7 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { levelConfig } from "@/config/levelConfig";
-import { BASE_POINTS, MAX_ANGRY_CUSTOMERS, PENALTY } from "@/data/gameConstants";
+import {
+  BASE_POINTS,
+  IN_GAME_BADGES,
+  LAST_MINUTE_TIME_THRESHOLD,
+  LIGHTNING_HANDS_STREAK,
+  LIGHTNING_HANDS_TIME_THRESHOLD,
+  MAX_ANGRY_CUSTOMERS,
+  OOPS_STREAK,
+  PENALTY,
+  PERFECT_PLATE_STREAK,
+  RUSH_HOUR_STREAK,
+  SLUGGISH_STREAK,
+  SLUGGISH_TIME_THRESHOLD,
+  UNSTOPPABLE_STREAK,
+  WANT_IT_ALL_LEVEL,
+} from "@/data/gameConstants";
 import { Feedback, FeedbackType } from "@/types/Feedback";
 import { Order, Tray, emptyTray } from "@/types/Order";
 import { awardBadge, compareIngredients, getSpeedBonus, getStreakMultiplier, trackEvent } from "@/utils";
@@ -15,20 +30,24 @@ export type LevelStart = {
   ordersServed: number;
 };
 
-const BADGES = {
-  FIRST_ORDER: "First Order",
-  STREAK: "Speed Chef",
-  MASTER: "Master Barista",
-} as const;
+// Raw end-of-game stats. The /game-end roundtrip (which produces the rank,
+// granted badges, and updated visitor stats) is initiated by the GameOver
+// screen so the phase transition can happen instantly while the server
+// crunches the results.
+export type GameOverPayload = {
+  score: number;
+  ordersServed: number;
+  correctOrders: number;
+  incorrectOrders: number;
+  angryCount: number;
+};
 
-const STREAK_MILESTONES = [5, 10, 25];
 const FEEDBACK_DURATION_MS = 2000;
-const BADGE_POPUP_DURATION_MS = 4000;
 const FINAL_LEVEL = 4;
 
 const generateRandomOrder = (level: number): Order => {
   const config = levelConfig[level as keyof typeof levelConfig];
-  const pick = <T,>(arr: readonly T[]): T => arr[Math.floor(Math.random() * arr.length)];
+  const pick = <T>(arr: readonly T[]): T => arr[Math.floor(Math.random() * arr.length)];
 
   const order: Order = {
     id: Math.floor(1000 + Math.random() * 9000).toString(),
@@ -39,8 +58,10 @@ const generateRandomOrder = (level: number): Order => {
   };
   if (config.ingredients.flavor.length > 0) order.flavor = pick(config.ingredients.flavor);
   if (config.ingredients.toppings.length > 0) {
+    const maxToppings = level === WANT_IT_ALL_LEVEL ? 3 : 2;
+    const numToppings = Math.floor(Math.random() * maxToppings) + 1;
     const shuffled = [...config.ingredients.toppings].sort(() => Math.random() - 0.5);
-    order.toppings = shuffled.slice(0, Math.floor(Math.random() * 2) + 1);
+    order.toppings = shuffled.slice(0, numToppings);
   }
   return order;
 };
@@ -48,11 +69,12 @@ const generateRandomOrder = (level: number): Order => {
 interface UseOrderManagerOptions {
   level: number;
   initial: LevelStart;
+  ownedBadgeNames: string[];
   onLevelComplete: (next: LevelStart) => void;
-  onGameOver: (final: { score: number; ordersServed: number }) => void;
+  onGameOver: (final: GameOverPayload) => void;
 }
 
-const useOrderManager = ({ level, initial, onLevelComplete, onGameOver }: UseOrderManagerOptions) => {
+const useOrderManager = ({ level, initial, ownedBadgeNames, onLevelComplete, onGameOver }: UseOrderManagerOptions) => {
   const [score, setScore] = useState<number>(initial.score);
   const [streak, setStreak] = useState<number>(initial.streak);
   const [angryCount, setAngryCount] = useState<number>(initial.angry);
@@ -63,19 +85,36 @@ const useOrderManager = ({ level, initial, onLevelComplete, onGameOver }: UseOrd
   const [tray, setTray] = useState<Tray>(emptyTray());
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
-  const [activeBadge, setActiveBadge] = useState<ActiveBadge | null>(null);
 
   const timeoutRef = useRef<number | undefined>(undefined);
   const intervalRef = useRef<number | undefined>(undefined);
   const feedbackTimeoutRef = useRef<number | undefined>(undefined);
   const badgeTimeoutRef = useRef<number | undefined>(undefined);
+  const gameEndedRef = useRef(false);
 
-  // Latest values for use inside timer callbacks (avoids stale closures
-  // when the game ends via timeout rather than a button click).
-  const stateRef = useRef({ score, ordersServedGame });
+  // Cross-render snapshot so timer-fired endings and button-fired endings both
+  // see the latest score / orders / per-game accumulators.
+  const statsRef = useRef({
+    score: initial.score,
+    angryCount: initial.angry,
+    ordersServedGame: initial.ordersServed,
+    correctOrders: 0,
+    incorrectOrders: 0,
+    fastStreak: 0,
+    slowStreak: 0,
+    wrongStreak: 0,
+  });
   useEffect(() => {
-    stateRef.current = { score, ordersServedGame };
-  }, [score, ordersServedGame]);
+    statsRef.current.score = score;
+  }, [score]);
+  useEffect(() => {
+    statsRef.current.angryCount = angryCount;
+  }, [angryCount]);
+  useEffect(() => {
+    statsRef.current.ordersServedGame = ordersServedGame;
+  }, [ordersServedGame]);
+
+  const ownedBadgesRef = useRef<Set<string>>(new Set(ownedBadgeNames));
 
   const clearTimers = useCallback(() => {
     if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
@@ -88,24 +127,14 @@ const useOrderManager = ({ level, initial, onLevelComplete, onGameOver }: UseOrd
     feedbackTimeoutRef.current = window.setTimeout(() => setFeedback(null), FEEDBACK_DURATION_MS);
   }, []);
 
-  const showBadgePopup = useCallback((badge: ActiveBadge) => {
-    if (badgeTimeoutRef.current) window.clearTimeout(badgeTimeoutRef.current);
-    setActiveBadge(badge);
-    badgeTimeoutRef.current = window.setTimeout(() => setActiveBadge(null), BADGE_POPUP_DURATION_MS);
+  // Server dedupes badge grants, but we also short-circuit on the client to
+  // avoid a roundtrip when the visitor already owns the badge.
+  const tryAwardBadge = useCallback(async (badgeName: string) => {
+    if (ownedBadgesRef.current.has(badgeName)) return;
+    const result = await awardBadge(badgeName);
+    if (!result) return;
+    ownedBadgesRef.current.add(badgeName);
   }, []);
-
-  const dismissBadge = useCallback(() => {
-    if (badgeTimeoutRef.current) window.clearTimeout(badgeTimeoutRef.current);
-    setActiveBadge(null);
-  }, []);
-
-  const tryAwardBadge = useCallback(
-    async (badgeName: string) => {
-      const result = await awardBadge(badgeName);
-      if (result?.granted) showBadgePopup({ name: badgeName, icon: result.icon || "" });
-    },
-    [showBadgePopup],
-  );
 
   // Refs break the circular call graph (advance → handleOrderFailure on
   // timeout, handleOrderFailure → advance after a non-fatal miss).
@@ -113,8 +142,17 @@ const useOrderManager = ({ level, initial, onLevelComplete, onGameOver }: UseOrd
   const handleOrderFailureRef = useRef<(message: string) => void>(() => {});
 
   const endGame = () => {
+    if (gameEndedRef.current) return;
+    gameEndedRef.current = true;
     clearTimers();
-    onGameOver({ score: stateRef.current.score, ordersServed: stateRef.current.ordersServedGame });
+    const stats = statsRef.current;
+    onGameOver({
+      score: stats.score,
+      ordersServed: stats.ordersServedGame,
+      correctOrders: stats.correctOrders,
+      incorrectOrders: stats.incorrectOrders,
+      angryCount: stats.angryCount,
+    });
   };
 
   const handleOrderFailure = (message: string) => {
@@ -122,10 +160,18 @@ const useOrderManager = ({ level, initial, onLevelComplete, onGameOver }: UseOrd
     setStreak(0);
     setTray(emptyTray());
     triggerFeedback(message, "error");
+
+    statsRef.current.incorrectOrders += 1;
+    statsRef.current.wrongStreak += 1;
+    statsRef.current.fastStreak = 0;
+    statsRef.current.slowStreak = 0;
+    if (statsRef.current.wrongStreak >= OOPS_STREAK) void tryAwardBadge(IN_GAME_BADGES.OOPS);
+
     setAngryCount((prev) => {
       const next = prev + 1;
       if (next >= MAX_ANGRY_CUSTOMERS) {
         trackEvent("gamesCompleted");
+        statsRef.current.angryCount = next;
         endGame();
       } else {
         advanceRef.current();
@@ -170,7 +216,8 @@ const useOrderManager = ({ level, initial, onLevelComplete, onGameOver }: UseOrd
     const newOrdersServedLevel = ordersServedLevel + 1;
     const newOrdersServedGame = ordersServedGame + 1;
     const config = levelConfig[level as keyof typeof levelConfig];
-    const justHitMilestone = STREAK_MILESTONES.includes(newStreak);
+    const justHitStreakMilestone =
+      newStreak === PERFECT_PLATE_STREAK || newStreak === RUSH_HOUR_STREAK || newStreak === UNSTOPPABLE_STREAK;
 
     setScore(newScore);
     setStreak(newStreak);
@@ -178,25 +225,48 @@ const useOrderManager = ({ level, initial, onLevelComplete, onGameOver }: UseOrd
     setOrdersServedGame(newOrdersServedGame);
     setTray(emptyTray());
     triggerFeedback(
-      justHitMilestone ? `🔥 ${newStreak} Streak!` : "Perfect!",
-      justHitMilestone ? "milestone" : "success",
+      justHitStreakMilestone ? `🔥 ${newStreak} Streak!` : "Perfect!",
+      justHitStreakMilestone ? "milestone" : "success",
     );
 
-    if (newOrdersServedGame === 1) void tryAwardBadge(BADGES.FIRST_ORDER);
-    if (justHitMilestone) {
-      trackEvent("streakMilestonesReached");
-      void tryAwardBadge(BADGES.STREAK);
+    statsRef.current.correctOrders += 1;
+    statsRef.current.wrongStreak = 0;
+
+    const timePercent = activeOrder.timeLimit > 0 ? ((timeRemaining * 1000) / activeOrder.timeLimit) * 100 : 0;
+    if (timePercent > LIGHTNING_HANDS_TIME_THRESHOLD) {
+      statsRef.current.fastStreak += 1;
+      statsRef.current.slowStreak = 0;
+      if (statsRef.current.fastStreak >= LIGHTNING_HANDS_STREAK) void tryAwardBadge(IN_GAME_BADGES.LIGHTNING_HANDS);
+    } else if (timePercent < SLUGGISH_TIME_THRESHOLD) {
+      statsRef.current.slowStreak += 1;
+      statsRef.current.fastStreak = 0;
+      if (statsRef.current.slowStreak >= SLUGGISH_STREAK) void tryAwardBadge(IN_GAME_BADGES.SLUGGISH);
+    } else {
+      statsRef.current.fastStreak = 0;
+      statsRef.current.slowStreak = 0;
     }
+
+    if (timePercent < LAST_MINUTE_TIME_THRESHOLD) void tryAwardBadge(IN_GAME_BADGES.LAST_MINUTE_SAVE);
+    if (level === WANT_IT_ALL_LEVEL && (activeOrder.toppings?.length || 0) === 3) {
+      void tryAwardBadge(IN_GAME_BADGES.WANT_IT_ALL);
+    }
+    if (statsRef.current.correctOrders === 1) void tryAwardBadge(IN_GAME_BADGES.FIRST_ORDER);
+    if (newStreak === PERFECT_PLATE_STREAK) void tryAwardBadge(IN_GAME_BADGES.PERFECT_PLATE);
+    if (newStreak === RUSH_HOUR_STREAK) void tryAwardBadge(IN_GAME_BADGES.RUSH_HOUR);
+    if (newStreak === UNSTOPPABLE_STREAK) void tryAwardBadge(IN_GAME_BADGES.UNSTOPPABLE);
 
     if (newOrdersServedLevel >= config.threshold) {
       clearTimers();
-      if (level >= FINAL_LEVEL) void tryAwardBadge(BADGES.MASTER);
-      onLevelComplete({
-        score: newScore,
-        angry: angryCount,
-        streak: newStreak,
-        ordersServed: newOrdersServedGame,
-      });
+      if (level >= FINAL_LEVEL) {
+        endGame();
+      } else {
+        onLevelComplete({
+          score: newScore,
+          angry: angryCount,
+          streak: newStreak,
+          ordersServed: newOrdersServedGame,
+        });
+      }
     } else {
       advance();
     }
@@ -220,7 +290,6 @@ const useOrderManager = ({ level, initial, onLevelComplete, onGameOver }: UseOrd
     });
   }, []);
 
-  // Cleanup all timers on unmount.
   useEffect(() => {
     return () => {
       clearTimers();
@@ -231,7 +300,6 @@ const useOrderManager = ({ level, initial, onLevelComplete, onGameOver }: UseOrd
 
   return {
     activeOrder,
-    activeBadge,
     angryCount,
     feedback,
     score,
@@ -239,7 +307,6 @@ const useOrderManager = ({ level, initial, onLevelComplete, onGameOver }: UseOrd
     timeRemaining,
     tray,
     advance,
-    dismissBadge,
     handleManualCloseShop,
     handleServeOrder,
     updateTray,

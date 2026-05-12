@@ -1,12 +1,10 @@
-// src/config/levelConfig.ts
-
 export const levelConfig = {
   1: {
     title: "Warm-Up",
     threshold: 5, // Levels up after 5 successful orders
     timer: 15000, // 12 seconds
     description: "Pick the size, temperature, and milk for each drink! Get into the rhythm of the kitchen.",
-    instructions: ["2–3 ingredients per order", "Timer: 12 seconds per customer", "Focus on Size, Temp, and Milk"],
+    instructions: ["2-3 ingredients per order", "Timer: 12 seconds per customer", "Focus on Size, Temp, and Milk"],
     ingredients: {
       size: ["small", "medium", "large"],
       temp: ["hot", "iced"],
@@ -39,7 +37,7 @@ export const levelConfig = {
     timer: 10000, // 8 seconds
     description: "Getting fancy! Customers are looking for treats. Add toppings to your drink orders.",
     instructions: [
-      "4–5 ingredients per order",
+      "4-5 ingredients per order",
       "Timer: 8 seconds per customer",
       "New Ingredients: Whipped Cream, Cinnamon, and Sprinkles!",
     ],

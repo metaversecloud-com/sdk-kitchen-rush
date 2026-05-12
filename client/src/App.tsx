@@ -1,50 +1,62 @@
 import { useContext, useEffect, useMemo, useState } from "react";
+import { Route, Routes, useNavigate, useSearchParams } from "react-router-dom";
 
-import { Home } from "@/pages";
-import { GlobalDispatchContext } from "@/context/GlobalContext";
-import { InteractiveParams, SET_HAS_INTERACTIVE_PARAMS } from "@/context/types";
-import { setupBackendAPI } from "@/utils";
+// pages
+import { Error, Home } from "./pages";
 
-const readInteractiveParams = (search: string): InteractiveParams => {
-  const params = new URLSearchParams(search);
-  return {
-    assetId: params.get("assetId") || "",
-    displayName: params.get("displayName") || "",
-    identityId: params.get("identityId") || "",
-    interactiveNonce: params.get("interactiveNonce") || "",
-    interactivePublicKey: params.get("interactivePublicKey") || "",
-    profileId: params.get("profileId") || "",
-    sceneDropId: params.get("sceneDropId") || "",
-    uniqueName: params.get("uniqueName") || "",
-    urlSlug: params.get("urlSlug") || "",
-    username: params.get("username") || "",
-    visitorId: params.get("visitorId") || "",
-  };
-};
+// context
+import { GlobalDispatchContext } from "./context/GlobalContext";
+import { InteractiveParams, SET_HAS_INTERACTIVE_PARAMS } from "./context/types";
+
+// utils
+import { setupBackendAPI } from "./utils/backendAPI";
 
 const App = () => {
-  const dispatch = useContext(GlobalDispatchContext);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [hasInitBackendAPI, setHasInitBackendAPI] = useState(false);
   const [hasMissingParams, setHasMissingParams] = useState(false);
 
-  const interactiveParams = useMemo(() => readInteractiveParams(window.location.search), []);
+  const dispatch = useContext(GlobalDispatchContext);
+
+  const interactiveParams: InteractiveParams = useMemo(() => {
+    return {
+      assetId: searchParams.get("assetId") || "",
+      displayName: searchParams.get("displayName") || "",
+      identityId: searchParams.get("identityId") || "",
+      interactiveNonce: searchParams.get("interactiveNonce") || "",
+      interactivePublicKey: searchParams.get("interactivePublicKey") || "",
+      profileId: searchParams.get("profileId") || "",
+      sceneDropId: searchParams.get("sceneDropId") || "",
+      uniqueName: searchParams.get("uniqueName") || "",
+      urlSlug: searchParams.get("urlSlug") || "",
+      username: searchParams.get("username") || "",
+      visitorId: searchParams.get("visitorId") || "",
+    };
+  }, [searchParams]);
 
   useEffect(() => {
-    if (!interactiveParams.assetId) {
-      setHasMissingParams(true);
-      return;
+    if (interactiveParams.assetId) {
+      dispatch!({
+        type: SET_HAS_INTERACTIVE_PARAMS,
+        payload: { hasInteractiveParams: true },
+      });
     }
-    if (dispatch) {
-      dispatch({ type: SET_HAS_INTERACTIVE_PARAMS, payload: { hasInteractiveParams: true } });
-    }
-  }, [interactiveParams, dispatch]);
+  }, [interactiveParams]);
 
   useEffect(() => {
-    if (hasInitBackendAPI || !interactiveParams.assetId) return;
-    setupBackendAPI(interactiveParams)
-      .catch((error) => console.error(error?.response?.data?.message))
-      .finally(() => setHasInitBackendAPI(true));
+    if (!interactiveParams.assetId) setHasMissingParams(true);
+    if (!hasInitBackendAPI) setupBackend();
   }, [hasInitBackendAPI, interactiveParams]);
+
+  const setupBackend = () => {
+    setupBackendAPI(interactiveParams)
+      .catch((error) => {
+        console.error(error?.response?.data?.message);
+        navigate("*");
+      })
+      .finally(() => setHasInitBackendAPI(true));
+  };
 
   if (hasMissingParams) {
     return (
@@ -69,7 +81,12 @@ const App = () => {
     );
   }
 
-  return <Home />;
+  return (
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="*" element={<Error />} />
+    </Routes>
+  );
 };
 
 export default App;

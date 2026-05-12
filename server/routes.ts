@@ -1,11 +1,11 @@
 import express from "express";
 import {
   handleAwardBadge,
+  handleGameEnd,
   handleGetGameState,
   handleGetLeaderboard,
   handleIncrementAnalytics,
   handleResetLeaderboard,
-  handleUpdateLeaderboard,
 } from "./controllers/index.js";
 import { getVersion } from "@utils/getVersion.js";
 
@@ -26,8 +26,8 @@ router.get("/system/health", (_req, res) => {
 
 router.get("/game-state", handleGetGameState);
 router.get("/leaderboard", handleGetLeaderboard);
-router.post("/leaderboard/update", handleUpdateLeaderboard);
 router.post("/leaderboard/reset", handleResetLeaderboard);
+router.post("/game-end", handleGameEnd);
 router.post("/award-badge", handleAwardBadge);
 router.post("/analytics/increment", handleIncrementAnalytics);
 
