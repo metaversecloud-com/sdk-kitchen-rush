@@ -28,6 +28,7 @@ export type LevelStart = {
   angry: number;
   streak: number;
   ordersServed: number;
+  incorrectOrders: number;
 };
 
 // Raw end-of-game stats. The /game-end roundtrip (which produces the rank,
@@ -43,6 +44,7 @@ export type GameOverPayload = {
 };
 
 const FEEDBACK_DURATION_MS = 2000;
+const TIMER_TICK_INTERVAL_MS = 100;
 const FINAL_LEVEL = 4;
 
 const generateRandomOrder = (level: number): Order => {
@@ -72,9 +74,17 @@ interface UseOrderManagerOptions {
   ownedBadgeNames: string[];
   onLevelComplete: (next: LevelStart) => void;
   onGameOver: (final: GameOverPayload) => void;
+  onBadgeGranted?: (badge: ActiveBadge) => void;
 }
 
-const useOrderManager = ({ level, initial, ownedBadgeNames, onLevelComplete, onGameOver }: UseOrderManagerOptions) => {
+const useOrderManager = ({
+  level,
+  initial,
+  ownedBadgeNames,
+  onLevelComplete,
+  onGameOver,
+  onBadgeGranted,
+}: UseOrderManagerOptions) => {
   const [score, setScore] = useState<number>(initial.score);
   const [streak, setStreak] = useState<number>(initial.streak);
   const [angryCount, setAngryCount] = useState<number>(initial.angry);
@@ -91,15 +101,22 @@ const useOrderManager = ({ level, initial, ownedBadgeNames, onLevelComplete, onG
   const feedbackTimeoutRef = useRef<number | undefined>(undefined);
   const badgeTimeoutRef = useRef<number | undefined>(undefined);
   const gameEndedRef = useRef(false);
+  // Wall-clock start of the current order. Used to compute exact ms-precise
+  // time remaining at serve — the rendered `timeRemaining` state ticks at
+  // 100ms granularity, which would otherwise float "Last Minute Save" out of
+  // reach and leave the visual timer bar above 0 at expiry.
+  const orderStartTimeRef = useRef<number>(0);
 
   // Cross-render snapshot so timer-fired endings and button-fired endings both
-  // see the latest score / orders / per-game accumulators.
+  // see the latest score / orders / per-game accumulators. correctOrders and
+  // incorrectOrders are seeded from `initial` so they accumulate across levels
+  // (Game remounts between levels and would otherwise lose them).
   const statsRef = useRef({
     score: initial.score,
     angryCount: initial.angry,
     ordersServedGame: initial.ordersServed,
-    correctOrders: 0,
-    incorrectOrders: 0,
+    correctOrders: initial.ordersServed,
+    incorrectOrders: initial.incorrectOrders,
     fastStreak: 0,
     slowStreak: 0,
     wrongStreak: 0,
@@ -115,6 +132,17 @@ const useOrderManager = ({ level, initial, ownedBadgeNames, onLevelComplete, onG
   }, [ordersServedGame]);
 
   const ownedBadgesRef = useRef<Set<string>>(new Set(ownedBadgeNames));
+  // Keep the local set in sync with the parent-supplied list. The parent
+  // (Home) updates context on each newly-granted badge, so a subsequent
+  // Game remount (next level) starts already-aware of badges earned earlier.
+  useEffect(() => {
+    ownedBadgesRef.current = new Set(ownedBadgeNames);
+  }, [ownedBadgeNames]);
+
+  const onBadgeGrantedRef = useRef(onBadgeGranted);
+  useEffect(() => {
+    onBadgeGrantedRef.current = onBadgeGranted;
+  }, [onBadgeGranted]);
 
   const clearTimers = useCallback(() => {
     if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
@@ -131,9 +159,21 @@ const useOrderManager = ({ level, initial, ownedBadgeNames, onLevelComplete, onG
   // avoid a roundtrip when the visitor already owns the badge.
   const tryAwardBadge = useCallback(async (badgeName: string) => {
     if (ownedBadgesRef.current.has(badgeName)) return;
-    const result = await awardBadge(badgeName);
-    if (!result) return;
+    // Optimistically mark as owned before the network call so concurrent
+    // triggers (e.g. two streak milestones reached on the same serve) don't
+    // each fire a duplicate request.
     ownedBadgesRef.current.add(badgeName);
+    const result = await awardBadge(badgeName);
+    if (!result?.success) {
+      // Roll back the optimistic mark so the next trigger retries.
+      ownedBadgesRef.current.delete(badgeName);
+      return;
+    }
+    // Notify on every successful response — including granted=false (server
+    // says the visitor already owns it). The parent's merge is idempotent;
+    // syncing here keeps the Badges tab + future Game mounts honest when the
+    // initial /game-state snapshot was stale.
+    onBadgeGrantedRef.current?.({ name: badgeName, icon: result.icon || "" });
   }, []);
 
   // Refs break the circular call graph (advance → handleOrderFailure on
@@ -185,11 +225,14 @@ const useOrderManager = ({ level, initial, ownedBadgeNames, onLevelComplete, onG
     const order = generateRandomOrder(level);
     setActiveOrder(order);
     clearTimers();
-    setTimeRemaining(Math.ceil(order.timeLimit / 1000));
+    orderStartTimeRef.current = Date.now();
+    setTimeRemaining(order.timeLimit / 1000);
     intervalRef.current = window.setInterval(() => {
-      setTimeRemaining((prev) => Math.max(0, prev - 1));
-    }, 1000);
+      const elapsed = Date.now() - orderStartTimeRef.current;
+      setTimeRemaining(Math.max(0, (order.timeLimit - elapsed) / 1000));
+    }, TIMER_TICK_INTERVAL_MS);
     timeoutRef.current = window.setTimeout(() => {
+      setTimeRemaining(0);
       trackEvent("ordersTimedout");
       handleOrderFailureRef.current("Customer got tired of waiting!");
     }, order.timeLimit);
@@ -209,7 +252,10 @@ const useOrderManager = ({ level, initial, ownedBadgeNames, onLevelComplete, onG
 
     trackEvent("correctOrdersServed");
 
-    const speedBonus = getSpeedBonus(timeRemaining * 1000, activeOrder.timeLimit);
+    // Use wall-clock elapsed time so the badge thresholds (especially the <5%
+    // Last Minute Save) see real ms precision, not the 100ms-granular state.
+    const actualRemainingMs = Math.max(0, activeOrder.timeLimit - (Date.now() - orderStartTimeRef.current));
+    const speedBonus = getSpeedBonus(actualRemainingMs, activeOrder.timeLimit);
     const points = BASE_POINTS * getStreakMultiplier(streak) + speedBonus;
     const newScore = score + points;
     const newStreak = streak + 1;
@@ -232,7 +278,7 @@ const useOrderManager = ({ level, initial, ownedBadgeNames, onLevelComplete, onG
     statsRef.current.correctOrders += 1;
     statsRef.current.wrongStreak = 0;
 
-    const timePercent = activeOrder.timeLimit > 0 ? ((timeRemaining * 1000) / activeOrder.timeLimit) * 100 : 0;
+    const timePercent = activeOrder.timeLimit > 0 ? (actualRemainingMs / activeOrder.timeLimit) * 100 : 0;
     if (timePercent > LIGHTNING_HANDS_TIME_THRESHOLD) {
       statsRef.current.fastStreak += 1;
       statsRef.current.slowStreak = 0;
@@ -245,7 +291,6 @@ const useOrderManager = ({ level, initial, ownedBadgeNames, onLevelComplete, onG
       statsRef.current.fastStreak = 0;
       statsRef.current.slowStreak = 0;
     }
-
     if (timePercent < LAST_MINUTE_TIME_THRESHOLD) void tryAwardBadge(IN_GAME_BADGES.LAST_MINUTE_SAVE);
     if (level === WANT_IT_ALL_LEVEL && (activeOrder.toppings?.length || 0) === 3) {
       void tryAwardBadge(IN_GAME_BADGES.WANT_IT_ALL);
@@ -265,6 +310,7 @@ const useOrderManager = ({ level, initial, ownedBadgeNames, onLevelComplete, onG
           angry: angryCount,
           streak: newStreak,
           ordersServed: newOrdersServedGame,
+          incorrectOrders: statsRef.current.incorrectOrders,
         });
       }
     } else {

@@ -3,20 +3,20 @@ import { useContext, useEffect, useState } from "react";
 import coffeeShopImg from "@/assets/coffeeShop.png";
 import { BadgesTab, Game, GameOver, LevelIntermission, PageContainer, ScoresTab } from "@/components";
 import { GlobalDispatchContext, GlobalStateContext } from "@/context/GlobalContext";
-import { ErrorType } from "@/context/types";
-import { GameOverPayload, LevelStart } from "@/hooks/useOrderManager";
+import { ErrorType, SET_GAME_STATE } from "@/context/types";
+import { ActiveBadge, GameOverPayload, LevelStart } from "@/hooks/useOrderManager";
 import { backendAPI, setErrorMessage, setGameState } from "@/utils";
 
 type Phase = "tabs" | "intermission" | "game" | "gameover";
 type PlayerTab = "game" | "scores" | "badges";
 
-const INITIAL_LEVEL_STATE: LevelStart = { score: 0, angry: 0, streak: 0, ordersServed: 0 };
+const INITIAL_LEVEL_STATE: LevelStart = { score: 0, angry: 0, streak: 0, ordersServed: 0, incorrectOrders: 0 };
 const EMPTY_FINAL: GameOverPayload = { score: 0, ordersServed: 0, correctOrders: 0, incorrectOrders: 0, angryCount: 0 };
 const FINAL_LEVEL = 4;
 
 export const Home = () => {
   const dispatch = useContext(GlobalDispatchContext);
-  const { hasInteractiveParams } = useContext(GlobalStateContext);
+  const { hasInteractiveParams, visitorInventory } = useContext(GlobalStateContext);
   const [isLoading, setIsLoading] = useState(true);
 
   const [phase, setPhase] = useState<Phase>("tabs");
@@ -65,6 +65,17 @@ export const Home = () => {
     setPhase("gameover");
   };
 
+  // Merge each in-game badge grant into context so the next level's Game mount
+  // (which rebuilds its ownedBadgesRef from context) doesn't re-ask the server
+  // for badges already earned this session.
+  const handleBadgeGranted = (badge: ActiveBadge) => {
+    if (!dispatch) return;
+    const mergedBadges = { ...(visitorInventory?.badges || {}) };
+    if (mergedBadges[badge.name]) return;
+    mergedBadges[badge.name] = { id: badge.name, name: badge.name, icon: badge.icon };
+    dispatch({ type: SET_GAME_STATE, payload: { visitorInventory: { badges: mergedBadges } } });
+  };
+
   const playAgain = () => {
     setCurrentLevel(1);
     setLevelStart(INITIAL_LEVEL_STATE);
@@ -90,6 +101,7 @@ export const Home = () => {
         initial={levelStart}
         onLevelComplete={handleLevelComplete}
         onGameOver={handleGameOver}
+        onBadgeGranted={handleBadgeGranted}
       />
     );
   }

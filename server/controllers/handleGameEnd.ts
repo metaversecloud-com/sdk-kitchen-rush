@@ -58,7 +58,7 @@ export const handleGameEnd = async (req: Request, res: Response) => {
     const { urlSlug } = credentials;
     const { correctOrders, incorrectOrders, angryCount, finalScore } = sanitizeStats(req.body || {});
 
-    const { visitor, visitorStats } = await getVisitor(credentials, true);
+    const { visitor, visitorStats } = await getVisitor(credentials, false);
 
     // Snapshot persistent stats before incrementing so we can detect threshold
     // crossings (e.g. "Open for Business" = first ever game played).
@@ -130,7 +130,6 @@ export const handleGameEnd = async (req: Request, res: Response) => {
 
     let grantedBadges: AwardBadgeResult[] = [];
     if (eligibleBadges.length > 0) {
-      await visitor.fetchInventoryItems();
       const inventoryItems = await getCachedInventoryItems({ credentials });
       grantedBadges = await grantBadges({ visitor, inventoryItems, badgeNames: eligibleBadges });
     }

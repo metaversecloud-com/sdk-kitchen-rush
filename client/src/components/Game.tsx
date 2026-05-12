@@ -4,7 +4,7 @@ import { FeedbackToast, Ingredients, Order, PageContainer, Tray } from "@/compon
 
 import { levelConfig } from "@/config/levelConfig";
 import { GlobalStateContext } from "@/context/GlobalContext";
-import useOrderManager, { GameOverPayload, LevelStart } from "@/hooks/useOrderManager";
+import useOrderManager, { ActiveBadge, GameOverPayload, LevelStart } from "@/hooks/useOrderManager";
 
 import "@/styles/Game.css";
 
@@ -13,9 +13,10 @@ interface GameProps {
   initial: LevelStart;
   onLevelComplete: (next: LevelStart) => void;
   onGameOver: (final: GameOverPayload) => void;
+  onBadgeGranted: (badge: ActiveBadge) => void;
 }
 
-export const Game = ({ level, initial, onLevelComplete, onGameOver }: GameProps) => {
+export const Game = ({ level, initial, onLevelComplete, onGameOver, onBadgeGranted }: GameProps) => {
   const { visitorInventory } = useContext(GlobalStateContext);
   const ownedBadgeNames = useMemo(() => Object.keys(visitorInventory?.badges || {}), [visitorInventory]);
   const config = levelConfig[level as keyof typeof levelConfig];
@@ -32,7 +33,7 @@ export const Game = ({ level, initial, onLevelComplete, onGameOver }: GameProps)
     handleManualCloseShop,
     handleServeOrder,
     updateTray,
-  } = useOrderManager({ level, initial, ownedBadgeNames, onLevelComplete, onGameOver });
+  } = useOrderManager({ level, initial, ownedBadgeNames, onLevelComplete, onGameOver, onBadgeGranted });
 
   // Kick off the first order on mount; the hook owns the rest of the loop.
   useEffect(() => {
@@ -53,7 +54,7 @@ export const Game = ({ level, initial, onLevelComplete, onGameOver }: GameProps)
           <div className="hud-item">
             <span className="hud-label">Streak</span> {streak}
           </div>
-          <div className="hud-item">⏱️ {timeRemaining}s</div>
+          <div className="hud-item">⏱️ {Math.ceil(timeRemaining)}s</div>
           <div className="hud-item">😡 {angryCount}/5</div>
         </div>
         <div className="grid grid-cols-2 gap-2">

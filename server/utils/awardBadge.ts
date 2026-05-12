@@ -26,10 +26,25 @@ export const awardBadge = async ({
 }): Promise<AwardBadgeResult> => {
   try {
     const { visitor } = await getVisitor(credentials, false);
-    const inventoryItems = await getCachedInventoryItems({ credentials });
-    const badge = findEcosystemBadge(inventoryItems, badgeName);
+    let inventoryItems = await getCachedInventoryItems({ credentials });
+    let badge = findEcosystemBadge(inventoryItems, badgeName);
 
-    if (!badge) return { success: false, granted: false, badgeName };
+    // The ecosystem inventory is cached for 6h — if the admin just added the
+    // badge it may not be in the cache yet. Retry once with a fresh fetch
+    // before giving up so a newly-configured badge becomes available without
+    // waiting for the cache to expire.
+    if (!badge) {
+      inventoryItems = await getCachedInventoryItems({ credentials, forceRefresh: true });
+      badge = findEcosystemBadge(inventoryItems, badgeName);
+    }
+
+    if (!badge) {
+      console.warn(
+        `Badge "${badgeName}" not found in ecosystem inventory. ` +
+          `Make sure a BADGE item with status ACTIVE and that exact name exists in the Topia ecosystem.`,
+      );
+      return { success: false, granted: false, badgeName };
+    }
 
     const icon = (badge as any).image_url || (badge as any).image_path || "";
 

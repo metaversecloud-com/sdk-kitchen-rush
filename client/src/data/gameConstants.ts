@@ -40,7 +40,7 @@ export const IN_GAME_BADGES = {
   UNSTOPPABLE: "Unstoppable",
   LIGHTNING_HANDS: "Lightning Hands",
   LAST_MINUTE_SAVE: "Last Minute Save",
-  WANT_IT_ALL: "Want It All",
+  WANT_IT_ALL: "Want it All",
   SLUGGISH: "Sluggish",
   OOPS: "Oops",
 } as const;

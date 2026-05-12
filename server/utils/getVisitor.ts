@@ -16,13 +16,17 @@ export type VisitorStats = {
   lifetimeCorrectOrders: number;
 };
 
+// Matches visitorHasBadge in awardBadge.ts: any inventory item of type BADGE
+// with a matching name counts as owned, regardless of the SDK status field.
+// We also accept either image_url or image_path since the Topia SDK uses
+// different keys on ecosystem items vs visitor inventory items.
 const buildVisitorInventory = (items: any[] = []): VisitorInventory => {
   const badges: VisitorBadgeRecord = {};
   for (const visitorItem of items) {
-    const { id, status, item } = visitorItem || {};
-    const { name, type, image_url = "" } = item || {};
-    if (status === "ACTIVE" && type === "BADGE" && name) {
-      badges[name] = { id, name, icon: image_url };
+    const { id, item } = visitorItem || {};
+    const { name, type, image_url, image_path } = item || {};
+    if (type === "BADGE" && name) {
+      badges[name] = { id, name, icon: image_url || image_path || "" };
     }
   }
   return { badges };
@@ -50,7 +54,7 @@ export const getVisitor = async (
 
     if (!visitor) throw new Error("Not in world");
 
-    if (shouldGetVisitorDetails) await visitor.fetchInventoryItems();
+    await visitor.fetchInventoryItems();
     const visitorInventory = buildVisitorInventory(visitor.inventoryItems || []);
 
     const dataObject = (await visitor.fetchDataObject()) as VisitorStats;

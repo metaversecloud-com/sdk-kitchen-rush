@@ -57,7 +57,7 @@ export const levelConfig = {
     instructions: [
       "5+ ingredients per order",
       "Timer: 7 seconds per customer",
-      "Ultimate Challenge: Java Chips and Drizzles unlocked!",
+      // "Ultimate Challenge: Java Chips and Drizzles unlocked!",
     ],
     ingredients: {
       size: ["small", "medium", "large"],

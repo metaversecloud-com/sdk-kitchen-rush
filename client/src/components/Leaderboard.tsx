@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { backendAPI } from "@/utils";
 
@@ -8,10 +8,20 @@ type LeaderboardEntry = {
   score: number;
 };
 
+const getProfileId = () => new URLSearchParams(window.location.search).get("profileId") || "";
+
 export const Leaderboard = () => {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const profileId = useMemo(getProfileId, []);
+  const myEntry = useMemo(() => {
+    if (!profileId) return null;
+    const index = leaderboard.findIndex((entry) => entry.profileId === profileId);
+    if (index < 0) return null;
+    return { entry: leaderboard[index], rank: index + 1 };
+  }, [leaderboard, profileId]);
 
   useEffect(() => {
     backendAPI
@@ -26,7 +36,20 @@ export const Leaderboard = () => {
 
   return (
     <div className="grid gap-2">
-      <h3>🏆 Top 25</h3>
+      {profileId && (
+        <div className="card warning-card">
+          {myEntry ? (
+            <div className="flex grid-cols-2 justify-between">
+              <h5>My Best Score</h5>
+              <h5>{myEntry.entry.score}</h5>
+            </div>
+          ) : (
+            <p className="p2">No score yet — play a game to make the board.</p>
+          )}
+        </div>
+      )}
+
+      <h3 className="pt-3">🏆 Top 25</h3>
       {leaderboard.length === 0 ? (
         <p className="p2">No scores yet. Be the first!</p>
       ) : (
@@ -40,7 +63,7 @@ export const Leaderboard = () => {
           </thead>
           <tbody>
             {leaderboard.map((entry, index) => (
-              <tr key={entry.profileId}>
+              <tr key={entry.profileId} className={entry.profileId === profileId ? "highlight" : ""}>
                 <td className="p2">{index + 1}</td>
                 <td className="p2">{entry.displayName}</td>
                 <td className="p2">{entry.score}</td>
