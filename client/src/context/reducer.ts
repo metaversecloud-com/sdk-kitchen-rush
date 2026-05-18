@@ -1,31 +1,23 @@
 import { ActionType, InitialState, SET_ERROR, SET_GAME_STATE, SET_HAS_INTERACTIVE_PARAMS } from "./types";
 
-const globalReducer = (state: InitialState, action: ActionType) => {
+export const globalReducer = (state: InitialState, action: ActionType): InitialState => {
   const { type, payload } = action;
   switch (type) {
     case SET_HAS_INTERACTIVE_PARAMS:
-      return {
-        ...state,
-        hasInteractiveParams: true,
-      };
+      return { ...state, hasInteractiveParams: true };
     case SET_GAME_STATE:
       return {
         ...state,
-        isAdmin: payload.isAdmin,
-        visitorData: payload.visitorData,
-        droppedAsset: payload.droppedAsset,
+        isAdmin: payload.isAdmin ?? state.isAdmin,
+        droppedAsset: payload.droppedAsset ?? state.droppedAsset,
+        badges: payload.badges ?? state.badges,
+        visitorInventory: payload.visitorInventory ?? state.visitorInventory,
+        visitorStats: payload.visitorStats ?? state.visitorStats,
         error: "",
       };
     case SET_ERROR:
-      return {
-        ...state,
-        error: payload.error,
-      };
-
-    default: {
+      return { ...state, error: payload.error ?? "" };
+    default:
       throw new Error(`Unhandled action type: ${type}`);
-    }
   }
 };
-
-export { globalReducer };

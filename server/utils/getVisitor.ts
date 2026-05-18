@@ -1,53 +1,70 @@
 import { VisitorInterface } from "@rtsdk/topia";
-import { Visitor } from "./topiaInit.js";
 import { Credentials } from "../types/index.js";
+import { Visitor } from "./topiaInit.js";
 import { standardizeError } from "./standardizeError.js";
-import { VisitorDataObjectType } from "@shared/types/VisitorData.js";
 
-export const getVisitor = async (credentials: Credentials, shouldGetVisitorDetails = false) => {
-  try {
-    const { sceneDropId, urlSlug, visitorId } = credentials;
+export type VisitorBadgeRecord = {
+  [name: string]: { id: string; name: string; icon: string };
+};
 
-    let visitor: VisitorInterface;
-    if (shouldGetVisitorDetails) visitor = await Visitor.get(visitorId, urlSlug, { credentials });
-    else visitor = await Visitor.create(visitorId, urlSlug, { credentials });
+export type VisitorInventory = {
+  badges: VisitorBadgeRecord;
+};
 
-    if (!visitor) throw "Not in world";
+export type VisitorStats = {
+  gamesPlayed: number;
+  lifetimeCorrectOrders: number;
+};
 
-    const dataObject = (await visitor.fetchDataObject()) as VisitorDataObjectType;
-
-    const lockId = `${sceneDropId}-${new Date(Math.round(new Date().getTime() / 60000) * 60000)}`;
-    if (!dataObject) {
-      await visitor.setDataObject(
-        {
-          [`${urlSlug}-${sceneDropId}`]: { dateStarted: new Date().getTime() },
-        },
-        { lock: { lockId, releaseLock: true } },
-      );
-    } else if (!dataObject[`${urlSlug}-${sceneDropId}`]) {
-      await visitor.updateDataObject(
-        { [`${urlSlug}-${sceneDropId}`]: { dateStarted: new Date().getTime() } },
-        { lock: { lockId, releaseLock: true } },
-      );
+// Matches visitorHasBadge in awardBadge.ts: any inventory item of type BADGE
+// with a matching name counts as owned, regardless of the SDK status field.
+// We also accept either image_url or image_path since the Topia SDK uses
+// different keys on ecosystem items vs visitor inventory items.
+const buildVisitorInventory = (items: any[] = []): VisitorInventory => {
+  const badges: VisitorBadgeRecord = {};
+  for (const visitorItem of items) {
+    const { id, item } = visitorItem || {};
+    const { name, type, image_url, image_path } = item || {};
+    if (type === "BADGE" && name) {
+      badges[name] = { id, name, icon: image_url || image_path || "" };
     }
+  }
+  return { badges };
+};
+
+const buildVisitorStats = (dataObject: any): VisitorStats => ({
+  gamesPlayed: typeof dataObject?.gamesPlayed === "number" ? dataObject.gamesPlayed : 0,
+  lifetimeCorrectOrders: typeof dataObject?.lifetimeCorrectOrders === "number" ? dataObject.lifetimeCorrectOrders : 0,
+});
+
+export const getVisitor = async (
+  credentials: Credentials,
+  shouldGetVisitorDetails = false,
+): Promise<{
+  visitor: VisitorInterface;
+  visitorInventory: VisitorInventory;
+  visitorStats: VisitorStats;
+}> => {
+  try {
+    const { urlSlug, visitorId } = credentials;
+
+    const visitor: VisitorInterface = shouldGetVisitorDetails
+      ? await Visitor.get(visitorId, urlSlug, { credentials })
+      : Visitor.create(visitorId, urlSlug, { credentials });
+
+    if (!visitor) throw new Error("Not in world");
 
     await visitor.fetchInventoryItems();
-    let visitorInventory: { [key: string]: { id: string; icon: string; name: string } } = {};
+    const visitorInventory = buildVisitorInventory(visitor.inventoryItems || []);
 
-    for (const visitorItem of visitor.inventoryItems) {
-      const { id, status, item } = visitorItem;
-      const { name, type, image_url = "" } = item || {};
+    const dataObject = (await visitor.fetchDataObject()) as VisitorStats;
+    const visitorStats = buildVisitorStats(dataObject);
 
-      if (status === "ACTIVE" && type === "BADGE") {
-        visitorInventory[name] = {
-          id,
-          icon: image_url,
-          name,
-        };
-      }
+    if (!dataObject.gamesPlayed) {
+      await visitor.setDataObject(visitorStats, {});
     }
 
-    return { visitor, visitorInventory };
+    return { visitor, visitorInventory, visitorStats };
   } catch (error) {
     throw standardizeError(error);
   }
