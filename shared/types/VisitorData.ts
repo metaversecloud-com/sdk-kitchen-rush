@@ -3,5 +3,6 @@
  */
 
 export interface VisitorDataObject {
-  exampleParam: string;
+  [key: string]: any;
+  exampleParam?: string;
 }
