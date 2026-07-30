@@ -1,54 +1,78 @@
-import { INGREDIENT_ICONS } from "@/data/ingredientIcons";
-import { Order as OrderType } from "@/types/Order";
+import { getRecipeIcon, getRecipeLabel } from "@/data/ingredientIcons";
+import { Order as OrderType, Tray as TrayType } from "@/types/Order";
 
-const RecipeRow = ({ value }: { value: string | undefined }) => {
-  let display = value;
-  let iconKey = value?.toLowerCase() || "none";
-  if (display === "whipped_cream") {
-    iconKey = "whipped";
-    display = "Whipped";
-  }
-  if (!display || display === "none") {
-    display = "None";
-    iconKey = "none";
-  }
+interface RecipeRowProps {
+  label: string;
+  category: string;
+  required: string | undefined;
+  trayValue: string | undefined;
+}
+
+const RecipeRow = ({ label, category, required, trayValue }: RecipeRowProps) => {
+  const reqIcon = getRecipeIcon(category, required);
+  const reqLabel = getRecipeLabel(category, required);
+  const trayIcon = getRecipeIcon(category, trayValue);
+  const isFilled = !!trayValue;
+
   return (
-    <div className="flex items-center gap-2">
-      <img src={INGREDIENT_ICONS[iconKey]} alt="" className="recipe-bullet-icon" />
-      <span className="recipe-text">{display}</span>
+    <div className="recipe-row">
+      <div className="recipe-row__label">{label}</div>
+      <div className="recipe-row__req">
+        {reqIcon ? (
+          <img src={reqIcon} alt="" className="recipe-row__icon" draggable={false} />
+        ) : (
+          <div className="recipe-row__icon" />
+        )}
+        <span className="recipe-row__text">{reqLabel}</span>
+      </div>
+      <div className={`recipe-row__slot ${isFilled ? "recipe-row__slot--filled" : ""}`} aria-label={isFilled ? `${label} added` : `${label} missing`}>
+        {trayIcon ? (
+          <img src={trayIcon} alt="" className="recipe-row__icon" draggable={false} />
+        ) : null}
+      </div>
     </div>
   );
 };
 
 interface OrderProps {
   order: OrderType;
-  timeRemaining: number;
+  tray: TrayType;
   currentLevel: number;
 }
 
-export const Order = ({ order, timeRemaining, currentLevel }: OrderProps) => {
-  const totalTime = order.timeLimit / 1000;
-  const timePercent = totalTime > 0 ? Math.max(0, (timeRemaining / totalTime) * 100) : 0;
+export const Order = ({ order, tray, currentLevel }: OrderProps) => {
+  const trayToppings = tray.toppings || [];
+  const orderToppings = order.toppings || [];
 
   return (
-    <div className="card warning-card" style={{ gap: "4px" }}>
-      <div className="timer-container">
-        <div
-          className="timer-bar"
-          style={{ width: `${timePercent}%`, background: timePercent < 30 ? "#ef4444" : "#22c55e" }}
-        />
+    <div className="recipe-panel">
+      <div className="recipe-panel__head">
+        <span className="recipe-panel__head-col">Order</span>
+        <span className="recipe-panel__head-col">Your tray</span>
       </div>
-
-      <RecipeRow value={order.size} />
-      <RecipeRow value={order.temp} />
-      <RecipeRow value={order.milk} />
-      {currentLevel >= 2 && <RecipeRow value={order.flavor} />}
+      <RecipeRow label="Size" category="size" required={order.size} trayValue={tray.size || ""} />
+      <RecipeRow label="Temp" category="temp" required={order.temp} trayValue={tray.temp || ""} />
+      <RecipeRow label="Milk" category="milk" required={order.milk} trayValue={tray.milk || ""} />
+      {currentLevel >= 2 && (
+        <RecipeRow label="Flavor" category="flavor" required={order.flavor} trayValue={tray.flavor || ""} />
+      )}
       {currentLevel >= 3 &&
-        (order.toppings && order.toppings.length > 0 ? (
-          order.toppings.map((t) => <RecipeRow key={t} value={t} />)
-        ) : (
-          <RecipeRow value="none" />
-        ))}
+        (orderToppings.length > 0
+          ? orderToppings.map((topping, i) => {
+              const has = trayToppings.includes(topping);
+              return (
+                <RecipeRow
+                  key={`${topping}-${i}`}
+                  label={i === 0 ? "Toppings" : ""}
+                  category="toppings"
+                  required={topping}
+                  trayValue={has ? topping : ""}
+                />
+              );
+            })
+          : (
+              <RecipeRow label="Toppings" category="toppings" required="none" trayValue="none" />
+            ))}
     </div>
   );
 };

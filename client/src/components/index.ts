@@ -10,4 +10,3 @@ export * from "./Order";
 export * from "./PageContainer";
 export * from "./ResetLeaderboardButton";
 export * from "./ScoresTab";
-export * from "./Tray";

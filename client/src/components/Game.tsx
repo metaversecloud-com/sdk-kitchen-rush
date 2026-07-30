@@ -1,6 +1,6 @@
 import { useContext, useEffect, useMemo } from "react";
 
-import { FeedbackToast, Ingredients, Order, PageContainer, Tray } from "@/components";
+import { FeedbackToast, Ingredients, Order, PageContainer } from "@/components";
 
 import { levelConfig } from "@/config/levelConfig";
 import { GlobalStateContext } from "@/context/GlobalContext";
@@ -41,6 +41,10 @@ export const Game = ({ level, initial, onLevelComplete, onGameOver, onBadgeGrant
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const totalTime = activeOrder ? activeOrder.timeLimit / 1000 : 0;
+  const timePercent = totalTime > 0 ? Math.max(0, (timeRemaining / totalTime) * 100) : 0;
+  const timerDanger = timePercent < 30;
+
   return (
     <PageContainer isLoading={false}>
       <div className="grid gap-3">
@@ -57,10 +61,13 @@ export const Game = ({ level, initial, onLevelComplete, onGameOver, onBadgeGrant
           <div className="hud-item">⏱️ {Math.ceil(timeRemaining)}s</div>
           <div className="hud-item">😡 {angryCount}/5</div>
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          {activeOrder && <Order order={activeOrder} timeRemaining={timeRemaining} currentLevel={level} />}
-          <Tray tray={tray} />
+        <div className="order-timer" aria-label={`${Math.ceil(timeRemaining)} seconds remaining`}>
+          <div
+            className="order-timer__bar"
+            style={{ width: `${timePercent}%`, background: timerDanger ? "#ef4444" : "#22c55e" }}
+          />
         </div>
+        {activeOrder && <Order order={activeOrder} tray={tray} currentLevel={level} />}
         <Ingredients tray={tray} onSelect={updateTray} level={level} />
         <button className="btn btn-primary" onClick={handleServeOrder}>
           Serve Order

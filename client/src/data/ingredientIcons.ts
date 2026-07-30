@@ -16,22 +16,22 @@ import sprinklesImg from "@/assets/ingredients/sprinkles.png";
 import whippedImg from "@/assets/ingredients/whipped.png";
 
 export const INGREDIENT_ICONS: Record<string, string> = {
-  small: smallImg,
-  medium: mediumImg,
-  large: largeImg,
-  hot: hotImg,
-  iced: icedImg,
-  almond: almondImg,
-  oat: oatImg,
-  whole: wholeImg,
-  vanilla: vanillaImg,
-  caramel: caramelImg,
-  mocha: mochaImg,
-  cinnamon: cinnamonImg,
-  sprinkles: sprinklesImg,
-  whipped: whippedImg,
-  whipped_cream: whippedImg,
-  none: noMilkImg,
+  "small": smallImg,
+  "medium": mediumImg,
+  "large": largeImg,
+  "hot": hotImg,
+  "iced": icedImg,
+  "almond": almondImg,
+  "oat": oatImg,
+  "whole": wholeImg,
+  "vanilla": vanillaImg,
+  "caramel": caramelImg,
+  "mocha": mochaImg,
+  "cinnamon": cinnamonImg,
+  "sprinkles": sprinklesImg,
+  "whipped": whippedImg,
+  "whipped_cream": whippedImg,
+  "none": noMilkImg,
   "no-milk": noMilkImg,
   "no-flavor": noFlavorImg,
 };
@@ -39,4 +39,27 @@ export const INGREDIENT_ICONS: Record<string, string> = {
 export const getIngredientIcon = (value: string | undefined): string | null => {
   if (!value) return null;
   return INGREDIENT_ICONS[value.toLowerCase()] ?? null;
+};
+
+export const getRecipeIcon = (category: string, value: string | undefined): string | null => {
+  if (!value) return null;
+  const v = value.toLowerCase();
+  if (v === "none") {
+    if (category === "milk") return INGREDIENT_ICONS["no-milk"];
+    if (category === "flavor") return INGREDIENT_ICONS["no-flavor"];
+    return null;
+  }
+  return INGREDIENT_ICONS[v] ?? null;
+};
+
+export const getRecipeLabel = (category: string, value: string | undefined): string => {
+  if (!value) return "";
+  const v = value.toLowerCase();
+  if (v === "none") {
+    if (category === "milk") return "No milk";
+    if (category === "flavor") return "No flavor";
+    return "None";
+  }
+  if (v === "whipped_cream") return "Whipped";
+  return v.replace("_", " ");
 };

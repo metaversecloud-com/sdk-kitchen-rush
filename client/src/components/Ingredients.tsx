@@ -1,8 +1,16 @@
 import { levelConfig } from "@/config/levelConfig";
-import { getIngredientIcon } from "@/data/ingredientIcons";
+import { getRecipeIcon, getRecipeLabel } from "@/data/ingredientIcons";
 import { Order, Tray } from "@/types/Order";
 
 const CATEGORY_ORDER: (keyof Order)[] = ["size", "temp", "milk", "flavor", "toppings"];
+
+const CATEGORY_LABELS: Record<string, string> = {
+  size: "Size",
+  temp: "Temperature",
+  milk: "Milk",
+  flavor: "Flavor",
+  toppings: "Toppings",
+};
 
 interface IngredientsProps {
   tray: Tray;
@@ -20,14 +28,22 @@ export const Ingredients = ({ tray, level, onSelect }: IngredientsProps) => {
         const options = config.ingredients[category as keyof typeof config.ingredients] as readonly string[];
         if (!options || options.length === 0) return null;
 
+        // Single-select rows lock once filled. Toppings row stays open until
+        // three are picked (the hard cap in useOrderManager.updateTray).
+        const isMultiSelect = category === "toppings";
+        const rowLocked = isMultiSelect
+          ? (tray.toppings || []).length >= 3
+          : typeof tray[category] === "string" && tray[category] !== "";
+
         return (
-          <div key={category} className="mb-1">
-            <p className="p2 uppercase py-1">{category}</p>
+          <div key={category} className={`ingredient-row ${rowLocked ? "ingredient-row--locked" : ""}`}>
+            <p className="ingredient-row__label">{CATEGORY_LABELS[category] || category}</p>
             <div className="grid grid-cols-4 gap-2">
               {options.map((option) => {
-                const isSelected =
-                  category === "toppings" ? (tray.toppings || []).includes(option) : tray[category] === option;
-                const icon = getIngredientIcon(option);
+                const isSelected = isMultiSelect ? (tray.toppings || []).includes(option) : tray[category] === option;
+                const disabled = rowLocked || (isMultiSelect && isSelected);
+                const icon = getRecipeIcon(category, option);
+                const label = getRecipeLabel(category, option);
 
                 return (
                   <button
@@ -35,13 +51,15 @@ export const Ingredients = ({ tray, level, onSelect }: IngredientsProps) => {
                     type="button"
                     className={`option-btn ${isSelected ? "selected" : ""}`}
                     onClick={() => onSelect(category, option)}
+                    disabled={disabled}
+                    aria-pressed={isSelected}
                   >
                     {icon ? (
-                      <img src={icon} alt={option} className="ingredient-icon" />
+                      <img src={icon} alt="" className="ingredient-icon" draggable={false} />
                     ) : (
                       <div className="placeholder-icon" />
                     )}
-                    <span className="option-text">{option.replace("_", " ")}</span>
+                    <span className="option-text">{label}</span>
                   </button>
                 );
               })}
