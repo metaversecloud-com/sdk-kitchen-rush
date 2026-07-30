@@ -8,10 +8,12 @@ import { GameOverPayload } from "@/hooks/useOrderManager";
 import { backendAPI } from "@/utils";
 
 type GrantedBadge = { name: string; icon: string };
+type LeaderboardEntry = { profileId: string; displayName: string; score: number };
 
 type GameEndResult = {
   rank: number | null;
   grantedBadges: GrantedBadge[];
+  leaderboard?: LeaderboardEntry[];
   visitorStats?: { gamesPlayed: number; lifetimeCorrectOrders: number };
 };
 
@@ -50,6 +52,7 @@ export const GameOver = ({ stats, onPlayAgain }: GameOverProps) => {
         const next: GameEndResult = {
           rank: data?.rank ?? null,
           grantedBadges: data?.grantedBadges || [],
+          leaderboard: data?.leaderboard,
           visitorStats: data?.visitorStats,
         };
         setResult(next);
@@ -121,7 +124,11 @@ export const GameOver = ({ stats, onPlayAgain }: GameOverProps) => {
           )
         )}
 
-        <Leaderboard />
+        {tallying ? (
+          <p className="p2">Loading leaderboard...</p>
+        ) : (
+          <Leaderboard entries={result?.leaderboard} />
+        )}
 
         <button onClick={onPlayAgain} className="btn btn-primary">
           Play Again

@@ -134,9 +134,12 @@ export const handleGameEnd = async (req: Request, res: Response) => {
       grantedBadges = await grantBadges({ visitor, inventoryItems, badgeNames: eligibleBadges });
     }
 
+    // Return the freshly-computed leaderboard so the GameOver screen can render
+    // it without racing a separate GET /leaderboard against the update above.
     return res.json({
       success: true,
       rank,
+      leaderboard,
       visitorStats: { gamesPlayed: newGamesPlayed, lifetimeCorrectOrders: newLifetimeCorrect },
       grantedBadges: grantedBadges.filter((b) => b.granted).map(({ badgeName, icon }) => ({ name: badgeName, icon })),
     });

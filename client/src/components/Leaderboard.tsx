@@ -8,11 +8,18 @@ type LeaderboardEntry = {
   score: number;
 };
 
+interface LeaderboardProps {
+  // When provided, skips the GET /leaderboard fetch and renders these entries
+  // directly. Used by GameOver to hand in the post-/game-end leaderboard so
+  // the panel doesn't race against the score update.
+  entries?: LeaderboardEntry[];
+}
+
 const getProfileId = () => new URLSearchParams(window.location.search).get("profileId") || "";
 
-export const Leaderboard = () => {
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+export const Leaderboard = ({ entries }: LeaderboardProps = {}) => {
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>(entries ?? []);
+  const [isLoading, setIsLoading] = useState(entries === undefined);
   const [error, setError] = useState<string | null>(null);
 
   const profileId = useMemo(getProfileId, []);
@@ -24,12 +31,17 @@ export const Leaderboard = () => {
   }, [leaderboard, profileId]);
 
   useEffect(() => {
+    if (entries !== undefined) {
+      setLeaderboard(entries);
+      setIsLoading(false);
+      return;
+    }
     backendAPI
       .get("/leaderboard")
       .then((res) => setLeaderboard((res.data?.leaderboard as LeaderboardEntry[]) || []))
       .catch(() => setError("Failed to load leaderboard."))
       .finally(() => setIsLoading(false));
-  }, []);
+  }, [entries]);
 
   if (isLoading) return <p className="p2">Loading leaderboard...</p>;
   if (error) return <p className="p2">{error}</p>;
