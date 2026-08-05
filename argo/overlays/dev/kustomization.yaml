@@ -26,4 +26,4 @@ patches:
 images:
   - name: krush0
     newName: 368076259134.dkr.ecr.us-east-1.amazonaws.com/sdk-example
-    digest: sha256:5b61dc71004ddc9bf6baaefa89e6dcfefa3baacd1c1cb9013880c5cd638d6760
+    digest: sha256:0b3935058d044161ebb0a5e3e4f5866a55b0ffd163bcd390e7317de842278c8c
