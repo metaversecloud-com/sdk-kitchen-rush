@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 dotenv.config({ path: "../.env" });
+console.log("Checking keys:", process.env.INTERACTIVE_KEY ? "Found Key ✅" : "Key MISSING ❌");
 
 import {
   Topia,

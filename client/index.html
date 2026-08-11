@@ -9,9 +9,10 @@
       href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap"
       rel="stylesheet"
     />
-    <link href="https://sdk-style.s3.amazonaws.com/styles-3.0.2.css" rel="stylesheet" />
+    <!-- SDK stylesheet is loaded from src/index.css inside @import layer(sdk) so
+         our per-page custom CSS can override it without bumping specificity. -->
 
-    <title>SDK AI Template</title>
+    <title>Kitchen Rush</title>
   </head>
   <body class="rtsdk">
     <div id="root"></div>
