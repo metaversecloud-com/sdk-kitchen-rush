@@ -27,3 +27,4 @@ images:
   - name: krush0
     newName: 368076259134.dkr.ecr.us-east-1.amazonaws.com/sdk-example
     digest: sha256:1ccf62afadb066b2d5da998b195650eadf383f8cf6f493b97d6c43244287ad77
+    newTag: sdk-kitchen-rush
