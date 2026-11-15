@@ -1,0 +1,186 @@
+[
+  {
+    "id": "item-1",
+    "name": "First Order",
+    "type": "BADGE",
+    "status": "ACTIVE",
+    "description": "First Order description",
+    "image_path": "https://example.invalid/badges/1.png"
+  },
+  {
+    "id": "item-2",
+    "name": "Perfect Plate",
+    "type": "BADGE",
+    "status": "ACTIVE",
+    "description": "Perfect Plate description",
+    "image_path": "https://example.invalid/badges/2.png"
+  },
+  {
+    "id": "item-3",
+    "name": "Rush Hour",
+    "type": "BADGE",
+    "status": "ACTIVE",
+    "description": "Rush Hour description",
+    "image_path": "https://example.invalid/badges/3.png"
+  },
+  {
+    "id": "item-4",
+    "name": "Unstoppable",
+    "type": "BADGE",
+    "status": "ACTIVE",
+    "description": "Unstoppable description",
+    "image_path": "https://example.invalid/badges/4.png"
+  },
+  {
+    "id": "item-5",
+    "name": "Lightning Hands",
+    "type": "BADGE",
+    "status": "ACTIVE",
+    "description": "Lightning Hands description",
+    "image_path": "https://example.invalid/badges/5.png"
+  },
+  {
+    "id": "item-6",
+    "name": "Last Minute Save",
+    "type": "BADGE",
+    "status": "ACTIVE",
+    "description": "Last Minute Save description",
+    "image_path": "https://example.invalid/badges/6.png"
+  },
+  {
+    "id": "item-7",
+    "name": "Want it All",
+    "type": "BADGE",
+    "status": "ACTIVE",
+    "description": "Want it All description",
+    "image_path": "https://example.invalid/badges/7.png"
+  },
+  {
+    "id": "item-8",
+    "name": "Sluggish",
+    "type": "BADGE",
+    "status": "ACTIVE",
+    "description": "Sluggish description",
+    "image_path": "https://example.invalid/badges/8.png"
+  },
+  {
+    "id": "item-9",
+    "name": "Oops",
+    "type": "BADGE",
+    "status": "ACTIVE",
+    "description": "Oops description",
+    "image_path": "https://example.invalid/badges/9.png"
+  },
+  {
+    "id": "item-10",
+    "name": "Open for Business",
+    "type": "BADGE",
+    "status": "ACTIVE",
+    "description": "Open for Business description",
+    "image_path": "https://example.invalid/badges/10.png"
+  },
+  {
+    "id": "item-11",
+    "name": "Back in the Kitchen",
+    "type": "BADGE",
+    "status": "ACTIVE",
+    "description": "Back in the Kitchen description",
+    "image_path": "https://example.invalid/badges/11.png"
+  },
+  {
+    "id": "item-12",
+    "name": "Sharp Chef",
+    "type": "BADGE",
+    "status": "ACTIVE",
+    "description": "Sharp Chef description",
+    "image_path": "https://example.invalid/badges/12.png"
+  },
+  {
+    "id": "item-13",
+    "name": "No Substitutions",
+    "type": "BADGE",
+    "status": "ACTIVE",
+    "description": "No Substitutions description",
+    "image_path": "https://example.invalid/badges/13.png"
+  },
+  {
+    "id": "item-14",
+    "name": "Clean Service",
+    "type": "BADGE",
+    "status": "ACTIVE",
+    "description": "Clean Service description",
+    "image_path": "https://example.invalid/badges/14.png"
+  },
+  {
+    "id": "item-15",
+    "name": "Line Cook",
+    "type": "BADGE",
+    "status": "ACTIVE",
+    "description": "Line Cook description",
+    "image_path": "https://example.invalid/badges/15.png"
+  },
+  {
+    "id": "item-16",
+    "name": "Sous Chef",
+    "type": "BADGE",
+    "status": "ACTIVE",
+    "description": "Sous Chef description",
+    "image_path": "https://example.invalid/badges/16.png"
+  },
+  {
+    "id": "item-17",
+    "name": "Head Chef",
+    "type": "BADGE",
+    "status": "ACTIVE",
+    "description": "Head Chef description",
+    "image_path": "https://example.invalid/badges/17.png"
+  },
+  {
+    "id": "item-18",
+    "name": "Master Chef",
+    "type": "BADGE",
+    "status": "ACTIVE",
+    "description": "Master Chef description",
+    "image_path": "https://example.invalid/badges/18.png"
+  },
+  {
+    "id": "item-19",
+    "name": "On the Board",
+    "type": "BADGE",
+    "status": "ACTIVE",
+    "description": "On the Board description",
+    "image_path": "https://example.invalid/badges/19.png"
+  },
+  {
+    "id": "item-20",
+    "name": "Top 10",
+    "type": "BADGE",
+    "status": "ACTIVE",
+    "description": "Top 10 description",
+    "image_path": "https://example.invalid/badges/20.png"
+  },
+  {
+    "id": "item-21",
+    "name": "Number 1",
+    "type": "BADGE",
+    "status": "ACTIVE",
+    "description": "Number 1 description",
+    "image_path": "https://example.invalid/badges/21.png"
+  },
+  {
+    "id": "item-22",
+    "name": "Retired Badge",
+    "type": "BADGE",
+    "status": "INACTIVE",
+    "description": "Retired Badge description",
+    "image_path": "https://example.invalid/badges/22.png"
+  },
+  {
+    "id": "item-23",
+    "name": "Coffee Mug",
+    "type": "ITEM",
+    "status": "ACTIVE",
+    "description": "Coffee Mug description",
+    "image_path": "https://example.invalid/badges/23.png"
+  }
+]
